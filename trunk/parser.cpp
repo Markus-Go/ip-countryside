@@ -28,18 +28,18 @@ int main() {
     inDBex.close();
     ofstream inDBex1 ( (findValue("Testout")).c_str()  );
     inDBex1.close();
-    
+
     char cBuf[LINE_LENGTH];
     stringstream sstream;
     string sStr;
-    unsigned int temp = 0;  
-    
+    unsigned int temp = 0;
+
     set < DBRangeEntries , compare > seEntries;
     set < DBEntries , compare_entries > setEntries;
     vector <string>  sEntry;
     vector < DBRangeEntries > vDBEntries;
     vector < DBEntries > vEntries;
-        
+
     // All delegation files are parsed and merged to one file 
     delegParser( "afrinic" , "Testout" );
     delegParser( "lacnic" , "Testout" );
@@ -54,7 +54,7 @@ int main() {
     }
     ofstream outDel ( (findValue("DBout")).c_str(), ios::app );
 
-//    read the Parsed delegation files to set, the set sorts the entries based on ipFrom then on ipTo 
+    // read the Parsed delegation files to set, the set sorts the entries based on ipFrom then on ipTo 
     while ( !(inDel.getline(cBuf,LINE_LENGTH).eof())  ) {
         sStr = cBuf;
         if ( !sStr.empty() ) {
@@ -81,12 +81,12 @@ int main() {
     for ( it = seEntries.begin(); it != seEntries.end(); it++ ) {
         vDBEntries.push_back(*it);
     }
-    //    clear the set
+    // clear the set
     seEntries.clear();    
     
     unsigned int uDBsize = vDBEntries.size();
 
-//  check for overlaps between delegation files.     
+    // check for overlaps between delegation files.     
     for ( unsigned int i = 0 ; i < uDBsize -1  ; i++ ) {
         if ( vDBEntries[i+1].ipFrom > vDBEntries[i].ipTo ) {
             continue;
@@ -233,32 +233,40 @@ int main() {
     for ( iter = setEntries.begin(); iter != setEntries.end(); iter++ ) {
         vEntries.push_back(*iter);
     }
-    //    clear the set
+    // clear the set
     setEntries.clear();    
     
     uDBsize = vEntries.size();
     
-    for ( unsigned int i = 0 ; i < uDBsize -1  ; i++ ) {
-        outDB << vEntries[i].ipFrom << " " << vEntries[i].ipTo << " " 
-              << vEntries[i].country[0] << vEntries[i].country[1]<< endl;
+    long from = vEntries[0].ipFrom;
+    long to = vEntries[0].ipTo;
+    for ( unsigned int i = 1 ; i < uDBsize -1  ; i++ ) {
+        if (vEntries[i].ipFrom > to+1 || vEntries[i-1].country[0] != vEntries[i].country[0]
+            || vEntries[i-1].country[1] != vEntries[i].country[1]) {
+            outDB << from << " " << to << " " 
+                  << vEntries[i-1].country[0] << vEntries[i-1].country[1]<< endl;
+            from = vEntries[i].ipFrom;
+            to = vEntries[i].ipTo;
+        }
+        else {
+            to =  vEntries[i].ipTo;
+        }
     }
-    
-    
+    outDB << from << " " << to << " " 
+          << vEntries[uDBsize-2].country[0] << vEntries[uDBsize-2].country[1]<< endl;
+
     inDB.close();
     outDB.close();
     apnic.close();
     ripe.close();
     
-//    time_t current = time(0);
+    // time_t current = time(0);
     
     cout << "Program Terminated!"<<endl;
     return 0;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//    this function is used to process the apnic and ripe dbs, 
+// this function is used to process the apnic and ripe dbs, 
 void dbParser( string dbIn , string delName, string dbOut ) {
     char cBuf[LINE_LENGTH];
     
@@ -333,7 +341,7 @@ void dbParser( string dbIn , string delName, string dbOut ) {
                 entry->country[0] = toupper (str.c_str()[0]);
                 entry->country[1] = toupper (str.c_str()[1]);
                 
-//                add entry to a set which will sort the entries based on [ipTo-ipFrom]
+                // add entry to a set which will sort the entries based on [ipTo-ipFrom]
                 seEntries.insert( *entry );
             }
             ipFrom = 0;
@@ -343,16 +351,16 @@ void dbParser( string dbIn , string delName, string dbOut ) {
         }
     }
 
-//    add all elements of the set to a vector 
+    // add all elements of the set to a vector 
     set <DBEntries , comp>::iterator it;   
     for ( it = seEntries.begin(); it != seEntries.end(); it++ ) {
         vDBEntries.push_back(*it);
     }
-    //    clear the set
+    // clear the set
     seEntries.clear();
 
-//    parse the delegation file to extract the ranges of the ips. excerpt of the deld. file
-//    "3723493376-3724541951-JP"
+    // parse the delegation file to extract the ranges of the ips. excerpt of the deld. file
+    // "3723493376-3724541951-JP"
     set < DBEntries , compare_entries > seStructEntries;
     
     while ( !(in.getline(cBuf,LINE_LENGTH).eof())  ) {
@@ -384,7 +392,7 @@ void dbParser( string dbIn , string delName, string dbOut ) {
     ipTo = 0 ;
     bool bTrig = true;
 
-//    merge successive ranges if they are <= 16777216
+    // merge successive ranges if they are <= 16777216
     for ( unsigned int i = 0; i < vRanges.size()-1 ; i++ ) {
         if ( bTrig ) {
             ipFrom = vRanges[i].ipFrom;
@@ -433,12 +441,11 @@ void dbParser( string dbIn , string delName, string dbOut ) {
     unsigned int uDifference = 0;
     stringstream sstream;
     
-    
     uDifference = vRangeIP.size();
 
-//    this part will iterate over the ranges, then go through the DB looking 
-//  for entries which are in this range, and assign the country 
-//    of the entry to a part of the range. 
+    // this part will iterate over the ranges, then go through the DB looking 
+    // for entries which are in this range, and assign the country 
+    // of the entry to a part of the range. 
 
     for ( unsigned int ii = 0; ii < uDifference ; ii++ ) { // for-1
         iRange[0] = vRangeIP[ii].ipFrom;
@@ -451,10 +458,10 @@ void dbParser( string dbIn , string delName, string dbOut ) {
         iCounter = 0;
         iRangeValue = iRange[1]-iRange[0] +1;
 
-//        array of structures to keep the single ips of a range
+        // array of structures to keep the single ips of a range
         struct net * nets = new struct net [iRangeValue ] ; 
 
-//        initialize the range of one entry in delegation file
+        // initialize the range of one entry in delegation file
         ip = iRange[0];
         for (unsigned int i = 0 ; i < iRangeValue ; i ++) {
             nets[i].ip = ip;
@@ -514,21 +521,10 @@ void dbParser( string dbIn , string delName, string dbOut ) {
                     nets[k].bSetFlag = true;
                 }
 
-//                else if ( uDiff == nets[k].size ) {
-//                    if ( (nets[k].country[0] != vDBEntries[i].country[0]) || 
-//                         (nets[k].country[1] != vDBEntries[i].country[1] ) ) {
-//                        
-//                        cout << "Violation -"<<convertIP(vDBEntries[i].ipFrom) << " - "
-//                             << convertIP(vDBEntries[i].ipTo) << " - " 
-//                             << vDBEntries[i].country << " - "<< nets[k].ip << " - " 
-//                             << nets[k].country[0] << nets[k].country[1] << " - "
-//                             << nets[k].size << endl ;
-//                    }
-//                }
             }
         }
                 
-        //            merge single successor ips into one range
+        // merge single successor ips into one range
         vRanges.clear();
         
         for ( ite = seStructEntries.begin(); ite != seStructEntries.end(); ite++ ) {
