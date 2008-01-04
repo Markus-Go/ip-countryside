@@ -94,7 +94,7 @@ function ip2int($ip) {
 <p>
 Here we provide an on-line demo of our <a href="http://code.google.com/p/ip-countryside/" target="_BLANK">ip-countryside</a> project.<br>
 The database is generated weekly and was last created on <?php print $last_modified; ?> (CEST).<br>
-It can be dowloaded as a <a href="ip2country.zip">zip-file</a> (<?php echo $db_size; ?> kb)
+It can be dowloaded as a <a href="ip2country.zip">zip-file</a> (<?php echo $db_size; ?> kb).
 For more details please contact <a href="http://www.iupr.org/goldstein" target="_BLANK">Markus Goldstein</a>.
 </p>
 <div align="center">

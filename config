@@ -1,4 +1,4 @@
-DBout=ip2country.db
+DBout=ip2country.tmp
 Testout=Testout
 afrinic=delegated-afrinic-latest
 lacnic=delegated-lacnic-latest
