@@ -14,6 +14,12 @@ wget ftp://ftp.arin.net/pub/stats/arin/delegated-arin-latest
 wget ftp://ftp.apnic.net/pub/stats/apnic/delegated-apnic-latest
 wget ftp://ftp.ripe.net/ripe/stats/delegated-ripencc-latest
 wget ftp://ftp.ripe.net/ripe/dbase/split/ripe.db.inetnum.gz
-wget ftp://ftp.apnic.net/apnic/whois-data/APNIC/split/apnic.db.inetnum.gz
+ftp -n -v ftp.apnic.net <<END
+user anonymous anonymous@anonymous.org
+binary
+passive
+get /apnic/whois-data/APNIC/split/apnic.db.inetnum.gz apnic.db.inetnum.gz
+bye
+END
 gunzip ripe.db.inetnum
 gunzip apnic.db.inetnum
