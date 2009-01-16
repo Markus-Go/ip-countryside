@@ -74,6 +74,8 @@ int main() {
             entry->registry = sEntry[3];
 
             seEntries.insert(*entry);
+
+            delete entry;
         }
     }
 
@@ -121,6 +123,8 @@ int main() {
 
                         vDBEntries.push_back(*entry);
                         vDBEntries[i].ipTo = vDBEntries[i+1].ipFrom - 1;
+
+                        delete entry;
                     }
                 }
                 else {
@@ -164,6 +168,8 @@ int main() {
 
                         vDBEntries.push_back(*entry);
                         vDBEntries[i].ipTo = vDBEntries[i+1].ipFrom - 1;
+
+                        delete entry;
                     }
             }
         }
@@ -226,6 +232,8 @@ int main() {
             entry->country[1] = sEntry[2][1];
             
             setEntries.insert(*entry);
+
+            delete entry;
         }
     }
     
@@ -238,8 +246,8 @@ int main() {
     
     uDBsize = vEntries.size();
     
-    long from = vEntries[0].ipFrom;
-    long to = vEntries[0].ipTo;
+    unsigned int from = vEntries[0].ipFrom;
+    unsigned int to = vEntries[0].ipTo;
     for ( unsigned int i = 1 ; i < uDBsize -1  ; i++ ) {
         if (vEntries[i].ipFrom > to+1 || vEntries[i-1].country[0] != vEntries[i].country[0]
             || vEntries[i-1].country[1] != vEntries[i].country[1]) {
@@ -344,6 +352,7 @@ void dbParser( string dbIn , string delName, string dbOut ) {
                 // add entry to a set which will sort the entries based on [ipTo-ipFrom]
                 seEntries.insert( *entry );
             }
+			delete entry;
             ipFrom = 0;
         }
         else if ( startWith ( sStr , "inetnum:") && (ipFrom == 0) && (bTrigger== false) ) {
@@ -380,6 +389,8 @@ void dbParser( string dbIn , string delName, string dbOut ) {
             sRange->country[1] = sEntry[2][1];
             
             seStructEntries.insert( *sRange );
+
+            delete sRange;
         }
     }
     set <DBEntries , compare_entries>::iterator ite;   
@@ -407,6 +418,8 @@ void dbParser( string dbIn , string delName, string dbOut ) {
             
             vRangeIP.push_back(* rIP);
             bTrig = true;
+
+            delete rIP;
         }
         else if ( (vRanges[i].ipTo + 1) == vRanges[i+1].ipFrom ) {
                 if ( ((vRanges[i+1].ipTo - vRanges[i+1].ipFrom) + uRange) <= 16777216 ) {
@@ -419,6 +432,8 @@ void dbParser( string dbIn , string delName, string dbOut ) {
                     rIP->ipTo = vRanges[i].ipTo;
                     vRangeIP.push_back(* rIP);
                     bTrig = true;
+
+                    delete rIP;
                 }
             
         }
@@ -428,6 +443,8 @@ void dbParser( string dbIn , string delName, string dbOut ) {
             rIP->ipTo = ipTo;
             vRangeIP.push_back(* rIP);
             bTrig = true;
+
+            delete rIP;
         }
     }
 
@@ -643,6 +660,8 @@ void delegParser( string delName, string delegOut  ) {
                 sRange->registry = sEntry[0];
 
                 vRanges.push_back(*sRange);
+
+                delete sRange;
             }
         }
     }
