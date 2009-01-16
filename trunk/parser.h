@@ -45,6 +45,15 @@ public:
     unsigned int ipFrom;
     unsigned int ipTo;
     char country[2];
+
+	DBEntries() {};
+
+	DBEntries( const DBEntries& objToCopy ) :
+		ipFrom( objToCopy.ipFrom ),
+		ipTo( objToCopy.ipTo )
+		{
+			memcpy( country, objToCopy.country, 2 );
+		};
 };
 
 //  contains a range with country and registry [124.10.187.65-124.30.121.12-JP-APNIC] 
@@ -54,6 +63,16 @@ public:
     unsigned int ipTo;
     char country[2];
     string registry;
+
+	DBRangeEntries() {};
+
+	DBRangeEntries( const DBRangeEntries& objToCopy ) :
+		ipFrom( objToCopy.ipFrom ),
+		ipTo( objToCopy.ipTo ),
+		registry( objToCopy.registry )
+		{
+			memcpy( country, objToCopy.country, 2 );
+		};
 };
 
 //    conatins single ip-country [124.12.10.122-AU]
