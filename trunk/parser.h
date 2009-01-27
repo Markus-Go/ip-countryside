@@ -31,6 +31,9 @@
 #include <vector>
 #include <deque>
 #include <set>
+#include <cstring>
+#include <cstdlib>
+#include <climits>
 
 
 using namespace std;
