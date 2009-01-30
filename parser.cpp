@@ -13,7 +13,7 @@
  * Project: ip-countryside
  * File: parser.cpp
  * Purpose: source file for building the ip2country database
- * Responsible: Michael Yaco
+ * Responsible: Markus Goldstein
  * Primary Repository: http://ip-countryside.googlecode.com/svn/trunk/
  * Web Sites: http://code.google.com/p/ip-countryside/, www.iupr.org, www.dfki.de, 
  * 
@@ -58,24 +58,22 @@ int main() {
     while ( !(inDel.getline(cBuf,LINE_LENGTH).eof())  ) {
         sStr = cBuf;
         if ( !sStr.empty() ) {
-            DBRangeEntries *entry = new DBRangeEntries();
+            DBRangeEntries entry;
             sstream.clear();
             sStr = cBuf;
             sEntry = split ( sStr , '-' );
             sstream << sEntry[0];
             sstream >> temp;
-            entry->ipFrom = temp;
+            entry.ipFrom = temp;
             sstream.clear();
             sstream << sEntry[1];
             sstream >> temp;
-            entry->ipTo = temp;
-            entry->country[0] = sEntry[2][0];
-            entry->country[1] = sEntry[2][1];
-            entry->registry = sEntry[3];
+            entry.ipTo = temp;
+            entry.country[0] = sEntry[2][0];
+            entry.country[1] = sEntry[2][1];
+            entry.registry = string(sEntry[3]);
 
-            seEntries.insert(*entry);
-
-            delete entry;
+            seEntries.insert(entry);
         }
     }
 
@@ -113,18 +111,16 @@ int main() {
                     }
                     else if ( (vDBEntries[i].ipFrom < vDBEntries[i+1].ipFrom) && 
                     ( vDBEntries[i].ipTo > vDBEntries[i+1].ipTo ) ) {
-                        DBRangeEntries * entry = new DBRangeEntries();
+                        DBRangeEntries entry;
 
-                        entry->ipFrom = vDBEntries[i+1].ipTo + 1;
-                        entry->ipTo = vDBEntries[i].ipTo;
-                        entry->country[0] = vDBEntries[i].country[0];
-                        entry->country[1] = vDBEntries[i].country[1];
-                        entry->registry = vDBEntries[i].registry;
+                        entry.ipFrom = vDBEntries[i+1].ipTo + 1;
+                        entry.ipTo = vDBEntries[i].ipTo;
+                        entry.country[0] = vDBEntries[i].country[0];
+                        entry.country[1] = vDBEntries[i].country[1];
+                        entry.registry = vDBEntries[i].registry;
 
-                        vDBEntries.push_back(*entry);
+                        vDBEntries.push_back(entry);
                         vDBEntries[i].ipTo = vDBEntries[i+1].ipFrom - 1;
-
-                        delete entry;
                     }
                 }
                 else {
@@ -158,18 +154,16 @@ int main() {
                     }
                     else if ( (vDBEntries[i].ipFrom < vDBEntries[i+1].ipFrom) && 
                               ( vDBEntries[i].ipTo > vDBEntries[i+1].ipTo ) ) {
-                        DBRangeEntries * entry = new DBRangeEntries();
+                        DBRangeEntries entry;
 
-                        entry->ipFrom = vDBEntries[i+1].ipTo + 1;
-                        entry->ipTo = vDBEntries[i].ipTo;
-                        entry->country[0] = vDBEntries[i].country[0];
-                        entry->country[1] = vDBEntries[i].country[1];
-                        entry->registry = vDBEntries[i].registry;
+                        entry.ipFrom = vDBEntries[i+1].ipTo + 1;
+                        entry.ipTo = vDBEntries[i].ipTo;
+                        entry.country[0] = vDBEntries[i].country[0];
+                        entry.country[1] = vDBEntries[i].country[1];
+                        entry.registry = vDBEntries[i].registry;
 
-                        vDBEntries.push_back(*entry);
+                        vDBEntries.push_back(entry);
                         vDBEntries[i].ipTo = vDBEntries[i+1].ipFrom - 1;
-
-                        delete entry;
                     }
             }
         }
@@ -217,23 +211,21 @@ int main() {
     while ( !(inDB.getline(cBuf,LINE_LENGTH).eof())  ) {
         sStr = cBuf;
         if ( !sStr.empty() ) {
-            DBEntries *entry = new DBEntries();
+            DBEntries entry;
             sstream.clear();
             sStr = cBuf;
             sEntry = split ( sStr , '-' );
             sstream << sEntry[0];
             sstream >> temp;
-            entry->ipFrom = temp;
+            entry.ipFrom = temp;
             sstream.clear();
             sstream << sEntry[1];
             sstream >> temp;
-            entry->ipTo = temp;
-            entry->country[0] = sEntry[2][0];
-            entry->country[1] = sEntry[2][1];
+            entry.ipTo = temp;
+            entry.country[0] = sEntry[2][0];
+            entry.country[1] = sEntry[2][1];
             
-            setEntries.insert(*entry);
-
-            delete entry;
+            setEntries.insert(entry);
         }
     }
     
@@ -277,7 +269,7 @@ int main() {
 // this function is used to process the apnic and ripe dbs, 
 void dbParser( string dbIn , string delName, string dbOut ) {
     char cBuf[LINE_LENGTH];
-    
+
     string sStr;
     vector <string>  sEntry;
     vector <string>  sStrArray;
@@ -342,17 +334,16 @@ void dbParser( string dbIn , string delName, string dbOut ) {
             sEntry.clear();
             sEntry = split( sStr , ':' );
             string str = trim ( sEntry[1]);            
-            DBEntries * entry = new DBEntries();
+            DBEntries entry;
             if ( (ipFrom != 0 && ipTo != UINT_MAX)  ) {
-                entry->ipFrom = ipFrom;
-                entry->ipTo = ipTo;
-                entry->country[0] = toupper (str.c_str()[0]);
-                entry->country[1] = toupper (str.c_str()[1]);
+                entry.ipFrom = ipFrom;
+                entry.ipTo = ipTo;
+                entry.country[0] = toupper (str.c_str()[0]);
+                entry.country[1] = toupper (str.c_str()[1]);
                 
                 // add entry to a set which will sort the entries based on [ipTo-ipFrom]
-                seEntries.insert( *entry );
+                seEntries.insert( entry );
             }
-			delete entry;
             ipFrom = 0;
         }
         else if ( startWith ( sStr , "inetnum:") && (ipFrom == 0) && (bTrigger== false) ) {
@@ -378,19 +369,17 @@ void dbParser( string dbIn , string delName, string dbOut ) {
         if( !sStr.empty() ) {
             stringstream sstream;
             sEntry = split( sStr , '-' );
-            DBEntries *sRange = new DBEntries();
+            DBEntries sRange;
             sstream.clear();
             sstream << sEntry[0];
-            sstream >> sRange->ipFrom;
+            sstream >> sRange.ipFrom;
             sstream.clear();
             sstream << sEntry[1];
-            sstream >> sRange->ipTo;
-            sRange->country[0] = sEntry[2][0];
-            sRange->country[1] = sEntry[2][1];
+            sstream >> sRange.ipTo;
+            sRange.country[0] = sEntry[2][0];
+            sRange.country[1] = sEntry[2][1];
             
-            seStructEntries.insert( *sRange );
-
-            delete sRange;
+            seStructEntries.insert( sRange );
         }
     }
     set <DBEntries , compare_entries>::iterator ite;   
@@ -412,14 +401,12 @@ void dbParser( string dbIn , string delName, string dbOut ) {
             bTrig = false;
         }
         if ( uRange == 16777216 ) {
-            DBEntries * rIP = new DBEntries();
-            rIP->ipFrom = ipFrom;
-            rIP->ipTo = ipTo;
+            DBEntries rIP;
+            rIP.ipFrom = ipFrom;
+            rIP.ipTo = ipTo;
             
-            vRangeIP.push_back(* rIP);
+            vRangeIP.push_back(rIP);
             bTrig = true;
-
-            delete rIP;
         }
         else if ( (vRanges[i].ipTo + 1) == vRanges[i+1].ipFrom ) {
                 if ( ((vRanges[i+1].ipTo - vRanges[i+1].ipFrom) + uRange) <= 16777216 ) {
@@ -427,24 +414,20 @@ void dbParser( string dbIn , string delName, string dbOut ) {
                     ipTo = vRanges[i+1].ipTo;
                 }
                 else {
-                    DBEntries * rIP = new DBEntries();
-                    rIP->ipFrom = ipFrom;
-                    rIP->ipTo = vRanges[i].ipTo;
-                    vRangeIP.push_back(* rIP);
+                    DBEntries rIP;
+                    rIP.ipFrom = ipFrom;
+                    rIP.ipTo = vRanges[i].ipTo;
+                    vRangeIP.push_back(rIP);
                     bTrig = true;
-
-                    delete rIP;
                 }
             
         }
         else {
-            DBEntries * rIP = new DBEntries();
-            rIP->ipFrom = ipFrom;
-            rIP->ipTo = ipTo;
-            vRangeIP.push_back(* rIP);
+            DBEntries rIP;
+            rIP.ipFrom = ipFrom;
+            rIP.ipTo = ipTo;
+            vRangeIP.push_back(rIP);
             bTrig = true;
-
-            delete rIP;
         }
     }
 
@@ -644,32 +627,29 @@ void delegParser( string delName, string delegOut  ) {
             if ( ( sEntry[2] == "ipv4" ) && 
                  ( sEntry[1].length() == 2 ) && 
                  ( sEntry.size() == 7 ) ) {
-                DBRangeEntries *sRange = new DBRangeEntries();
+                DBRangeEntries sRange;
                 unsigned int temp;
                 stringstream sstream;
                 sstream.clear();
-
                 sIPFrom = split ( sEntry[3] , '.' );
-                sRange->ipFrom = convertToInt( sIPFrom );
+                sRange.ipFrom = convertToInt( sIPFrom );
 
                 sstream << sEntry[4];
                 sstream >> temp;
-                sRange->ipTo = (sRange->ipFrom + (temp-1)) ;
-                sRange->country[0] = sEntry[1][0];
-                sRange->country[1] = sEntry[1][1]; 
-                sRange->registry = sEntry[0];
+                sRange.ipTo = (sRange.ipFrom + (temp-1)) ;
+                sRange.country[0] = sEntry[1][0];
+                sRange.country[1] = sEntry[1][1]; 
+                sRange.registry.assign(sEntry[0]);
 
-                vRanges.push_back(*sRange);
-
-                delete sRange;
+                vRanges.push_back(sRange);
             }
         }
     }
 
-
     for ( int i = 0; i < (int)vRanges.size()-1 ; i++  ) {
         outDB << vRanges[i].ipFrom << "-" << vRanges[i].ipTo << "-" 
-              << vRanges[i].country<<"-" << vRanges[i].registry << endl;
+              << vRanges[i].country[0] << vRanges[i].country[1] << "-"
+              << vRanges[i].registry << endl;
     }
     in.close();
     outDB.close();
