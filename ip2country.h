@@ -29,6 +29,7 @@
 #include <sstream>
 #include <vector>
 #include <set>
+#include <cstdlib>
 
 using namespace std;
 #define LINE_LENGTH 600
