@@ -115,11 +115,10 @@ struct compare {
     bool operator () ( const DBRangeEntries e, const DBRangeEntries e1 ) const {
         if ( e.ipFrom == e1.ipFrom ) {
             if ( e.ipTo == e1.ipTo ) {
-                if ( (e.country[0] == e1.country[0]) && 
-                     ( e.country[1] == e1.country[1] ))
-                    return false;
-                else
-                    return true;
+				if ( e.country[0] == e1.country[0] ) 
+					return e.country[1] < e1.country[1];
+				else
+					return e.country[0] < e1.country[0];
             }
             else
                 return (e.ipTo <= e1.ipTo);
@@ -133,11 +132,10 @@ struct compare_entries {
     bool operator () ( const DBEntries e, const DBEntries e1 ) const {
         if ( e.ipFrom == e1.ipFrom ) {
             if ( e.ipTo == e1.ipTo ) {
-                if ( (e.country[0] == e1.country[0]) && 
-                     ( e.country[1] == e1.country[1] ))
-                    return false;
+                if ( e.country[0] == e1.country[0] )
+                    return e.country[1] < e1.country[1];
                 else
-                    return true;
+                    return e.country[0] < e1.country[0];
             }
             else
                 return (e.ipTo <= e1.ipTo);
