@@ -73,10 +73,7 @@ int main() {
             entry.country[1] = sEntry[2][1];
             entry.registry = string(sEntry[3]);
 
-			if ( seEntries.find(entry) == seEntries.end() )
-			{
-				seEntries.insert(entry);
-			}
+			seEntries.insert(entry);
         }
     }
 
@@ -228,10 +225,7 @@ int main() {
             entry.country[0] = sEntry[2][0];
             entry.country[1] = sEntry[2][1];
             
-			if ( setEntries.find( entry ) == setEntries.end() )
-			{
-	            setEntries.insert(entry);
-			}
+            setEntries.insert(entry);
         }
     }
     
