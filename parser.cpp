@@ -56,6 +56,11 @@ int main() {
 
     // read the Parsed delegation files to set, the set sorts the entries based on ipFrom then on ipTo 
     while ( !(inDel.getline(cBuf,LINE_LENGTH).eof())  ) {
+		if ( inDel.fail() )
+		{
+			cout << "Error reading Testout file" << std::endl;
+			return 1;
+		}
         sStr = cBuf;
         if ( !sStr.empty() ) {
             DBRangeEntries entry;
@@ -209,6 +214,11 @@ int main() {
     
     // read the final version of the delegation files to sort it.
     while ( !(inDB.getline(cBuf,LINE_LENGTH).eof())  ) {
+		if ( inDB.fail() )
+		{
+			cout << "Error reading DBout file" << std::endl;
+			return 1;
+		}
         sStr = cBuf;
         if ( !sStr.empty() ) {
             DBEntries entry;
@@ -311,6 +321,11 @@ void dbParser( string dbIn , string delName, string dbOut ) {
     //    "inetnum:      202.14.104.0 - 202.14.104.255"
     //    "country:      AU"
     while ( !(inDB.getline(cBuf,LINE_LENGTH).eof())  ) {
+		if ( inDB.fail() )
+		{
+			cout << "Error reading " << dbIn << " file" << std::endl;
+			exit(1);
+		}
         sStr = cBuf;
         if ( sStr.empty() ) {
             bTrigger = true;
@@ -364,6 +379,11 @@ void dbParser( string dbIn , string delName, string dbOut ) {
     set < DBEntries , compare_entries > seStructEntries;
     
     while ( !(in.getline(cBuf,LINE_LENGTH).eof())  ) {
+		if ( in.fail() )
+		{
+			cout << "Error reading " << s.c_str() << " file" << std::endl;
+			exit(1);
+		}
         sEntry.clear();
         sStr = cBuf;
         if( !sStr.empty() ) {
@@ -618,6 +638,11 @@ void delegParser( string delName, string delegOut  ) {
     ofstream outDB ((findValue(delegOut)).c_str(), ios::app);
     
     while ( !(in.getline(cBuf,LINE_LENGTH).eof())  ) {
+		if ( in.fail() )
+		{
+			cout << "Error reading " << delName.c_str() << " file" << std::endl;
+			exit(1);
+		}
         sEntry.clear();
         sIPFrom.clear();
         sStr = cBuf;

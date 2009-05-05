@@ -37,7 +37,7 @@
 
 
 using namespace std;
-#define LINE_LENGTH 600
+#define LINE_LENGTH 2048
 
 void dbParser( string dbIn , string delName, string dbOut );
 void delegParser( string , string );
