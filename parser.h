@@ -13,10 +13,10 @@
  * Project: ip-countryside
  * File: parser.h
  * Purpose: Header file for building the ip2country database
- * Responsible: Michael Yaco
+ * Responsible: Markus Goldstein
  * Primary Repository: http://ip-countryside.googlecode.com/svn/trunk/
- * Web Sites: http://code.google.com/p/ip-countryside/, www.iupr.org, www.dfki.de
- * 
+ * Web Sites: http://code.google.com/p/ip-countryside/, madm.dfki.de, www.dfki.de
+ *
 */
 
 #ifndef PARSER_H_
@@ -37,7 +37,7 @@
 
 
 using namespace std;
-#define LINE_LENGTH 2048
+#define LINE_LENGTH 4096 
 
 void dbParser( string dbIn , string delName, string dbOut );
 void delegParser( string , string );
