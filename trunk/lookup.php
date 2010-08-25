@@ -14,10 +14,10 @@
  * Project: ip-countryside
  * File: lookup.php
  * Purpose: PHP lookup demo client
- * Responsible: Michael Yaco
+ * Responsible: Markus Goldstein
  * Primary Repository: http://ip-countryside.googlecode.com/svn/trunk/
- * Web Sites: http://code.google.com/p/ip-countryside/, www.iupr.org, www.dfki.de,
- * 
+ * Web Sites: http://code.google.com/p/ip-countryside/, madm.dfki.de, www.dfki.de
+ *
 */
 
 if (!isset($_GET["ip"] ))
@@ -95,7 +95,7 @@ function ip2int($ip) {
 Here we provide an on-line demo of our <a href="http://code.google.com/p/ip-countryside/" target="_BLANK">ip-countryside</a> project.<br>
 The database is generated weekly and was last created on <?php print $last_modified; ?> (CEST).<br>
 It can be dowloaded as a <a href="ip2country.zip">zip-file</a> (<?php echo $db_size; ?> kb).
-For more details please contact <a href="http://www.iupr.org/goldstein" target="_BLANK">Markus Goldstein</a>.
+< For more details please contact <a href="http://madm.dfki.de/goldstein/" target="_BLANK">Markus Goldstein</a>.
 </p>
 <div align="center">
 <form method="get" action="<?php echo $PHP_SELF;?>">

@@ -15,8 +15,8 @@
  * Purpose: source file for building the ip2country database
  * Responsible: Markus Goldstein
  * Primary Repository: http://ip-countryside.googlecode.com/svn/trunk/
- * Web Sites: http://code.google.com/p/ip-countryside/, www.iupr.org, www.dfki.de, 
- * 
+ * Web Sites: http://code.google.com/p/ip-countryside/, madm.dfki.de, www.dfki.de
+ *
 */
 
 #include "parser.h"

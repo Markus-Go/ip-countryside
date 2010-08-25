@@ -13,10 +13,10 @@
  * Project: ip-countryside
  * File: ip2country.cpp
  * Purpose: Country lookup demo client 
- * Responsible: Michael Yaco
+ * Responsible: Markus Goldstein
  * Primary Repository: http://ip-countryside.googlecode.com/svn/trunk/
- * Web Sites: http://code.google.com/p/ip-countryside/, www.iupr.org, www.dfki.de, 
- * 
+ * Web Sites: http://code.google.com/p/ip-countryside/, madm.dfki.de, www.dfki.de
+ *
 */
 
 

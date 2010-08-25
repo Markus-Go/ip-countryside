@@ -16,7 +16,7 @@ limitations under the License.
  File: README.txt 
  Responsible: Markus Goldstein
  Primary Repository: http://ip-countryside.googlecode.com/svn/trunk/
- Web Sites: http://code.google.com/p/ip-countryside/, www.iupr.org, www.dfki.de
+ Web Sites: http://code.google.com/p/ip-countryside/, madm.dfki.de, www.dfki.de
 
 This software is published under the Apache 2.0 Licence (see LICENCE.txt) for
 details. The flag directory is published under public domain (see flags/README.txt).
