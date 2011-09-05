@@ -338,10 +338,11 @@ void dbParser( string dbIn , string delName, string dbOut ) {
                 sStrArray = split(sEntry[1],'-');
                 sIPFrom = split ( sStrArray[0],'.' );
                 sIPTo = split( sStrArray[1],'.' );
-
-                ipFrom = convertToInt(sIPFrom);
-                ipTo = convertToInt(sIPTo);
-                bTrigger = false; 
+                if (sIPFrom.size() == 4 && sIPTo.size() == 4) {
+                    ipFrom = convertToInt(sIPFrom);
+                    ipTo = convertToInt(sIPTo);
+                    bTrigger = false; 
+                }
             }
         }
 
