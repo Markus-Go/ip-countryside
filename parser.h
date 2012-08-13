@@ -183,7 +183,10 @@ int contain( string sString ,string sValue ) {
 //  Splits this string around matches of the given character
 vector <string> split ( string sStr, char  cValue ) {
     string sString ;
-    vector < string > vStr ;
+    vector < string > vStr;
+    if (strchr(sStr.c_str(), cValue) == NULL) {
+      return vStr;
+    }
     istringstream iss(sStr);
     size_t pos;
     while ( getline(iss, sString, cValue) ) {
