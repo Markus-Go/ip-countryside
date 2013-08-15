@@ -1,5 +1,5 @@
 /**
- * Copyright 2007 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz 
+ * Copyright 2007-2013 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz 
  * or its licensors, as applicable.
  *
  * You may not use this file except under the terms of the accompanying license.
@@ -20,8 +20,10 @@
 */
 
 #include "parser.h"
+#include <unistd.h>
 
 int main() {
+    char cBuf[LINE_LENGTH];
     vConfigFile = readConfig( "config" );
     // clears files from old values
     ofstream inDBex ( (findValue("DBout")).c_str() );
@@ -29,7 +31,6 @@ int main() {
     ofstream inDBex1 ( (findValue("Testout")).c_str()  );
     inDBex1.close();
 
-    char cBuf[LINE_LENGTH];
     stringstream sstream;
     string sStr;
     unsigned int temp = 0;
@@ -67,18 +68,20 @@ int main() {
             sstream.clear();
             sStr = cBuf;
             sEntry = split ( sStr , '-' );
-            sstream << sEntry[0];
-            sstream >> temp;
-            entry.ipFrom = temp;
-            sstream.clear();
-            sstream << sEntry[1];
-            sstream >> temp;
-            entry.ipTo = temp;
-            entry.country[0] = sEntry[2][0];
-            entry.country[1] = sEntry[2][1];
-            entry.registry = string(sEntry[3]);
+            if (sEntry.size() >= 4) {
+                sstream << sEntry[0];
+                sstream >> temp;
+                entry.ipFrom = temp;
+                sstream.clear();
+                sstream << sEntry[1];
+                sstream >> temp;
+                entry.ipTo = temp;
+                entry.country[0] = sEntry[2][0];
+                entry.country[1] = sEntry[2][1];
+                entry.registry = string(sEntry[3]);
 
-			seEntries.insert(entry);
+                seEntries.insert(entry);
+           }
         }
     }
 
@@ -225,17 +228,19 @@ int main() {
             sstream.clear();
             sStr = cBuf;
             sEntry = split ( sStr , '-' );
-            sstream << sEntry[0];
-            sstream >> temp;
-            entry.ipFrom = temp;
-            sstream.clear();
-            sstream << sEntry[1];
-            sstream >> temp;
-            entry.ipTo = temp;
-            entry.country[0] = sEntry[2][0];
-            entry.country[1] = sEntry[2][1];
+            if (sEntry.size() >= 3) {
+                sstream << sEntry[0];
+                sstream >> temp;
+                entry.ipFrom = temp;
+                sstream.clear();
+                sstream << sEntry[1];
+                sstream >> temp;
+                entry.ipTo = temp;
+                entry.country[0] = sEntry[2][0];
+                entry.country[1] = sEntry[2][1];
             
-            setEntries.insert(entry);
+                setEntries.insert(entry);
+           }
         }
     }
     
@@ -332,16 +337,20 @@ void dbParser( string dbIn , string delName, string dbOut ) {
         }
         else if ( startWith ( sStr , "inetnum:") && (ipFrom == 0) && bTrigger ) {
             sEntry = split( sStr , ':' );
-            if ( contain(sEntry[1],"-") ) {
-                sIPFrom.clear();
-                sIPTo.clear();
-                sStrArray = split(sEntry[1],'-');
-                sIPFrom = split ( sStrArray[0],'.' );
-                sIPTo = split( sStrArray[1],'.' );
-                if (sIPFrom.size() == 4 && sIPTo.size() == 4) {
-                    ipFrom = convertToInt(sIPFrom);
-                    ipTo = convertToInt(sIPTo);
-                    bTrigger = false; 
+            if (sEntry.size() >= 2) {
+                if ( contain(sEntry[1],"-") ) {
+                    sIPFrom.clear();
+                    sIPTo.clear();
+                    sStrArray = split(sEntry[1],'-');
+                    if (sStrArray.size() >= 2) {
+                        sIPFrom = split ( sStrArray[0],'.' );
+                        sIPTo = split( sStrArray[1],'.' );
+                        if (sIPFrom.size() == 4 && sIPTo.size() == 4) {
+                            ipFrom = convertToInt(sIPFrom);
+                            ipTo = convertToInt(sIPTo);
+                            bTrigger = false; 
+                        }
+                    }
                 }
             }
         }
@@ -349,17 +358,19 @@ void dbParser( string dbIn , string delName, string dbOut ) {
         else if ( (ipFrom != 0) && startWith ( sStr , "country:" ) && (bTrigger == false) ) {
             sEntry.clear();
             sEntry = split( sStr , ':' );
-            string str = trim ( sEntry[1]);            
-            DBEntries entry;
-            if ( (ipFrom != 0 && ipTo != UINT_MAX)  ) {
-                entry.ipFrom = ipFrom;
-                entry.ipTo = ipTo;
-                entry.country[0] = toupper (str.c_str()[0]);
-                entry.country[1] = toupper (str.c_str()[1]);
+            if (sEntry.size() >= 2) {
+                string str = trim ( sEntry[1]);            
+                DBEntries entry;
+                if ( (ipFrom != 0 && ipTo != UINT_MAX)  ) {
+                    entry.ipFrom = ipFrom;
+                    entry.ipTo = ipTo;
+                    entry.country[0] = toupper (str.c_str()[0]);
+                    entry.country[1] = toupper (str.c_str()[1]);
                 
-                // add entry to a set which will sort the entries based on [ipTo-ipFrom]
-                seEntries.insert( entry );
-            }
+                    // add entry to a set which will sort the entries based on [ipTo-ipFrom]
+                    seEntries.insert( entry );
+                }
+           }
             ipFrom = 0;
         }
         else if ( startWith ( sStr , "inetnum:") && (ipFrom == 0) && (bTrigger== false) ) {
@@ -390,17 +401,19 @@ void dbParser( string dbIn , string delName, string dbOut ) {
         if( !sStr.empty() ) {
             stringstream sstream;
             sEntry = split( sStr , '-' );
-            DBEntries sRange;
-            sstream.clear();
-            sstream << sEntry[0];
-            sstream >> sRange.ipFrom;
-            sstream.clear();
-            sstream << sEntry[1];
-            sstream >> sRange.ipTo;
-            sRange.country[0] = sEntry[2][0];
-            sRange.country[1] = sEntry[2][1];
+            if (sEntry.size() >= 3) {
+                DBEntries sRange;
+                sstream.clear();
+                sstream << sEntry[0];
+                sstream >> sRange.ipFrom;
+                sstream.clear();
+                sstream << sEntry[1];
+                sstream >> sRange.ipTo;
+                sRange.country[0] = sEntry[2][0];
+                sRange.country[1] = sEntry[2][1];
             
-            seStructEntries.insert( sRange );
+                seStructEntries.insert( sRange );
+           }
         }
     }
     set <DBEntries , compare_entries>::iterator ite;   
@@ -454,11 +467,7 @@ void dbParser( string dbIn , string delName, string dbOut ) {
 
     unsigned int iRange[2];
     unsigned int ip = 0;
-    unsigned int iMin = 0;
-    int iIndex = 0;
     unsigned int iRangeValue = 0;
-    bool bEnter = false;
-    int iCounter = 0;
     unsigned int uDifference = 0;
     stringstream sstream;
     
@@ -473,10 +482,6 @@ void dbParser( string dbIn , string delName, string dbOut ) {
         iRange[1] = vRangeIP[ii].ipTo;
         
         ip = 0;
-        iMin = 0;
-        iIndex = 0;
-        bEnter = false;
-        iCounter = 0;
         iRangeValue = iRange[1]-iRange[0] +1;
 
         // array of structures to keep the single ips of a range
@@ -650,9 +655,9 @@ void delegParser( string delName, string delegOut  ) {
 
         if( startWith(sStr,delName) ) {
             sEntry = split( sStr , '|' );
-            if ( ( sEntry[2] == "ipv4" ) && 
-                 ( sEntry[1].length() == 2 ) && 
-                 ( sEntry.size() == 7 ) ) {
+            if ( ( sEntry.size() == 7 ) &&
+                 ( sEntry[2] == "ipv4" ) &&
+                 ( sEntry[1].length() == 2 )) {
                 DBRangeEntries sRange;
                 unsigned int temp;
                 stringstream sstream;
