@@ -655,7 +655,8 @@ void delegParser( string delName, string delegOut  ) {
 
         if( startWith(sStr,delName) ) {
             sEntry = split( sStr , '|' );
-            if ( ( sEntry.size() == 7 ) &&
+            if ( ( sEntry.size() >= 7 ) &&
+                 ( sEntry[1] != "ZZ" ) &&
                  ( sEntry[2] == "ipv4" ) &&
                  ( sEntry[1].length() == 2 )) {
                 DBRangeEntries sRange;
