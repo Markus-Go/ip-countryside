@@ -98,7 +98,7 @@ It can be dowloaded as a <a href="ip2country.zip">zip-file</a> (<?php echo $db_s
 < For more details please contact <a href="http://madm.dfki.de/goldstein/" target="_BLANK">Markus Goldstein</a>.
 </p>
 <div align="center">
-<form method="get" action="<?php echo $PHP_SELF;?>">
+<form method="get" action="<?php echo $_SERVER['SCRIPT_NAME'];?>">
 <font face="Arial" size="2"> IP Address: <input type="text" size="30" maxlength="15" name="ip" value="<?php print $ip; ?>"> </font><br />
 <input type="submit" value="Find"> 
 </form>
