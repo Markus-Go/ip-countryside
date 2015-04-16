@@ -7,7 +7,7 @@ applications for geolocating internet users based on  their IP address.
 <b>If you only need the ip2country database itself (not the program creating 
 it),  
 you can <a 
-href='http://madm.dfki.de/demo/ip-countryside/ip2country.zip'>download 
+href='https://github.com/Markus-Go/ip-countryside/blob/downloads/ip2country.zip?raw=true'>download 
 it here</a> (updated weekly).</b>
 
 Detailed Information
@@ -93,9 +93,7 @@ Copyright/ License/ Credits
 Copyright 2006-2007 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz  
 Copyright 2008-2015 Markus Goldstein
 
-This is free software. Licensed under the [Apache License, Version 
-2.0](LICENSE.txt).  
+This is free software. Licensed under the [Apache License, Version 2.0](LICENSE.txt).  
 There is NO WARRANTY, to the extent permitted by law.
 
-![http://madm.dfki.de/lib/tpl/dfki/images/logo.jpg](http://madm.dfki.de/lib/tpl/
-dfki/images/logo.jpg)
+![http://madm.dfki.de/lib/tpl/dfki/images/logo.jpg](http://madm.dfki.de/lib/tpl/dfki/images/logo.jpg)
