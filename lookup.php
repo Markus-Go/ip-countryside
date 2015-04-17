@@ -2,6 +2,7 @@
 /**
  * Copyright 2007 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz 
  * or its licensors, as applicable.
+ * Copyright 2008-2015 Markus Goldstein
  *
  * You may not use this file except under the terms of the accompanying license.
  * 
@@ -15,8 +16,8 @@
  * File: lookup.php
  * Purpose: PHP lookup demo client
  * Responsible: Markus Goldstein
- * Primary Repository: http://ip-countryside.googlecode.com/svn/trunk/
- * Web Sites: http://code.google.com/p/ip-countryside/, madm.dfki.de, www.dfki.de
+ * Primary Repository: https://github.com/Markus-Go/ip-countryside/
+ * Web Sites: madm.dfki.de, www.goldiges.de/ip-countryside
  *
 */
 
@@ -92,10 +93,10 @@ function ip2int($ip) {
 
 <H1>Country Lookup Demo</H1>
 <p>
-Here we provide an on-line demo of our <a href="http://code.google.com/p/ip-countryside/" target="_BLANK">ip-countryside</a> project.<br>
+Here we provide an on-line demo of our <a href="https://github.com/Markus-Go/ip-countryside/" target="_BLANK">ip-countryside</a> project.<br>
 The database is generated weekly and was last created on <?php print $last_modified; ?> (CEST).<br>
 It can be dowloaded as a <a href="ip2country.zip">zip-file</a> (<?php echo $db_size; ?> kb).
-< For more details please contact <a href="http://madm.dfki.de/goldstein/" target="_BLANK">Markus Goldstein</a>.
+< For more details please contact <a href="https://www.goldiges.de/contact" target="_BLANK">Markus Goldstein</a>.
 </p>
 <div align="center">
 <form method="get" action="<?php echo $_SERVER['SCRIPT_NAME'];?>">

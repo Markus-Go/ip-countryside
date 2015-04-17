@@ -1,21 +1,22 @@
 /**
- * Copyright 2007 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz 
+ * Copyright 2007 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
  * or its licensors, as applicable.
+ * Copyright 2008-2015 Markus Goldstein
  *
  * You may not use this file except under the terms of the accompanying license.
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * Project: ip-countryside
  * File: parser.h
  * Purpose: Header file for building the ip2country database
  * Responsible: Markus Goldstein
- * Primary Repository: http://ip-countryside.googlecode.com/svn/trunk/
- * Web Sites: http://code.google.com/p/ip-countryside/, madm.dfki.de, www.dfki.de
+ * Primary Repository: https://github.com/Markus-Go/ip-countryside/
+ * Web Sites: madm.dfki.de, www.goldiges.de/ip-countryside
  *
 */
 

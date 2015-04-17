@@ -1,5 +1,5 @@
 #!/bin/bash
-WGET='/usr/bin/wget'
+WGET='/usr/bin/wget -q'
 MD5SUM='/usr/bin/md5sum'
 GUNZIP='/bin/gunzip'
 RM='/bin/rm'
