@@ -36,7 +36,7 @@ ftp -n -v ftp.apnic.net <<END
   user anonymous -anonymous@anonymous.org
   binary
   passive
-  get /apnic/whois-data/APNIC/split/apnic.db.inetnum.gz apnic.db.inetnum.gz
+  get /apnic/whois/apnic.db.inetnum.gz apnic.db.inetnum.gz
   bye
 END
   $GUNZIP apnic.db.inetnum
