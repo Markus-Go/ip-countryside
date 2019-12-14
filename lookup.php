@@ -31,11 +31,11 @@ $last_modified = date("l, dS F Y, h:i a", filemtime("ip2country.zip"));
 $db_size = ceil(filesize("ip2country.zip")/1024);
 $count = 0;
 while(!feof($file)) {
-    list($start_ip[$count], $end_ip[$count], $country[$count]) = split(" ",fgets($file));
+    list($start_ip[$count], $end_ip[$count], $country[$count]) = explode(" ",fgets($file));
     $count++;
 }
     $error_code = 0;
-    list($a, $b, $c, $d) = split("\.",$ip);
+    list($a, $b, $c, $d) = explode(".",$ip);
 
     if ((is_numeric($a) && is_numeric($b) && is_numeric($c) && is_numeric($d)) && 
           (($a >= 0 && $a <= 255) && ($b >= 0 && $b <= 255) && ($c >= 0 && $c <= 255) && ($d >= 0 && $d <=255))){
@@ -79,7 +79,7 @@ function binSearch($start,$end,$search) {
 }
 
 function ip2int($ip) {
-    list($a, $b, $c, $d) = split("\.",$ip);
+    list($a, $b, $c, $d) = explode(".",$ip);
     return (int)$a*256*256*256 + (int)$b*256*256 + (int)$c*256 + (int)$d;
 }
 
