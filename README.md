@@ -10,6 +10,8 @@ you can <a
 href='https://github.com/Markus-Go/ip-countryside/blob/downloads/ip2country.zip?raw=true'>download 
 it here</a> (updated weekly).</b>
 
+A demo can be found <a href='https://www.goldiges.de/ip-countryside/' target='_BLANK'>here</a>. 
+
 Detailed Information
 --------------------
 
@@ -91,7 +93,7 @@ Copyright/ License/ Credits
 ---------------------------
 
 Copyright 2006-2007 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz  
-Copyright 2008-2015 Markus Goldstein
+Copyright 2008-2020 Markus Goldstein
 
 This is free software. Licensed under the [Apache License, Version 2.0](LICENSE.txt).  
 There is NO WARRANTY, to the extent permitted by law.
