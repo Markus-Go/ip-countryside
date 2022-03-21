@@ -1,7 +1,8 @@
 #vs solution
-.sln
+*.sln
 .vs/
-.pyproj
+*.pyproj
+*.pyproj.user
 
 #databank folder
 del_files/
