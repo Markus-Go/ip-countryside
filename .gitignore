@@ -8,3 +8,14 @@ del_files/
 
 #python
 __pycache__/
+*.pyc
+.pytest_cache/
+venv/
+
+#flask
+instance/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/

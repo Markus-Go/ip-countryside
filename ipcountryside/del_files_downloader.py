@@ -3,7 +3,7 @@ import gzip
 import shutil
 import os
 
-from config import *
+from config_ipcountryside import *
 
 
 # @TODO check if download is needed ... 
@@ -116,3 +116,5 @@ def download_del_file(host, cwd, delFileName, zipped=False):
 
 def download_del_file_needed():
     return False
+
+    
