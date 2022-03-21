@@ -1,0 +1,12 @@
+DBout=ip2country.tmp
+Testout=Testout
+afrinic=delegated-afrinic-latest
+lacnic=delegated-lacnic-latest
+apnic=delegated-apnic-latest
+arin=delegated-arin-extended-latest
+ripencc=delegated-ripencc-latest
+apnicDel=apnicDel
+ripeDel=ripeDel
+IpToCountry=ip2country.db
+apnic.db.inetnum=apnic.db.inetnum
+ripe.db.inetnum=ripe.db.inetnum
