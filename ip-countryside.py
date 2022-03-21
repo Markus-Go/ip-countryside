@@ -3,10 +3,12 @@ from socket import IP_TOS
 from  del_files_downloader import *
 from  del_files_parser import *
 
+isExitCmd = false
+
 def main():
-   download_del_files()
-   #parse_del_files("delegated-ripencc-latest")
-   return 0 
+    while isExitCmd:
+        if false:
+            download_del_files()
+    return 0 
 
 main()
-
