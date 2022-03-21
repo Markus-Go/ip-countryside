@@ -11,7 +11,7 @@ def create_app(test_config=None):
     app.debug = True
 
     # app scss
-    Scss(app, static_dir='ipcountryside/static/styles', asset_dir='ipcountryside/assets/scss')
+    Scss(app, static_dir='flaskr/static/styles', asset_dir='flaskr/assets/scss')
 
     app.config.from_mapping(
         SECRET_KEY='dev',
