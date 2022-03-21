@@ -1,0 +1,9 @@
+#vs solution
+.sln
+.vs/
+
+#databank folder
+del_files/
+
+#python
+__pycache__/
