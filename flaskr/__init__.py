@@ -33,8 +33,11 @@ def create_app(test_config=None):
 
     # a simple page that says hello
     @app.route('/')
-    def hello(hello_string="Hello World"):
-        return render_template('index.html', str=hello_string)
+    def variables():
+        hello_string = "this is a test"
+        ipaddress = os.popen('curl -s ifconfig.me').readline()
 
+        return render_template('index.html', str=hello_string, ip=ipaddress)
 
     return app
+
