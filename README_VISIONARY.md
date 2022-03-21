@@ -7,8 +7,8 @@ Windows (Power Shell & Visual Studio Code):
 
 - venv\Scripts\activate
 - pip install Flask
-
-- $env:FLASK_APP = "ipcountryside"  
+- pip install Flask-Scss
+- $env:FLASK_APP = "flaskr"  
   $env:FLASK_ENV = "development"
 
 - flask run
