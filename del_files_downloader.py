@@ -3,7 +3,7 @@ import gzip
 import shutil
 import os
 
-from config_ipcountryside import *
+from config import *
 
 
 # @TODO check if download is needed ... 
