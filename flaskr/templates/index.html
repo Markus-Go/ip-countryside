@@ -20,6 +20,7 @@
     </head>
   
   <body>
+  <h1>Test</h1>
   
 
     <font face="Arial" size="2"> IP Address: <input type="text" size="30" maxlength="15" name="ip" value={{ip}}> </font>
@@ -28,8 +29,8 @@
     <script src="{{ url_for('static', filename='javascript/universal.js') }}"></script>
     <script>
 
-        L.marker(["{{ markers.lat }}", "{{ markers.lon }}"]).addTo(map)
-        .bindPopup("{{ markers.popup }}")
+        L.marker(["{{lat}}", "{{lon}}"]).addTo(map)
+        .bindPopup("{{ip}}")
         .openPopup();
 
     </script>

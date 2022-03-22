@@ -3,6 +3,7 @@ import os
 from flask import Flask
 from flask import render_template
 from flask_scss import Scss
+from geopy.geocoders import Nominatim
 
 def create_app(test_config=None):
     # create and configure the app
@@ -34,12 +35,15 @@ def create_app(test_config=None):
     # a simple page that says hello
     @app.route('/')
     def variables():
-        hello_string = "this is a test"
+        hello_string = "tss is a test"
         ipaddress = os.popen('curl -s ifconfig.me').readline()
 
-        markers=[   {   'lat':0,   'lon':0,   'popup':ipaddress ,      }   ]
+        address = "Ulm"
+        geolocator = Nominatim(user_agent="Your_Name")
+        location = geolocator.geocode(address)
+        lat = location.latitude
+        lon = location.longitude
 
-        return render_template('index.html', str=hello_string, ip=ipaddress, markers=markers)
+        return render_template('index.html', str=hello_string, ip=ipaddress, lat=lat, lon=lon, add=address)
 
     return app
-
