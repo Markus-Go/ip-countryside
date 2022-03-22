@@ -43,7 +43,8 @@ def create_app(test_config=None):
         location = geolocator.geocode(address)
         lat = location.latitude
         lon = location.longitude
+        flag = "de"
 
-        return render_template('index.html', str=hello_string, ip=ipaddress, lat=lat, lon=lon, add=address)
+        return render_template('index.html', str=hello_string, ip=ipaddress, lat=lat, lon=lon, add=address, flag=flag)
 
     return app
