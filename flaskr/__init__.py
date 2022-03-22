@@ -37,7 +37,9 @@ def create_app(test_config=None):
         hello_string = "this is a test"
         ipaddress = os.popen('curl -s ifconfig.me').readline()
 
-        return render_template('index.html', str=hello_string, ip=ipaddress)
+        markers=[   {   'lat':0,   'lon':0,   'popup':ipaddress ,      }   ]
+
+        return render_template('index.html', str=hello_string, ip=ipaddress, markers=markers)
 
     return app
 
