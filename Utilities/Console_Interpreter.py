@@ -1,6 +1,7 @@
 from del_files_downloader import *
 from del_files_parser import *
 from Constants import *
+from Console_Selector import *
 
 import re
 
@@ -44,22 +45,25 @@ def EvaluateCommand(input):
         print("Invalid Command")
 
 def EvaluateUpdateCommand(input):
-    if(CheckForExtensionKey(input[LOC_EX])):
-        print("Command is extension")
-        EvaluateUpdateExtension(input)
-    else: print("Command has no extension")
+    if(CountList(input) >= LOC_EX):
+        if(CheckForExtensionKey(input[LOC_EX])):
+            print("Command is extension")
+            EvaluateUpdateExtension(input)
+    else: 
+        CallUpdate()
 
 def EvaluateParseCommand(input):
-    if(CheckForExtensionKey(input[LOC_EX])):
-        print("Command is extension")
-        EvaluateParseExtension(input)
+    if(CountList(input) >= LOC_EX):
+        if(CheckForExtensionKey(input[LOC_EX])):
+            print("Command is extension")
+            EvaluateParseExtension(input)
     else: print("Command has no extension")
 
 def EvaluateUpdateExtension(input):
     ext = adaptExtension(input[LOC_EX])
 
     if(ext == CMD_EX_FORCE):
-        print("Forcing Update")
+        CallUpdate(True)
     elif(ext == CMD_EX_HELP):
         print("Help for update function")
     else:
@@ -76,3 +80,9 @@ def EvaluateParseExtension(input):
 def adaptExtension(extension):
     extension = ''.join(extension.split(KEY_EX, 1))
     return extension
+
+def CountList(input):
+    count = -1
+    for element in input:
+        count += 1
+    return count
