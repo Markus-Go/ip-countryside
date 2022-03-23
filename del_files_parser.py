@@ -1,3 +1,5 @@
+from ast import And
+from itertools import count
 from DBRangeEntry import DBRangeEntry
 import re
 import os
@@ -92,9 +94,21 @@ def strip_del_files(del_destination_stripped_name = "del_merged_stripped.txt"):
             mask = [( ((1<<32)-1) << (32-cidr) >> i ) & 255 for i in reversed(range(0, 32, 8))]
             netw = [addr[i] & mask[i] for i in range(4)]
             bcas = [(addr[i] & mask[i]) | (255^mask[i]) for i in range(4)]
-            list = netw, bcas, list[1]
+            
+            ranges = ipv4_to_int(netw, bcas)
+            ranges = map(str, ranges) 
+            ranges = ','.join(ranges)
+            
+            list = ranges, list[1]
+
             print(*list, end='\n')
-        
+
+def ipv4_to_int(minIP, maxIP):
+
+    intIPMin = (minIP[0] * 16777216) + (minIP[1] * 65536) + (minIP[2] * 256 ) + (minIP[3] * 1)
+    intIPMax = (maxIP[0] * 16777216) + (maxIP[1] * 65536) + (maxIP[2] * 256 ) + (maxIP[3] * 1)
+
+    return [intIPMin, intIPMax]
 
 def getCountryCode(ip):
 
@@ -102,17 +116,26 @@ def getCountryCode(ip):
         
         for line in file: 
            
-           item = line.split()
-          
-           country = item[0]
-           listip = item[1]
-           hosts = item[2]
+           item = line.split(" ")
 
-           if(checkIp(ip, listip + "/" + getSubnetmask(hosts))):
-              return country
+           [ranges, country] = item 
 
-def checkIp(ip, network = '192.168.0.0/24'):
-    return ipaddress.ip_address(ip) in ipaddress.ip_network(network)    
+           [minIP, maxIP] = ranges.split(",")
+           
+           ip = [int(x) for x in ip.split('.')]
+
+           ip = (ip[0] * 16777216) + (ip[1] * 65536) + (ip[2] * 256 ) + (ip[3] * 1)
+
+
+           if ipv4_in_range(int(minIP), int(maxIP), ip):
+                return country
+
+           return 'No Country Found!' 
+
+           
+def ipv4_in_range(min, max, ip):
+    return min <= ip <= max
+
             
 def getSubnetmask(hosts):
     
@@ -127,8 +150,8 @@ def getSubnetmask(hosts):
 
     return "0"
 
-merge_del_files()    # Fügt del Dateien in del_merged.txt zusammen
-strip_del_files()    # formatiert und filtert Textdatei
+#merge_del_files()    # Fügt del Dateien in del_merged.txt zusammen
+#strip_del_files()    # formatiert und filtert Textdatei
 
 # print(getCountryCode("30.142.194.176"))     # Fehler beim "berechnen" der Subnetzmaske
 
@@ -137,13 +160,9 @@ strip_del_files()    # formatiert und filtert Textdatei
 #print("192.212.211.222" + "/" + str(getSubnetmask(1024)))          # manuell die Zahl eingeben funktioniert ohne Probleme 
 
 
-#cidr = 20
-#addr = [41,57,64,0]
-#mask = [( ((1<<32)-1) << (32-cidr) >> i ) & 255 for i in reversed(range(0, 32, 8))]
-#netw = [addr[i] & mask[i] for i in range(4)]
-#bcas = [(addr[i] & mask[i]) | (255^mask[i]) for i in range(4)]
+#print(getCountryCode("94.134.100.189"))
 
+ip = [94, 134, 100, 189]
+ip = (ip[0] * 16777216) + (ip[1] * 65536) + (ip[2] * 256 ) + (ip[3] * 1)
 
-#print(*mask)
-#print(*netw)
-#print(*bcas)
+print(ip)
