@@ -1,6 +1,7 @@
 import os
 from sys import flags
 
+
 from flask import Flask, request
 from flask import render_template
 from geopy.geocoders import Nominatim
@@ -42,7 +43,7 @@ def create_app(test_config=None):
         lon = location.longitude
         flag = "de"
 
-        return render_template('index.html', str=hello_string, ip=ipaddress, lat=lat, lon=lon, add=address, flag=flag)
+        return render_template('indextest.html', str=hello_string, ip=ipaddress, lat=lat, lon=lon, add=address, flag=flag)
 
     @app.route('/', methods=['POST'])
     def my_form_post():
@@ -56,6 +57,6 @@ def create_app(test_config=None):
         lon = location.longitude
         flag = request.form['text']
 
-        return render_template('index.html', str=hello_string, ip=ipaddress, lat=lat, lon=lon, add=address, flag=flag)
+        return render_template('indextest.html', str=hello_string, ip=ipaddress, lat=lat, lon=lon, add=address, flag=flag)
 
     return app

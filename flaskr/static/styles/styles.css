@@ -1,8 +1,40 @@
 body {
   padding: 0;
   margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  text-align: center;
 }
-html, body, #map {
+#table{
+    text-align: center;
+}
+.center{
+    margin-left: auto;
+    margin-right: auto;
+}
+#map {
     height: 281px;
     width: 308px;
+    margin-left: auto;
+    margin-right: auto;
 }
+#navbar ul {
+    margin: 0;
+    padding: 5px;
+    list-style-type: none;
+    text-align: center;
+    }
+
+#navbar ul li {
+    display: inline;
+    }
+
+#navbar ul li a {
+    text-decoration: none;
+    padding: .2em 1em;
+    color: #000;
+    }
+
+#navbar ul li a:hover {
+    color: #fff;
+    background-color: #000;
+    }
