@@ -30,8 +30,8 @@
 		<table class = "center">
 			<tr>
 				<td class = right>IP-Adresse:</td>
-				<td class = left> <form method="POST">
-      				<input name="text" size = 13 value ="{{ip}}">
+				<td class = left> <form method="GET">
+      				<input name="ip" size = 13 value ="{{ip}}">
       				<input type="submit" value="Find">
     				</form>
 				</td>
@@ -42,11 +42,11 @@
 			</tr>
 			<tr>
 				<td class = right>Country Code:</td>
-				<td class = left>DE</td>
+				<td class = left>{{flag}}</td>
 			</tr>
 			<tr>
 				<td class = right>Country:</td>
-				<td class = left>Germany</td>
+				<td class = left>{{country}}</td>
 			</tr>
 			<tr>
 				<td class = right>Comment:</td>

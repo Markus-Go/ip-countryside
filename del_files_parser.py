@@ -159,6 +159,5 @@ def main():
 
     merge_del_files()    # Fügt del Dateien in del_merged.txt zusammen
     strip_del_files()    # formatiert und filtert Textdatei
-    print(str(get_country_code("80.142.194.176"))) 
     
 main()
