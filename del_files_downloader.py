@@ -5,7 +5,6 @@ import os
 
 from config import *
 
-
 # @TODO check if download is needed ... 
 def download_del_files():
    """
@@ -112,7 +111,6 @@ def download_del_file(host, cwd, delFileName, zipped=False):
     except IOError as e:
 
         print(e)
-
 
 def download_del_file_needed():
     return False
