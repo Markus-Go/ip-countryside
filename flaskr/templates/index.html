@@ -29,28 +29,28 @@
 		<h1>IP Countryside</h1>
 		<table class = "center">
 			<tr>
-				<td>IP-Adresse:</td>
-				<td> <form method="POST">
-      				<input name="text">
-      				<input type="submit">
+				<td class = right>IP-Adresse:</td>
+				<td class = left> <form method="POST">
+      				<input name="text" size = 13 value ="{{ip}}">
+      				<input type="submit" value="Find">
     				</form>
 				</td>
 			</tr>
 			<tr>
-				<td>Countryflag:</td>
-				<td><img src="../../../../../static/img/{{flag}}.gif" alt =""></td>
+				<td class = right>Countryflag:</td>
+				<td class = left><img src="../static/img/{{flag}}.gif" alt =""></td>
 			</tr>
 			<tr>
-				<td>ISO Country CODE:</td>
-				<td>Hier kommt der Ländercode</td>
+				<td class = right>Country Code:</td>
+				<td class = left>DE</td>
 			</tr>
 			<tr>
-				<td>Country:</td>
-				<td>Hier steht dann das Land</td>
+				<td class = right>Country:</td>
+				<td class = left>Germany</td>
 			</tr>
 			<tr>
-				<td>Comment:</td>
-				<td>Hier könnte ein Kommentar stehen</td>
+				<td class = right>Comment:</td>
+				<td class = left>-</td>
 			</tr>
 		</table>
 		<div id="map"></div>

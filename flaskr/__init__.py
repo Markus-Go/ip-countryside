@@ -41,9 +41,9 @@ def create_app(test_config=None):
         location = geolocator.geocode(address)
         lat = location.latitude
         lon = location.longitude
-        flag = "de"
+        flag = "flag"
 
-        return render_template('indextest.html', str=hello_string, ip=ipaddress, lat=lat, lon=lon, add=address, flag=flag)
+        return render_template('index.html', str=hello_string, ip=ipaddress, lat=lat, lon=lon, add=address, flag=flag)
 
     @app.route('/', methods=['POST'])
     def my_form_post():
@@ -57,6 +57,6 @@ def create_app(test_config=None):
         lon = location.longitude
         flag = request.form['text']
 
-        return render_template('indextest.html', str=hello_string, ip=ipaddress, lat=lat, lon=lon, add=address, flag=flag)
+        return render_template('index.html', str=hello_string, ip=ipaddress, lat=lat, lon=lon, add=address, flag=flag)
 
     return app
