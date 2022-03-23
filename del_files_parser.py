@@ -115,7 +115,6 @@ def parse_ipv6(line):
     return ""
 
 
-
 def get_country_code(ip):
    
     ip = ip.split('.')
