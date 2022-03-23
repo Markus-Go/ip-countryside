@@ -22,7 +22,7 @@ def download_del_files():
 
    # collect delegation files in one specific folder "del_files"
    # if the folder doesn't exist then try to create one first ... 
-   del_files_dir = "del_files"
+   del_files_dir = DEL_FILES_DIR
 
    try:
     

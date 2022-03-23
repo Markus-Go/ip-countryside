@@ -32,6 +32,8 @@ RIPE = {
     'splitfname':   "ripe.db.inetnum.gz",
 }
 
+DEL_FILES_DIR = 'del_files'
+
 SUBNETMASK = {
     '4':        "30",
     '8':        "29",

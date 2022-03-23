@@ -8,7 +8,7 @@ import fileinput
 import ipaddress
 import math
 
-from config import SUBNETMASK;
+from config import *;
 
 # Klasse vereint alle Files und erstellt eine IP_von IP_zu Ländercode Textdatei
 # 1. Dateien zussamenfügen 
@@ -21,110 +21,105 @@ from config import SUBNETMASK;
 
 # Simple version ohne Optimierung oder Ipv6 und Städte unterstützung
 
-
-def merge_del_files(del_destination_file_name = "del_merged.txt"):
+def merge_del_files(merged_del_file = "merged_del_files.txt"):
 
    # Fuses the delegated files into a txt file 
-    with open(os.path.join("del_files", del_destination_file_name), "wb") as destination:
-        for f in [ os.path.join("del_files", "delegated-afrinic-latest"), 
-                  os.path.join("del_files", "delegated-apnic-latest"), 
-                  os.path.join("del_files", "delegated-arin-extended-latest"),
-                  os.path.join("del_files", "delegated-lacnic-latest"),
-                  os.path.join("del_files", "delegated-ripencc-latest")]:
-            with open(f,'rb') as source:
-                shutil.copyfileobj(source, destination)
-                destination.write(os.linesep.encode())
+    try: 
+        
+        with open(os.path.join(DEL_FILES_DIR, merged_del_file), "wb") as f:
+            for del_file in [ 
+                    os.path.join(DEL_FILES_DIR, AFRINIC['fname']), 
+                    os.path.join(DEL_FILES_DIR, LACNIC['fname']),
+                    os.path.join(DEL_FILES_DIR, ARIN['fname']),
+                    os.path.join(DEL_FILES_DIR, APNIC['fname']), 
+                    os.path.join(DEL_FILES_DIR, RIPE['fname'])
+                    ]:
 
+                with open(del_file,'rb') as source:
 
-def parse_del_files(delName):
+                    shutil.copyfileobj(source, f)
+
+                    f.write(os.linesep.encode())
     
-    dbRangeEntries = []
-
-    del_files_dir = "del_files"
-    os.chdir(del_files_dir)
-
-    try:
-        with open(delName) as fp:
-
-            for line in fp:
-                
-                entry = create_dbRangeEntry(line)
-                
-                dbRangeEntries.append(entry)
-
     except IOError as e:
-    
+        
         print(e)
 
-    os.chdir("../")
 
-    return dbRangeEntries
+def strip_del_files(stipped_del_file = "stipped_del_files.txt"):
 
-
-def create_dbRangeEntry(strEntry):
-
-    strEntry = strEntry.split("|")
-    
-    registry = strEntry[0]
-    country = strEntry[1]
-    
-    ipFrom = re.sub('[^0-9]', '', strEntry[3])
-    if(not ipFrom) :
-        ipFrom = -1
-    # python uses variable number of bits for integers -> no overflow
-    ipFrom = int(ipFrom)
-
-    ipTo = ipFrom + (int(strEntry[4]) - 1) 
-
-    entry = DBRangeEntry(ipFrom, ipTo, country, registry)
-
-    return entry
-
-
-def strip_del_files(del_destination_stripped_name = "del_merged_stripped.txt"):
-    # @TODO remove all un relevant lines for example 2|afrinic|20220317| .... 
     ipv4_pattern = "[0-9]+(?:\.[0-9]+){3}"
+    ipv6_pattern = ""
 
     # Removes all IPv6 and other lines 
-    for line in fileinput.input(os.path.join("del_files", "del_merged.txt"), inplace = True):
+    for line in fileinput.input(os.path.join(DEL_FILES_DIR, "merged_del_files.txt"), inplace = True):
         
         if re.search(ipv4_pattern, line):
             
-            list = line.split("|")
-            
-            if list[6] == 'reserved':
-                
-                list[1] = "N/A"
-                
-            cidr = int(getSubnetmask(list[4]))
-            addr = [int(x) for x in list[3].split('.')]
-            mask = [( ((1<<32)-1) << (32-cidr) >> i ) & 255 for i in reversed(range(0, 32, 8))]
-            netw = [addr[i] & mask[i] for i in range(4)]
-            bcas = [(addr[i] & mask[i]) | (255^mask[i]) for i in range(4)]
-            
-            ranges = [ipv4_to_int(netw), ipv4_to_int(bcas)]
-            
-            ranges = map(str, ranges) 
-            ranges = ','.join(ranges)
-            
-            list = ranges, list[1]
-
+            list = parse_ipv4(line)
+ 
             print(*list, end='\n')
 
-def ipv4_to_int(ip):
+        if re.search(ipv6_pattern, line):
 
+            # @TODO IPv6 ... Do Something here ...
+            list = parse_ipv6(line)
+
+            # print(*list, end='\n')
+
+
+def parse_ipv4(line):
+
+    # registry|cc|type|start|value|date|status[|extensions...]
+
+    record = line.split("|")
+
+    # if line doesn't have any country 
+    if record[6] == 'reserved':
+        record[1] = "N/A"
+
+    cidr = int(get_subnet_mask(record[4]))
+    
+    addr = [int(x) for x in record[3].split('.')]
+    
+    mask = [( ((1<<32)-1) << (32-cidr) >> i ) & 255 for i in reversed(range(0, 32, 8))]
+    
+    netw = [addr[i] & mask[i] for i in range(4)]
+    
+    bcas = [(addr[i] & mask[i]) | (255^mask[i]) for i in range(4)]
+
+    ranges = [ipv4_to_int(netw), ipv4_to_int(bcas)]
+    
+    ranges = map(str, ranges) 
+    
+    ranges = ','.join(ranges)
+    
+    record = ranges, record[1]
+
+    return record
+
+
+
+def ipv4_to_int(ip):
     return (ip[0] * 16777216) + (ip[1] * 65536) + (ip[2] * 256 ) + (ip[3] * 1)
 
-def int_to_ipv4(ipInt):
-    return [(ipInt / 16777216) , (ipInt / 65536) , (ipInt / 256 ) , (ipInt / 1)]
 
-def getCountryCode(ip):
+def ipv4_in_range(min, max, ip):
+    return min <= ip <= max
+
+
+def parse_ipv6(line):
+    return ""
+
+
+
+def get_country_code(ip):
    
     ip = ip.split('.')
     ip = [int(x) for x in ip]
     ip = ipv4_to_int(ip)
 
-    with open(os.path.join("del_files", "del_merged.txt")) as file:
+    with open(os.path.join(DEL_FILES_DIR, "stipped_del_files.txt")) as file:
         
         for line in file: 
 
@@ -135,18 +130,13 @@ def getCountryCode(ip):
            [minIP, maxIP] = ranges.split(",")
 
            if ipv4_in_range(int(minIP), int(maxIP), ip):
-                print(line)
                 return country
 
 
-        return 'No Country Found!' 
+    return 'No Country Found!' 
 
-
-def ipv4_in_range(min, max, ip):
-    return min <= ip <= max
-
-            
-def getSubnetmask(hosts):
+      
+def get_subnet_mask(hosts):
     
     hosts = math.log2(int(hosts))      
     hosts_aufg = math.ceil(hosts)     
@@ -159,17 +149,12 @@ def getSubnetmask(hosts):
 
     return "0"
 
-merge_del_files()    # Fügt del Dateien in del_merged.txt zusammen
-strip_del_files()    # formatiert und filtert Textdatei
+def main():
 
-# print(getCountryCode("30.142.194.176"))     # Fehler beim "berechnen" der Subnetzmaske
+    merge_del_files()    # Fügt del Dateien in del_merged.txt zusammen
+    strip_del_files()    # formatiert und filtert Textdatei
+    print(get_country_code("94.134.100.189"))   
 
-#print(checkIp("30.142.194.176", "41.48.0.0"))
-
-#print("192.212.211.222" + "/" + str(getSubnetmask(1024)))          # manuell die Zahl eingeben funktioniert ohne Probleme 
+main()
 
 
-# ip = [int(x) for x in "94.134.100.189".split('.')]
-# print(ipv4_to_int(ip))
-
-print(getCountryCode("94.134.100.189"))   
