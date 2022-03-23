@@ -149,10 +149,10 @@ def get_subnet_mask(hosts):
     return "0"
 
 def main():
-
-    merge_del_files()    # Fügt del Dateien in del_merged.txt zusammen
-    strip_del_files()    # formatiert und filtert Textdatei
-    print(get_country_code("94.134.100.189"))   
+    return 0
+    # merge_del_files()    # Fügt del Dateien in del_merged.txt zusammen
+    # strip_del_files()    # formatiert und filtert Textdatei
+    # print(get_country_code("94.134.100.189"))   
 
 main()
 
