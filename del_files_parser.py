@@ -112,14 +112,13 @@ def parse_ipv6(line):
     return ""
 
 
-
 def get_country_code(ip):
    
     ip = ip.split('.')
     ip = [int(x) for x in ip]
     ip = ipv4_to_int(ip)
 
-    with open(os.path.join(DEL_FILES_DIR, "stipped_del_files.txt")) as file:
+    with open(os.path.join(DEL_FILES_DIR, "merged_del_files.txt")) as file:
         
         for line in file: 
 
