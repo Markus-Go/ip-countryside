@@ -60,7 +60,7 @@ SUBNETMASK = {
     '16777216': "8",
 }
 
-CountryName = {
+COUNTRY_DICTIONARY = {
 'AF':"AFGHANISTAN",
 'AX':"ÅLAND ISLANDS",
 'AL':"ALBANIA",

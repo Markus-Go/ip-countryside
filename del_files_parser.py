@@ -21,9 +21,9 @@ from config import *;
 
 # Simple version ohne Optimierung oder Ipv6 und Städte unterstützung
 
-COUNTRY_DICTIONARY = {}
 
 
+# @TODO define merged_del_file as global name 
 def merge_del_files(merged_del_file = "merged_del_files.txt"):
 
    # Fuses the delegated files into a txt file 
@@ -49,9 +49,11 @@ def merge_del_files(merged_del_file = "merged_del_files.txt"):
         print(e)
 
 
+# @TODO define stipped_del_file as global name 
 def strip_del_files(stipped_del_file = "stipped_del_files.txt"):
 
     ipv4_pattern = "[0-9]+(?:\.[0-9]+){3}"
+    # @TODO ipv6 ...
     ipv6_pattern = ""
 
     # Removes all IPv6 and other lines 
@@ -121,7 +123,7 @@ def get_country_code(ip):
     ip = [int(x) for x in ip]
     ip = ipv4_to_int(ip)
 
-    with open(os.path.join(DEL_FILES_DIR, "del_merged.txt")) as file:
+    with open(os.path.join(DEL_FILES_DIR, "merged_del_files.txt")) as file:
         
         for line in file: 
 
@@ -153,24 +155,10 @@ def get_subnet_mask(hosts):
     return "0"
 
 
-
-def createCountryDic():
-  
-    with open(os.path.join("countries.txt"), 'r') as f:
-        for line in f:
-            line = line.rstrip('\n')
-            (val, key) = line.split(";")
-            COUNTRY_DICTIONARY[key] = val
-
-
-  
-
-
 def main():
 
-    createCountryDic()
-    #merge_del_files()    # Fügt del Dateien in del_merged.txt zusammen
-    #strip_del_files()    # formatiert und filtert Textdatei
+    merge_del_files()    # Fügt del Dateien in del_merged.txt zusammen
+    strip_del_files()    # formatiert und filtert Textdatei
     print(str(get_country_code("80.142.194.176"))) 
     
 main()
