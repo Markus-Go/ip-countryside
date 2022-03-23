@@ -1,17 +1,16 @@
 import os
+from sys import flags
 
-from flask import Flask
+
+from flask import Flask, request
 from flask import render_template
-from flask_scss import Scss
+from geopy.geocoders import Nominatim
 
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
 
     app.debug = True
-
-    # app scss
-    Scss(app, static_dir='flaskr/static/styles', asset_dir='flaskr/assets/scss')
 
     app.config.from_mapping(
         SECRET_KEY='dev',
@@ -33,8 +32,31 @@ def create_app(test_config=None):
 
     # a simple page that says hello
     @app.route('/')
-    def hello(hello_string="Hello World"):
-        return render_template('index.html', str=hello_string)
+    def variables():
+        hello_string = "tss is a test"
+        ipaddress = os.popen('curl -s ifconfig.me').readline()
 
+        address = "Ulm"
+        geolocator = Nominatim(user_agent="Your_Name")
+        location = geolocator.geocode(address)
+        lat = location.latitude
+        lon = location.longitude
+        flag = "flag"
+
+        return render_template('index.html', str=hello_string, ip=ipaddress, lat=lat, lon=lon, add=address, flag=flag)
+
+    @app.route('/', methods=['POST'])
+    def my_form_post():
+        hello_string = "tss is a test"
+        ipaddress = os.popen('curl -s ifconfig.me').readline()
+
+        address = "Ulm"
+        geolocator = Nominatim(user_agent="Your_Name")
+        location = geolocator.geocode(address)
+        lat = location.latitude
+        lon = location.longitude
+        flag = request.form['text']
+
+        return render_template('index.html', str=hello_string, ip=ipaddress, lat=lat, lon=lon, add=address, flag=flag)
 
     return app
