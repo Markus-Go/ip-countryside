@@ -1,5 +1,8 @@
-h1 {
-  color: red; }
-
-  p {
-    padding: 2em; }
+body {
+  padding: 0;
+  margin: 0;
+}
+html, body, #map {
+    height: 281px;
+    width: 308px;
+}

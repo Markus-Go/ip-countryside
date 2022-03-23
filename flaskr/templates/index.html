@@ -7,10 +7,9 @@
         <meta http-equiv="X-UA-Compatible" content="ie=edge">
         <title>IP Countryside</title>
 
-        <link rel="stylesheet" href="{{url_for('static', filename='styles/styles.scss')}}">
         <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
         
-        <link rel="stylesheet" href="{{ url_for('static', filename='styles/universal.css') }}" />
+        <link rel="stylesheet" href="{{url_for('static', filename='styles/styles.css')}}">
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
         integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
         crossorigin=""/>
@@ -34,7 +33,7 @@
     </form>
 
     <div id="map"></div>
-    <script src="{{ url_for('static', filename='javascript/universal.js') }}"></script>
+    <script src="{{ url_for('static', filename='javascript/main.js') }}"></script>
     <script>
 
         L.marker(["{{lat}}", "{{lon}}"]).addTo(map)

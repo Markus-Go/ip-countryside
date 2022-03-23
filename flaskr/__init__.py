@@ -3,7 +3,6 @@ from sys import flags
 
 from flask import Flask, request
 from flask import render_template
-from flask_scss import Scss
 from geopy.geocoders import Nominatim
 
 def create_app(test_config=None):
@@ -11,9 +10,6 @@ def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
 
     app.debug = True
-
-    # app scss
-    Scss(app, static_dir='flaskr/static/styles', asset_dir='flaskr/assets/scss')
 
     app.config.from_mapping(
         SECRET_KEY='dev',
