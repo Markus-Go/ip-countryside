@@ -4,6 +4,7 @@ import os
 import shutil
 import fileinput
 import ipaddress
+import math
 
 from config import SUBNETMASK;
 
@@ -86,8 +87,12 @@ def strip_del_files(del_destination_stripped_name = "del_merged_stripped.txt"):
     for line in fileinput.input(os.path.join("del_files", "del_merged.txt"), inplace = True):
         if re.search(ipv4_pattern, line):
             list = line.split("|")
-            #list[4] = subnetmask[list[4]]      # Subnetzmaske hier zu berechnen funktioniert auch nicht
-            list = list[1], list[3], list[4]
+            cidr = int(getSubnetmask(list[4]))
+            addr = [int(x) for x in list[3].split('.')]
+            mask = [( ((1<<32)-1) << (32-cidr) >> i ) & 255 for i in reversed(range(0, 32, 8))]
+            netw = [addr[i] & mask[i] for i in range(4)]
+            bcas = [(addr[i] & mask[i]) | (255^mask[i]) for i in range(4)]
+            list = netw, bcas, list[1]
             print(*list, end='\n')
         
 
@@ -111,18 +116,34 @@ def checkIp(ip, network = '192.168.0.0/24'):
             
 def getSubnetmask(hosts):
     
+    hosts = math.log2(int(hosts))      
+    hosts_aufg = math.ceil(hosts)     
+    newzahl = int(math.pow(2, hosts_aufg))
+
+    hosts = str(newzahl)
     if(hosts in SUBNETMASK):
 
         return SUBNETMASK[hosts]
 
     return "0"
 
-#merge_del_files()    # Fügt del Dateien in del_merged.txt zusammen
-#strip_del_files()    # formatiert und filtert Textdatei
+merge_del_files()    # Fügt del Dateien in del_merged.txt zusammen
+strip_del_files()    # formatiert und filtert Textdatei
+
 # print(getCountryCode("30.142.194.176"))     # Fehler beim "berechnen" der Subnetzmaske
 
-print(checkIp("30.142.194.176", "41.48.0.0"))
+#print(checkIp("30.142.194.176", "41.48.0.0"))
 
 #print("192.212.211.222" + "/" + str(getSubnetmask(1024)))          # manuell die Zahl eingeben funktioniert ohne Probleme 
 
-#print("done")
+
+#cidr = 20
+#addr = [41,57,64,0]
+#mask = [( ((1<<32)-1) << (32-cidr) >> i ) & 255 for i in reversed(range(0, 32, 8))]
+#netw = [addr[i] & mask[i] for i in range(4)]
+#bcas = [(addr[i] & mask[i]) | (255^mask[i]) for i in range(4)]
+
+
+#print(*mask)
+#print(*netw)
+#print(*bcas)
