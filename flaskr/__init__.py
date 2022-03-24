@@ -1,4 +1,5 @@
 import os
+from pickle import TRUE
 from sys import flags
 
 
@@ -44,27 +45,27 @@ def create_app(test_config=None):
         lat = location.latitude
         lon = location.longitude
         comment = "-"
+        isValid = True
 
         if request.method == 'GET' and request.args.get('ip') is not None:
             ipaddress = request.args.get('ip')
-            country = get_country_code(ipaddress)[0] 
-            flag = get_country_code(ipaddress)[1]
-            address = get_country_code(ipaddress)[0]
-            geolocator = Nominatim(user_agent="Your_Name")
-            location = geolocator.geocode(address)
-            lat = location.latitude
-            lon = location.longitude
-            comment = "-"
-        #else:
-        #    country = "-" 
-        #    flag = "-"
-        #    address = ""
-        #    geolocator = Nominatim(user_agent="Your_Name")
-        #    location = geolocator.geocode(address)
-        #    lat = 0
-        #    lon = 0
-        #    comment = "No Valid IP-Adress"
+            if ipaddress == "":
+                ipaddress = os.popen('curl -s ifconfig.me').readline()
+            elif get_country_code(ipaddress) == "No Country Found!": # wird noch geändert mit bool
+                country = "-" 
+                flag = "-"
+                comment = "No Valid IP-Adress"
+                isValid = False
+            else:
+                country = get_country_code(ipaddress)[0] 
+                flag = get_country_code(ipaddress)[1]
+                address = get_country_code(ipaddress)[0]
+                geolocator = Nominatim(user_agent="Your_Name")
+                location = geolocator.geocode(address)
+                lat = location.latitude
+                lon = location.longitude
+                comment = "-"
 
-        return render_template('index.html', ip=ipaddress, lat=lat, lon=lon, add=address, flag=flag, country=country, comment=comment)
+        return render_template('index.html', ip=ipaddress, lat=lat, lon=lon, add=address, flag=flag, country=country, comment=comment, isValid=isValid)
 
     return app

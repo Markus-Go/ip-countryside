@@ -31,7 +31,7 @@
 			<tr>
 				<td class = right>IP-Adresse:</td>
 				<td class = left> <form method="GET">
-      				<input name="ip" size = 13 value ="{{ip}}">
+      				<input name="ip" size = 13 value ="{{ip}}" pattern="^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$">
       				<input type="submit" value="Find">
     				</form>
 				</td>
@@ -57,9 +57,11 @@
 		<script src="{{ url_for('static', filename='javascript/main.js') }}"></script>
     	<script>
 
-        L.marker(["{{lat}}", "{{lon}}"]).addTo(map)
-        .bindPopup("{{ip}}")
-        .openPopup();
+		if ("{{isValid}}" == "True") {
+        	L.marker(["{{lat}}", "{{lon}}"]).addTo(map)
+        	.bindPopup("{{ip}}")
+        	.openPopup();
+		}
 
 		</script>
 
