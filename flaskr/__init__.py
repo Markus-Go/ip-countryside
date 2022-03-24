@@ -32,27 +32,39 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    # a simple page that says hello
     @app.route('/', methods=['GET'])
     def index():
 
-        hello_string = "tss is a test"
-
-        #ipaddress = os.popen('curl -s ifconfig.me').readline()
-        ipaddress = ''
-        address = "Ulm"
+        ipaddress = os.popen('curl -s ifconfig.me').readline()
+        country = get_country_code(ipaddress)[0] 
+        flag = get_country_code(ipaddress)[1]
+        address = get_country_code(ipaddress)[0]
         geolocator = Nominatim(user_agent="Your_Name")
         location = geolocator.geocode(address)
         lat = location.latitude
         lon = location.longitude
-        country = "none"
-        flag = "none"
+        comment = "-"
 
         if request.method == 'GET' and request.args.get('ip') is not None:
             ipaddress = request.args.get('ip')
             country = get_country_code(ipaddress)[0] 
             flag = get_country_code(ipaddress)[1]
+            address = get_country_code(ipaddress)[0]
+            geolocator = Nominatim(user_agent="Your_Name")
+            location = geolocator.geocode(address)
+            lat = location.latitude
+            lon = location.longitude
+            comment = "-"
+        #else:
+        #    country = "-" 
+        #    flag = "-"
+        #    address = ""
+        #    geolocator = Nominatim(user_agent="Your_Name")
+        #    location = geolocator.geocode(address)
+        #    lat = 0
+        #    lon = 0
+        #    comment = "No Valid IP-Adress"
 
-        return render_template('index.html', str=hello_string, ip=ipaddress, lat=lat, lon=lon, add=address, flag=flag, country=country)
+        return render_template('index.html', ip=ipaddress, lat=lat, lon=lon, add=address, flag=flag, country=country, comment=comment)
 
     return app
