@@ -22,6 +22,12 @@ from config import *;
 # Simple version ohne Optimierung oder Ipv6 und Städte unterstützung
 
 
+# @TODO Aurunden Idee verbessern und genauer schauen in 
+# der Dateien, ob vuekkecht ein Eintrag ein anderer 
+# aufsummiert oder so ...
+
+# @TODO MAX MindDB API anschauen benutzen 
+# wie sie die Objekte einer Datenbank aufbauen ....
 
 # @TODO define merged_del_file as global name 
 def merge_del_files(merged_del_file = "merged_del_files.txt"):
