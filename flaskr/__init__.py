@@ -1,6 +1,7 @@
 import os
 from pickle import TRUE
 from sys import flags
+from warnings import catch_warnings
 
 
 from flask import Flask, request
@@ -40,10 +41,14 @@ def create_app(test_config=None):
         country = get_country_code(ipaddress)[0] 
         flag = get_country_code(ipaddress)[1]
         address = get_country_code(ipaddress)[0]
-        geolocator = Nominatim(user_agent="Your_Name")
-        location = geolocator.geocode(address)
-        lat = location.latitude
-        lon = location.longitude
+        try:
+            geolocator = Nominatim(user_agent="Your_Name")
+            location = geolocator.geocode(address)
+            lat = location.latitude
+            lon = location.longitude
+        except:
+            isValid = False
+            comment = "Karte aktuell Leider nicht Verfügbar"
         comment = "-"
         isValid = True
 
@@ -60,10 +65,14 @@ def create_app(test_config=None):
                 country = get_country_code(ipaddress)[0] 
                 flag = get_country_code(ipaddress)[1]
                 address = get_country_code(ipaddress)[0]
-                geolocator = Nominatim(user_agent="Your_Name")
-                location = geolocator.geocode(address)
-                lat = location.latitude
-                lon = location.longitude
+                try:
+                    geolocator = Nominatim(user_agent="Your_Name")
+                    location = geolocator.geocode(address)
+                    lat = location.latitude
+                    lon = location.longitude
+                except:
+                    isValid = False
+                    comment = "Karte aktuell Leider nicht Verfügbar"
                 comment = "-"
 
         return render_template('index.html', ip=ipaddress, lat=lat, lon=lon, add=address, flag=flag, country=country, comment=comment, isValid=isValid)
