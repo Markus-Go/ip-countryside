@@ -53,7 +53,7 @@ def create_app(test_config=None):
                 ipaddress = os.popen('curl -s ifconfig.me').readline()
             elif get_country_code(ipaddress) == "No Country Found!": # wird noch geändert mit bool
                 country = "-" 
-                flag = "-"
+                flag = "Arrr"
                 comment = "No Valid IP-Adress"
                 isValid = False
             else:
