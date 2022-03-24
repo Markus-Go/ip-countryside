@@ -87,7 +87,7 @@ def download_del_file(host, cwd, delFileName, zipped=False):
 
         localfile = delFileName
 
-        with open(localfile, 'wb') as file:
+        with open(localfile, "wb") as file:
 
             print("Downloading file " + delFileName)
 
@@ -102,9 +102,9 @@ def download_del_file(host, cwd, delFileName, zipped=False):
 
             localfile = os.path.splitext(delFileName)[0]
 
-            with gzip.open(delFileName, 'rb') as f_in:
+            with gzip.open(delFileName, "rb") as f_in:
 
-                with open(localfile, 'wb') as f_out:
+                with open(localfile, "wb") as f_out:
 
                     shutil.copyfileobj(f_in, f_out)
 
