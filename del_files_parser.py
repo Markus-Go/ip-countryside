@@ -1,7 +1,3 @@
-from ast import And
-from http.client import NETWORK_AUTHENTICATION_REQUIRED
-from itertools import count
-from DBRangeEntry import DBRangeEntry
 import re
 import os
 import shutil
@@ -11,18 +7,8 @@ import math
 
 from config import *;
 
-# Klasse vereint alle Files und erstellt eine IP_von IP_zu Ländercode Textdatei
-# 1. Dateien zussamenfügen 
-# 2. Alle Zeilen die keine IPv4 oder IPv6 Adresse haben verwerfen (v4 und v6 in verschiedene Dateien?)
-# IP Von Zu Bereich berechnen
-# Zeile in Textfile ablegen 
 
-# später: durch die Files iterieren und Ländercode finden
-# noch später: Methoden zur Optimierung
-
-# Simple version ohne Optimierung oder Ipv6 und Städte unterstützung
-
-
+# Simple version ohne Optimierung und Städte unterstützung
 
 
 # @TODO Aurunden Idee verbessern und genauer schauen in 
