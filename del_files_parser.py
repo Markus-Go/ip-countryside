@@ -1,4 +1,5 @@
 from ast import And
+from http.client import NETWORK_AUTHENTICATION_REQUIRED
 from itertools import count
 from DBRangeEntry import DBRangeEntry
 import re
@@ -28,6 +29,9 @@ from config import *;
 
 # @TODO MAX MindDB API anschauen benutzen 
 # wie sie die Objekte einer Datenbank aufbauen ....
+
+# @TODO vergleichen der Ergebnisse mit den von dem 
+# alten Tool 
 
 # @TODO define merged_del_file as global name 
 def merge_del_files(merged_del_file = "merged_del_files.txt"):
@@ -74,77 +78,66 @@ def strip_del_files(stipped_del_file = "stipped_del_files.txt"):
         if re.search(ipv6_pattern, line):
 
             # @TODO IPv6 ... Do Something here ...
-            list = parse_ipv6(line)
+            list = ""
 
-            # print(*list, end='\n')
-
-
+           
 def parse_ipv4(line):
 
     # registry|cc|type|start|value|date|status[|extensions...]
 
-    record = line.split("|")
+    record = []
+    
+    line = line.split("|")
 
-    # if line doesn't have any country 
-    if record[6] == 'reserved':
-        record[1] = "N/A"
+    # if ip range is reserved 
+    if line[6] == 'reserved':
+        # record doesn't have any country 
+        line[1] = "N/A"
 
-    cidr = int(get_subnet_mask(record[4]))
-    
-    addr = [int(x) for x in record[3].split('.')]
-    
-    mask = [( ((1<<32)-1) << (32-cidr) >> i ) & 255 for i in reversed(range(0, 32, 8))]
-    
-    netw = [addr[i] & mask[i] for i in range(4)]
-    
-    bcas = [(addr[i] & mask[i]) | (255^mask[i]) for i in range(4)]
+    # country code
+    coutnry = line[1]
 
-    ranges = [ipv4_to_int(netw), ipv4_to_int(bcas)]
-    
-    ranges = map(str, ranges) 
-    
-    ranges = ','.join(ranges)
-    
-    record = ranges, record[1]
+    # subnetmask short e.g. 24 or 12 ...
+    nr_max_hosts = line[4]
+    mask = get_subnet_mask(nr_max_hosts)
 
+    # start ip adress of the network  
+    network = line[3]
+    network = ipaddress.IPv4Network(network + '/' + mask, False)
+
+    # casting in integer works only with ip_address not with IPv4Network ...
+    # therefore need to create this variable 
+    network_ip = ipaddress.ip_address(line[3])
+
+    # end ip adress of the network (broadcast)  
+    broadcast = network.broadcast_address
+
+    record = [int(network_ip), int(broadcast), coutnry]
+    
     return record
 
 
-
-def ipv4_to_int(ip):
-    return (ip[0] * 16777216) + (ip[1] * 65536) + (ip[2] * 256 ) + (ip[3] * 1)
-
-
-def ipv4_in_range(min, max, ip):
-    return min <= ip <= max
-
-
-def parse_ipv6(line):
-    return ""
+def ipv4_in_range(ip, network, mask):
+    return ipaddress.ip_address(ip) in ipaddress.ip_network(network + "/" +  mask) 
 
 
 def get_country_code(ip):
    
-    ip = ip.split('.')
-    ip = [int(x) for x in ip]
-    ip = ipv4_to_int(ip)
-
-    with open(os.path.join(DEL_FILES_DIR, "merged_del_files.txt")) as file:
+    with open(os.path.join(DEL_FILES_DIR, "stipped_del_file.txt")) as file:
         
         for line in file: 
 
-           item = line.split(" ")
+           item = line.split("|")
 
-           [ranges, country] = item 
+           network = item[3]
+           nr_max_hosts = item[4]
+           mask = get_subnet_mask(nr_max_hosts)
 
-           [minIP, maxIP] = ranges.split(",")
-
-           if ipv4_in_range(int(minIP), int(maxIP), ip):
+           if ipv4_in_range(ip, network, mask):
                 country = country.rstrip('\n')
                 return COUNTRY_DICTIONARY[country], country
 
-
-    return 'No Country Found!' 
+    return False 
 
       
 def get_subnet_mask(hosts):
@@ -165,5 +158,6 @@ def main():
 
     merge_del_files()    # Fügt del Dateien in del_merged.txt zusammen
     strip_del_files()    # formatiert und filtert Textdatei
-    
+    print(get_country_code("45.4.16.10"))
+
 main()
