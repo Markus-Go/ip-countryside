@@ -1,4 +1,5 @@
 from ast import And
+from http.client import NETWORK_AUTHENTICATION_REQUIRED
 from itertools import count
 from DBRangeEntry import DBRangeEntry
 import re
@@ -23,13 +24,23 @@ from config import *;
 
 
 
-# @TODO define merged_del_file as global name 
-def merge_del_files(merged_del_file = "merged_del_files.txt"):
+
+# @TODO Aurunden Idee verbessern und genauer schauen in 
+# der Dateien, ob vuekkecht ein Eintrag ein anderer 
+# aufsummiert oder so ...
+
+# @TODO MAX MindDB API anschauen benutzen 
+# wie sie die Objekte einer Datenbank aufbauen ....
+
+# @TODO vergleichen der Ergebnisse mit den von dem 
+# alten Tool 
+
+def merge_del_files():
 
    # Fuses the delegated files into a txt file 
     try: 
         
-        with open(os.path.join(DEL_FILES_DIR, merged_del_file), "wb") as f:
+        with open(MERGED_DEL_FILE, "wb") as f:
             for del_file in [ 
                     os.path.join(DEL_FILES_DIR, AFRINIC['fname']), 
                     os.path.join(DEL_FILES_DIR, LACNIC['fname']),
@@ -38,7 +49,7 @@ def merge_del_files(merged_del_file = "merged_del_files.txt"):
                     os.path.join(DEL_FILES_DIR, RIPE['fname'])
                     ]:
 
-                with open(del_file,'rb') as source:
+                with open(del_file, "rb") as source:
 
                     shutil.copyfileobj(source, f)
 
@@ -49,98 +60,96 @@ def merge_del_files(merged_del_file = "merged_del_files.txt"):
         print(e)
 
 
-# @TODO define stipped_del_file as global name 
-def strip_del_files(stipped_del_file = "stipped_del_files.txt"):
+def strip_del_files():
 
-    ipv4_pattern = "[0-9]+(?:\.[0-9]+){3}"
-    # @TODO ipv6 ...
-    ipv6_pattern = ""
-
-    # Removes all IPv6 and other lines 
-    for line in fileinput.input(os.path.join(DEL_FILES_DIR, "merged_del_files.txt"), inplace = True):
+    with open(STRIPPED_DEL_FILE_IPV4, "w") as ip4, open(STRIPPED_DEL_FILE_IPV6, "w") as ip6:
         
-        if re.search(ipv4_pattern, line):
-            
-            list = parse_ipv4(line)
- 
-            print(*list, end='\n')
+        for line in fileinput.input(MERGED_DEL_FILE):
 
-        if re.search(ipv6_pattern, line):
+            if re.search(IPV4_PATTERN, line):
 
-            # @TODO IPv6 ... Do Something here ...
-            list = parse_ipv6(line)
+                line = parse_ipv4(line)
+                line = " ".join(map(str, line))
+                line = line + '\n'
+                ip4.write(line)
 
-            # print(*list, end='\n')
+            elif re.search(IPV6_PATTERN, line):
 
-
-def parse_ipv4(line):
-
-    # registry|cc|type|start|value|date|status[|extensions...]
-
-    record = line.split("|")
-
-    # if line doesn't have any country 
-    if record[6] == 'reserved':
-        record[1] = "N/A"
-
-    cidr = int(get_subnet_mask(record[4]))
-    
-    addr = [int(x) for x in record[3].split('.')]
-    
-    mask = [( ((1<<32)-1) << (32-cidr) >> i ) & 255 for i in reversed(range(0, 32, 8))]
-    
-    netw = [addr[i] & mask[i] for i in range(4)]
-    
-    bcas = [(addr[i] & mask[i]) | (255^mask[i]) for i in range(4)]
-
-    ranges = [ipv4_to_int(netw), ipv4_to_int(bcas)]
-    
-    ranges = map(str, ranges) 
-    
-    ranges = ','.join(ranges)
-    
-    record = ranges, record[1]
-
-    return record
-
-
-
-def ipv4_to_int(ip):
-    return (ip[0] * 16777216) + (ip[1] * 65536) + (ip[2] * 256 ) + (ip[3] * 1)
-
-
-def ipv4_in_range(min, max, ip):
-    return min <= ip <= max
+                line = parse_ipv6(line)
+                line = " ".join(map(str, line))
+                line = line + '\n'
+                ip6.write(line)
 
 
 def parse_ipv6(line):
-    return ""
+
+    # record format: registry|cc|type|start|value|date|status[|extensions...]
+    record = line.split("|")
+
+    # if line doesn't have any country
+    if record[6] == 'reserved':
+        record[1] = "N/A"
+
+    return [record[3], record[4], record[1]]
+
+
+def parse_ipv4(line):          
+
+    # record format: registry|cc|type|start|value|date|status[|extensions...]
+    record = line.split("|")
+
+    # if line doesn't have any country
+    if record[6] == 'reserved':
+        record[1] = "N/A"
+
+    # get subnetmask from number of hosts (value)
+    mask = get_subnet_mask(record[4])
+
+    return [record[3], mask, record[1]]
+
+
+def ip_in_range(ip, network, mask, strict = True):
+    return ipaddress.ip_address(ip) in ipaddress.ip_network(network + "/" + mask, strict)
 
 
 def get_country_code(ip):
-   
-    ip = ip.split('.')
-    ip = [int(x) for x in ip]
-    ip = ipv4_to_int(ip)
 
-    with open(os.path.join(DEL_FILES_DIR, "merged_del_files.txt")) as file:
-        
-        for line in file: 
+    expr = re.match(IPV4_PATTERN, ip)
 
-           item = line.split(" ")
-
-           [ranges, country] = item 
-
-           [minIP, maxIP] = ranges.split(",")
-
-           if ipv4_in_range(int(minIP), int(maxIP), ip):
-                country = country.rstrip('\n')
-                return COUNTRY_DICTIONARY[country], country
-
-
-    return 'No Country Found!' 
-
+    if expr:
       
+        with open(STRIPPED_DEL_FILE_IPV4) as file:
+
+            for line in file:
+
+                item = line.split()
+
+                network = item[0]
+                mask = item[1]
+                
+                if ip_in_range(ip, network, mask, False):
+                    country = item[2].rstrip('\n')
+                    return COUNTRY_DICTIONARY[country], country
+
+    else:
+        
+        with open(STRIPPED_DEL_FILE_IPV6) as file:
+
+            for line in file:
+
+                item = line.split()
+
+                network = item[0]
+                mask = item[1]
+
+                if ip_in_range(ip, network, mask):
+                    country = item[2].rstrip('\n')
+                    return COUNTRY_DICTIONARY[country], country
+    
+    return False
+
+
+# @TODO Nicht immer aufrunden (aber wann?)
 def get_subnet_mask(hosts):
     
     hosts = math.log2(int(hosts))      
@@ -152,12 +161,19 @@ def get_subnet_mask(hosts):
 
         return SUBNETMASK[hosts]
 
-    return "0"
+    return False
 
 
-def main():
-
-    merge_del_files()    # Fügt del Dateien in del_merged.txt zusammen
-    strip_del_files()    # formatiert und filtert Textdatei
+def run_parser():
     
-main()
+    merge_del_files()      # Fügt del Dateien in del_merged.txt zusammen
+    strip_del_files()      # formatiert und filtert Textdatei
+
+# Tests
+#print(get_country_code("2001:43f8:1d0::")) -> ('SENEGAL', 'SN')
+#print(get_country_code("45.4.16.10"))      -> ('BRAZIL', 'BR')
+
+
+ 
+
+
