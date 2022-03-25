@@ -125,3 +125,83 @@ def run_parser():
     
     merge_del_files()      # Fügt del Dateien in del_merged.txt zusammen
     strip_del_files()      # formatiert und filtert Textdatei
+
+
+# merge_in_files
+def merge_in_files():
+    
+    try: 
+        
+        with open(os.path.join(DEL_FILES_DIR, "merged_ine_file.txt"), "wb") as f:
+            for in_file in [ 
+                    os.path.join(DEL_FILES_DIR, "apnic.db.inetnum"), 
+                    os.path.join(DEL_FILES_DIR, "ripe.db.inetnum")
+                    ]:
+
+                with open(in_file, "rb") as source:
+
+                    shutil.copyfileobj(source, f)
+
+                    f.write(os.linesep.encode())
+    
+    except IOError as e:
+        
+        print(e)
+
+
+# Returns block of data
+def get_groups(seq, group_by):
+    data = []
+    for line in seq:
+        if line.startswith(group_by):
+            if data:
+                if not data[0].startswith(group_by):
+                    data = []
+                else:
+                    yield data[:-1]
+                    data = []
+        data.append(line.replace(" ", "").replace('\n', ""))
+
+    if data:
+        yield data
+
+
+# Parses in entry
+def get_parsed_in_entry(entry):
+    y = []
+    description = ""
+    for item in entry:
+    
+        if any(str(item[0]) in s for s in PARSE_ITEMS):
+
+            if not item[0] == "descr":
+                y.append(item[1])
+            else:
+                description += item[1] + ' '
+    y.append(description[:-1])
+
+    return y
+
+
+
+ 
+
+
+
+
+# Parses merged_ine file and writes it into stripped_ine_file
+def parse_in_files():
+    with open(os.path.join(os.path.join(DEL_FILES_DIR, "merged_ine_file.txt")), 'r', encoding='utf-8', errors='ignore') as merged, open (os.path.join(DEL_FILES_DIR, "stripped_ine_file.txt"), 'w', encoding='utf-8', errors='ignore') as stripped:
+        for i, group in enumerate(get_groups(merged, "inetnum"), start=1):
+            
+            entry = [item.split(':') for item in group]
+            #entry = [re.split(r': +', item) for item in group] # funktioniert nicht warum?
+            stripped.write("|".join(get_parsed_in_entry(entry)) + '\n')
+
+    #os.remove(os.path.join(DEL_FILES_DIR, "merged_ine_file.txt"))
+
+
+ 
+parse_in_files()        
+
+# l = ['202.6.91.0-202.6.91.255', 'NLA', 'AU', 'ASSIGNEDPORTABLE', '2008-09-04T06', 'APNIC', ['NationalLibraryofAustralia ParkesPlace CanberraACT2600']]
