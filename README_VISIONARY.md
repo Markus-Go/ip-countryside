@@ -14,6 +14,11 @@ Windows (Power Shell & Visual Studio Code):
 - flask run
 
 
+Nützliche Tools: 
+
+https://marketplace.visualstudio.com/items?itemName=mechatroner.rainbow-csv
+https://github.com/mechatroner/RBQL
+
 More Info: https://flask.palletsprojects.com/en/2.0.x/patterns/packages/
 
 ===================================================================

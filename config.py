@@ -5,7 +5,7 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 DEL_FILES_DIR = os.path.join(ROOT_DIR, "del_files")
 
 MERGED_DEL_FILE        = os.path.join(DEL_FILES_DIR, "merged_del_file.txt")
-STRIPPED_DEL_FILE      = os.path.join(DEL_FILES_DIR, "stipped_del_file.txt")
+STRIPPED_DEL_FILE      = os.path.join(DEL_FILES_DIR, "stipped_del_file.csv")
 
 # Regex for matching ip versions
 IPV4_PATTERN = "[0-9]+(?:\.[0-9]+){3}"
