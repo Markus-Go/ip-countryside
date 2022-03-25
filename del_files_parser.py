@@ -65,9 +65,6 @@ def strip_del_files():
         
         print(e)
 
-        
-    
-
 
 def parse_line(line):          
     
@@ -144,8 +141,65 @@ def sort_stripped_del_files():
         print(e)
 
     return records
+
+
+def check_for_overlaping():
     
+    records = []
+
+    try:
+
+        # save all records in stripped_del_file into a list
+        with open(STRIPPED_DEL_FILE, "r") as f:
+            
+            for line in f:
+               
+                line = line.split("|")
+                
+                record = [
+                    int(line[0]),   # get range_start
+                    int(line[1]),   # get range_end
+                    line[2].rstrip('\n')
+                ]
+
+                records.append(record)
+
+    except IOError as e:
+        
+        print(e)
+
+    for i in range(1, len(records)):
+       
+        overlapp = ip_ranges_overlapp(records[i-1], records[i])
+       
+        if overlapp :
+            
+            print(i)
+            print(records[i-1])
+            print(records[i])
+            print("\n")
+            print(ipaddress.ip_address(3393687552))
+
+    return records
+
+
+def ip_ranges_overlapp(record_1, record_2):
     
+    # 16777216|16777471|AU 
+    # 16777316|16777571|AU 
+
+    range_start_1   = record_1[0]
+    range_end_1     = record_1[1]
+    range_start_2   = record_2[0]
+    range_end_2     = record_2[1]
+    
+    # @TODO do something here .... 
+
+    return  range_end_1 > range_start_2
+
+
+
+
 def get_country_code(ip):
 
     with open(STRIPPED_DEL_FILE) as file:
@@ -176,19 +230,28 @@ def ip_in_range(ip, start, end):
     return start <= ip_int <= end 
 
 
-
 def run_parser():
     
-    print("Merging delegation files ...")
-    #merge_del_files()          # Fügt del Dateien in del_merged.txt zusammen
-    print("Delegation files merging finished\n")
+    # print("Merging delegation files ...")
+    # merge_del_files()          # Fügt del Dateien in del_merged zusammen
+    # print("Delegation files merging finished\n")
 
-    print("Striping merged file ...")
-    strip_del_files()           # formatiert und filtert Textdatei
-    print("Striping merged file finished\n")
+    # print("Striping merged file ...")
+    # strip_del_files()           # formatiert del_merged 
+    # print("Striping merged file finished\n")
 
-    print("Sorting striped file ...")
-    sort_stripped_del_files()
-    print("Sorting striped files finished\n")
+    # print("Sorting striped file ...")
+    # sort_stripped_del_files()   # sortiert del_stripped
+    # print("Sorting striped files finished\n")
+
+    #print("checking for overlapping ...")
+    check_for_overlaping()     # clean del_stripped from overlapping in data
+    #print("checking for overlapping finished\n")
+   
+
 
 run_parser()
+
+# Overlapping example
+# ripencc|DE|ipv4|202.71.144.0|2048|19990830|allocated
+# apnic|IN|ipv4|202.71.144.0|2048|19990830|allocated
