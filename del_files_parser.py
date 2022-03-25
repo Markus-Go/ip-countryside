@@ -10,7 +10,6 @@ from config import *;
 
 # Simple version ohne Optimierung und Städte unterstützung
 
-
 # @TODO Aurunden Idee verbessern und genauer schauen in 
 # der Dateien, ob vuekkecht ein Eintrag ein anderer 
 # aufsummiert oder so ...
@@ -48,105 +47,77 @@ def merge_del_files():
 
 def strip_del_files():
 
-    with open(STRIPPED_DEL_FILE_IPV4, "w") as ip4, open(STRIPPED_DEL_FILE_IPV6, "w") as ip6:
+    with open(STRIPPED_DEL_FILE, "w") as striped_file:
         
         for line in fileinput.input(MERGED_DEL_FILE):
 
-            if re.search(IPV4_PATTERN, line):
+            if re.search(IPV4_PATTERN, line) or re.search(IPV6_PATTERN, line):
 
-                line = parse_ipv4(line)
-                line = " ".join(map(str, line))
+                line = parse_ip(line)
+                line = "|".join(map(str, line))
                 line = line + '\n'
-                ip4.write(line)
+                striped_file.write(line)
 
-            elif re.search(IPV6_PATTERN, line):
-
-                line = parse_ipv6(line)
-                line = " ".join(map(str, line))
-                line = line + '\n'
-                ip6.write(line)
-
-
-def parse_ipv6(line):
-
+           
+def parse_ip(line):          
+    
+    # record index:     0      1   2    3     4     5    6
     # record format: registry|cc|type|start|value|date|status[|extensions...]
+
+    record = []
+
+    # extract infromation from line
     record = line.split("|")
+    network_ip = record[3]
+    
+    range_start = int(ipaddress.ip_address(network_ip))
+    range_end = 0
+    country = record[1]
+    mask = record[4]
 
     # if line doesn't have any country
-    if record[6] == 'reserved':
-        record[1] = "N/A"
+    if record[6] == 'reserved' or record[6] == 'available':
+        country = "N/A"
+    
+    # parse ipv4 
+    if re.match(IPV4_PATTERN, network_ip):
+        range_end = int(record[4]) + range_start - 1
 
-    return [record[3], record[4], record[1]]
+    # parse ipv6 
+    if re.match(IPV6_PATTERN, network_ip):
+        net = ipaddress.IPv6Network(network_ip + "/" + mask)
+        range_end = int(net.broadcast_address)
 
-
-def parse_ipv4(line):          
-
-    # record format: registry|cc|type|start|value|date|status[|extensions...]
-    record = line.split("|")
-
-    # if line doesn't have any country
-    if record[6] == 'reserved':
-        record[1] = "N/A"
-
-    # get subnetmask from number of hosts (value)
-    mask = get_subnet_mask(record[4])
-
-    return [record[3], mask, record[1]]
+    return [range_start, range_end, country]
 
 
-def ip_in_range(ip, network, mask, strict = True):
-    return ipaddress.ip_address(ip) in ipaddress.ip_network(network + "/" + mask, strict)
+def ip_in_range(ip, start, end):
+    
+    ip = ipaddress.ip_address(ip)
+    ip_int = int(ip)
+
+    return start <= ip_int <= end  
 
 
 def get_country_code(ip):
 
-    expr = re.match(IPV4_PATTERN, ip)
+    with open(STRIPPED_DEL_FILE) as file:
 
-    if expr:
-      
-        with open(STRIPPED_DEL_FILE_IPV4) as file:
+        for line in file:
 
-            for line in file:
+            item = line.split("|")
 
-                item = line.split()
+            start = int(item[0])
+            end = int(item[1])
+            country = item[2].rstrip('\n')
 
-                network = item[0]
-                mask = item[1]
+            if ip_in_range(ip, start, end):
+
+                if country == 'N/A':
+                    return country
                 
-                if ip_in_range(ip, network, mask, False):
-                    country = item[2].rstrip('\n')
-                    return COUNTRY_DICTIONARY[country], country
-
-    else:
-        
-        with open(STRIPPED_DEL_FILE_IPV6) as file:
-
-            for line in file:
-
-                item = line.split()
-
-                network = item[0]
-                mask = item[1]
-
-                if ip_in_range(ip, network, mask):
-                    country = item[2].rstrip('\n')
-                    return COUNTRY_DICTIONARY[country], country
+                return COUNTRY_DICTIONARY[country], country
     
-    return False
-
-
-# @TODO Nicht immer aufrunden (aber wann?)
-def get_subnet_mask(hosts):
-    
-    hosts = math.log2(int(hosts))      
-    hosts_aufg = math.ceil(hosts)     
-    newzahl = int(math.pow(2, hosts_aufg))
-
-    hosts = str(newzahl)
-    if(hosts in SUBNETMASK):
-
-        return SUBNETMASK[hosts]
-
     return False
 
 
@@ -154,12 +125,3 @@ def run_parser():
     
     merge_del_files()      # Fügt del Dateien in del_merged.txt zusammen
     strip_del_files()      # formatiert und filtert Textdatei
-
-# Tests
-#print(get_country_code("2001:43f8:1d0::")) -> ('SENEGAL', 'SN')
-#print(get_country_code("45.4.16.10"))      -> ('BRAZIL', 'BR')
-
-
- 
-
-

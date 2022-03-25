@@ -4,9 +4,8 @@ import os
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 DEL_FILES_DIR = os.path.join(ROOT_DIR, "del_files")
 
-MERGED_DEL_FILE        = os.path.join(DEL_FILES_DIR, "merged_del_files.txt")
-STRIPPED_DEL_FILE_IPV4 = os.path.join(DEL_FILES_DIR, "stipped_del_ipv4.txt")
-STRIPPED_DEL_FILE_IPV6 = os.path.join(DEL_FILES_DIR, "stipped_del_ipv6.txt")
+MERGED_DEL_FILE        = os.path.join(DEL_FILES_DIR, "merged_del_file.txt")
+STRIPPED_DEL_FILE      = os.path.join(DEL_FILES_DIR, "stipped_del_file.txt")
 
 # Regex for matching ip versions
 IPV4_PATTERN = "[0-9]+(?:\.[0-9]+){3}"
@@ -47,31 +46,6 @@ RIPE = {
     'splitfname':   "ripe.db.inetnum.gz",
 }
 
-SUBNETMASK = {
-    '4':        "30",
-    '8':        "29",
-    '16':       "28",
-    '32':       "27",
-	'64':       "26",
-    '128':      "25",
-    '256':      "24",
-    '512':      "23",
-    '1024':     "22",
-    '2048':     "21",
-    '4096':     "20",
-    '8192':     "19",
-    '16384':    "18",
-    '32768':    "17",
-    '65536':    "16",
-    '131072':   "15",
-    '262144':   "14",
-    '524288':   "13",
-    '1048576':  "12",
-    '2097152':  "11",
-    '4194304':  "10",
-    '8388608':  "9",
-    '16777216': "8",
-}
 
 COUNTRY_DICTIONARY = {
     'AF':"AFGHANISTAN",
