@@ -1,5 +1,7 @@
 import os
+from pickle import TRUE
 from sys import flags
+from warnings import catch_warnings
 
 
 from flask import Flask, request
@@ -32,27 +34,47 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    # a simple page that says hello
     @app.route('/', methods=['GET'])
     def index():
 
-        hello_string = "tss is a test"
-
-        #ipaddress = os.popen('curl -s ifconfig.me').readline()
-        ipaddress = ''
-        address = "Ulm"
-        geolocator = Nominatim(user_agent="Your_Name")
-        location = geolocator.geocode(address)
-        lat = location.latitude
-        lon = location.longitude
-        country = "none"
-        flag = "none"
+        ipaddress = os.popen('curl -s ifconfig.me').readline()
+        country = get_country_code(ipaddress)[0] 
+        flag = get_country_code(ipaddress)[1]
+        address = get_country_code(ipaddress)[0]
+        try:
+            geolocator = Nominatim(user_agent="Your_Name")
+            location = geolocator.geocode(address)
+            lat = location.latitude
+            lon = location.longitude
+        except:
+            isValid = False
+            comment = "Karte aktuell Leider nicht Verfügbar"
+        comment = "-"
+        isValid = True
 
         if request.method == 'GET' and request.args.get('ip') is not None:
             ipaddress = request.args.get('ip')
-            country = get_country_code(ipaddress)[0] 
-            flag = get_country_code(ipaddress)[1]
+            if ipaddress == "":
+                ipaddress = os.popen('curl -s ifconfig.me').readline()
+            elif get_country_code(ipaddress) == "No Country Found!": # wird noch geändert mit bool
+                country = "-" 
+                flag = "Arrr"
+                comment = "No Valid IP-Adress"
+                isValid = False
+            else:
+                country = get_country_code(ipaddress)[0] 
+                flag = get_country_code(ipaddress)[1]
+                address = get_country_code(ipaddress)[0]
+                try:
+                    geolocator = Nominatim(user_agent="Your_Name")
+                    location = geolocator.geocode(address)
+                    lat = location.latitude
+                    lon = location.longitude
+                except:
+                    isValid = False
+                    comment = "Karte aktuell Leider nicht Verfügbar"
+                comment = "-"
 
-        return render_template('index.html', str=hello_string, ip=ipaddress, lat=lat, lon=lon, add=address, flag=flag, country=country)
+        return render_template('index.html', ip=ipaddress, lat=lat, lon=lon, add=address, flag=flag, country=country, comment=comment, isValid=isValid)
 
     return app
