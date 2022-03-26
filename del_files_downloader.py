@@ -5,8 +5,7 @@ import os
 
 from config import *
 
-# @TODO check if download is needed ... 
-def download_del_files():
+def download_del_files(force):
    """
    Downloads all delegation files
 
@@ -19,6 +18,12 @@ def download_del_files():
    boolean value which indicates wether downloading was successful
 
    """
+
+
+   # if downloading is not necessary and force is not set
+   # skip downloading ...
+   if(not download_del_files_needed() and not force):
+       return
 
    # collect delegation files in one specific folder "del_files"
    # if the folder doesn't exist then try to create one first ... 
@@ -112,7 +117,19 @@ def download_del_file(host, cwd, delFileName, zipped=False):
 
         print(e)
 
-def download_del_file_needed():
+# @TODO check if download is needed ... 
+# as the last update time of the files doesn't
+# mean necessarily that the conten has cahnged (was tested)
+# it's better to compare the md5 values
+# Therefore:
+# download the md5 values for each delegation file
+# implement the method download_del_file_needed() so that 
+# it gets with ftp the corresponding md5 file from the server
+# and compares it to the one in the subfolder del_files ... 
+def download_del_files_needed():
     return False
 
-    
+
+def run_downloader(force=True):
+
+    download_del_files(force)
