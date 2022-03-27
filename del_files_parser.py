@@ -54,7 +54,7 @@ def merge_del_files():
         print(e)
 
 
-def strip_del_files():
+def parse_del_files():
 
     try:
 
@@ -65,7 +65,7 @@ def strip_del_files():
                 # get rid of all lines without "ip entry" before parsing
                 if re.search(IPV4_PATTERN, line) :#or re.search(IPV6_PATTERN, line):
 
-                    line = parse_line(line)
+                    line = parse_del_line(line)
                     line = "|".join(map(str, line))
                     line = line + '\n'
                     f.write(line)
@@ -75,7 +75,7 @@ def strip_del_files():
         print(e)
 
 
-def parse_line(line):          
+def parse_del_line(line):          
     
     # record index:     0      1   2    3     4     5    6
     # record format: registry|cc|type|start|value|date|status[|extensions...]
@@ -120,12 +120,12 @@ def merge_inet_files():
         
         with open(MERGED_INET_FILE, "wb") as f:
             
-            for in_file in [ 
+            for inet_file in [ 
                     os.path.join(DEL_FILES_DIR, APNIC['inet_fname']), 
                     os.path.join(DEL_FILES_DIR, RIPE['inet_fname'])
                     ]:
 
-                with open(in_file, "rb") as source:
+                with open(inet_file, "rb") as source:
 
                     shutil.copyfileobj(source, f)
 
@@ -238,18 +238,22 @@ def sort_file(file):
         with open(file, "r") as f:
              
             for line in f:
-            
-                line = line.split("|")
+                
+                if line.startswith("\n"):
+                    continue
 
+                line = line.split("|")
+            
                 record = [
                     int(line[0]),           # get range_start
                     int(line[1]),           # get range_end
                     line[2],                # country
-                    line[3].rstrip('\n')    # register 
+                    line[3]                 # register 
                 ]
 
                 records.append(record)
-            
+
+                
         # sort this list
         records.sort()
 
@@ -453,55 +457,39 @@ def ip_in_range(ip, start, end):
 def run_parser():
 
     start_time = time.time()
-    print("Parsing Started\n")
+    print("parsing Started\n")
 
-    print("Merging delegation files ...")
-    merge_del_files()          # Fügt del Dateien in del_merged zusammen
-    print("Delegation files merging finished\n")
+    # print("merging delegation files ...")
+    # merge_del_files()          # Fügt del Dateien in del_merged zusammen
+    # print("merging finished\n")
 
-    print("Striping merged file ...")
-    strip_del_files()           # formatiert del_merged 
-    print("Striping merged file finished\n")
+    # print("parsing delegation files ...")
+    # parse_del_files()           # formatiert del_merged 
+    # print("parsing finished\n")
 
-    print("Sorting striped file ...")
-    sort_file(STRIPPED_DEL_FILE)  # sortiert del_stripped
-    print("Sorting striped files finished\n")
+    # print("merging inetnum files ...")
+    # merge_inet_files()
+    # print("merging finished\n")
 
-    print("checking for overlapping ...")
-    check_for_overlaping(STRIPPED_DEL_FILE)     # clean del_stripped from overlapping in data
-    print("checking for overlapping finished\n")
+    # print("parsing inetnum files ...")
+    # parse_inet_files()
+    # print("parsing finished\n")
+
+    # print("creating the final database ...")
+    # merge_databases()
     
-    print("Merging inetnum files ...")
-    merge_inet_files()
-    print("Inetnum files merging finished\n")
-
-    print("Parsing merged file ...")
-    parse_inet_files()
-    print("Parsing merged file finished\n")
-
-    print("Sorting striped file ...")
-    sort_file(STRIPPED_INET_FILE)  
-    print("Sorting striped files finished\n")
-
-    print("checking for overlapping ...")
-    check_for_overlaping(STRIPPED_INET_FILE)
-    print("checking for overlapping finished\n")
-
-    print("Preparing the final data base")
-    merge_databases()
-    print("Preparing finished")
-
-    sort_file( os.path.join(DEL_FILES_DIR, "ip2country_2.db"))
-    # @TODO check IndexError : list out of range !!
-    # check_for_overlaping(os.path.join(DEL_FILES_DIR, "ip2country_2.db"))
-
+    # print("sorting the final data base")
+    # sort_file(os.path.join(DEL_FILES_DIR, "ip2country_2.db"))
+    
+    check_for_overlaping(os.path.join(DEL_FILES_DIR, "ip2country_2.db"))
+    
     end_time = time.time()
-    print("Parsing finished", end = " -> ")
+    print("parsing finished", end = " -> ")
     print("Total time needed was:", f'{end_time - start_time:.3f}', "s")
 
     return 0
 
-run_parser()
+#run_parser()
 
 
 # l = ['202.6.91.0-202.6.91.255', 'NLA', 'AU', 'ASSIGNEDPORTABLE', '2008-09-04T06', 'APNIC', ['NationalLibraryofAustralia ParkesPlace CanberraACT2600']]
@@ -542,4 +530,3 @@ run_parser()
 #         print(records[i])
 #         print("\n")
 #         break
-
