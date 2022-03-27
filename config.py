@@ -4,8 +4,10 @@ import os
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 DEL_FILES_DIR = os.path.join(ROOT_DIR, "del_files")
 
-MERGED_DEL_FILE        = os.path.join(DEL_FILES_DIR, "merged_del_file.txt")
+MERGED_DEL_FILE        = os.path.join(DEL_FILES_DIR, "merged_del_file.csv")
 STRIPPED_DEL_FILE      = os.path.join(DEL_FILES_DIR, "stipped_del_file.csv")
+MERGED_INET_FILE       = os.path.join(DEL_FILES_DIR, "merged_inet_file.csv")
+STRIPPED_INET_FILE     = os.path.join(DEL_FILES_DIR, "stipped_inet_file.csv")
 
 # Regex for matching ip versions
 IPV4_PATTERN = "[0-9]+(?:\.[0-9]+){3}"
@@ -16,37 +18,39 @@ IPV6_PATTERN = "(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,
 PARSE_ITEMS = ["inetnum", "netname", "descr", "country", "status", "created", "last-modified", "source"]
 
 AFRINIC = {
-    'host':         "ftp.afrinic.net",
-    'cwd':          "pub/stats/afrinic/",
-    'fname':        "delegated-afrinic-latest"
+    'host':           "ftp.afrinic.net",
+    'del_cwd':        "pub/stats/afrinic/",
+    'del_fname':      "delegated-afrinic-latest"
 }
 
 LACNIC = {
-    'host':         "ftp.lacnic.net",
-    'cwd':          "pub/stats/lacnic/",
-    'fname':        "delegated-lacnic-latest"
+    'host':           "ftp.lacnic.net",
+    'del_cwd':        "pub/stats/lacnic/",
+    'del_fname':      "delegated-lacnic-latest"
 }
 
 ARIN = {
-    'host':         "ftp.arin.net",
-    'cwd':          "pub/stats/arin/",
-    'fname':        "delegated-arin-extended-latest"
+    'host':           "ftp.arin.net",
+    'del_cwd':        "pub/stats/arin/",
+    'del_fname':      "delegated-arin-extended-latest"
 }
 
 APNIC = {
-    'host':         "ftp.apnic.net",
-    'cwd':          "pub/stats/apnic/",
-    'fname':        "delegated-apnic-latest",
-    'splitcwd':     "/apnic/whois/",
-    'splitfname':   "apnic.db.inetnum.gz",
+    'host':           "ftp.apnic.net",
+    'del_cwd':        "pub/stats/apnic/",
+    'del_fname':      "delegated-apnic-latest",
+    'inet_cwd':       "/apnic/whois/",
+    'inet_fname_gz':  "apnic.db.inetnum.gz",
+    'inet_fname':     "apnic.db.inetnum"
 }
 
 RIPE = {
-    'host':         "ftp.ripe.net",
-    'cwd':          "ripe/stats/",
-    'fname':        "delegated-ripencc-latest",
-    'splitcwd':     "/ripe/dbase/split/",
-    'splitfname':   "ripe.db.inetnum.gz",
+    'host':           "ftp.ripe.net",
+    'del_cwd':        "ripe/stats/",
+    'del_fname':      "delegated-ripencc-latest",
+    'inet_cwd':       "/ripe/dbase/split/",
+    'inet_fname_gz':  "ripe.db.inetnum.gz",
+    'inet_fname':     "ripe.db.inetnum"
 }
 
 
@@ -305,5 +309,6 @@ COUNTRY_DICTIONARY = {
     'YE':"YEMEN",
     'YU':"YUGOSLAVIA",
     'ZM':"ZAMBIA",
-    'ZW':"ZIMBABWE"
+    'ZW':"ZIMBABWE",
+    'ZZ':'Unkown'
 }

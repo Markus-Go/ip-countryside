@@ -1,24 +1,32 @@
+from multiprocessing.sharedctypes import Value
 from queue import Empty
 import re
 import os
 import shutil
 import fileinput
 import ipaddress
+import time
+from warnings import catch_warnings
 
 from config import *;
 
 
 # Simple version ohne Optimierung und Städte unterstützung
 
-# @TODO beispiele genauer anschauen und versuchen zu reproduzieren ...
+# @TODO Flussdiagramm vom Parser erstellen 
 
-# @TODO MAX MindDB API anschauen benutzen 
-# wie sie die Objekte einer Datenbank aufbauen ....
+# @TODO overlapping beispiele genauer anschauen und versuchen zu reproduzieren ...
 
 # @TODO vergleichen der Ergebnisse mit den von dem 
 # alten Tool 
 
-# @TODO check if -1 is giving the right broadcast in parse_line
+# @TODO MAX MindDB API anschauen benutzen 
+# wie sie die Objekte einer Datenbank aufbauen ....
+
+
+# ==============================================================================
+# Delegation files methods 
+
 
 def merge_del_files():
 
@@ -28,11 +36,11 @@ def merge_del_files():
         with open(MERGED_DEL_FILE, "wb") as f:
             
             for del_file in [ 
-                    os.path.join(DEL_FILES_DIR, AFRINIC['fname']), 
-                    os.path.join(DEL_FILES_DIR, LACNIC['fname']),
-                    os.path.join(DEL_FILES_DIR, ARIN['fname']),
-                    os.path.join(DEL_FILES_DIR, APNIC['fname']), 
-                    os.path.join(DEL_FILES_DIR, RIPE['fname'])
+                    os.path.join(DEL_FILES_DIR, AFRINIC['del_fname']), 
+                    os.path.join(DEL_FILES_DIR, LACNIC['del_fname']),
+                    os.path.join(DEL_FILES_DIR, ARIN['del_fname']),
+                    os.path.join(DEL_FILES_DIR, APNIC['del_fname']), 
+                    os.path.join(DEL_FILES_DIR, RIPE['del_fname'])
                     ]:
 
                 with open(del_file, "rb") as source:
@@ -55,7 +63,7 @@ def strip_del_files():
             for line in fileinput.input(MERGED_DEL_FILE):
                 
                 # get rid of all lines without "ip entry" before parsing
-                if re.search(IPV4_PATTERN, line) or re.search(IPV6_PATTERN, line):
+                if re.search(IPV4_PATTERN, line) :#or re.search(IPV6_PATTERN, line):
 
                     line = parse_line(line)
                     line = "|".join(map(str, line))
@@ -89,7 +97,7 @@ def parse_line(line):
 
     # if line doesn't have any country
     if status == "reserved" or status == "available":
-        country = "N/A"
+        country = "ZZ"
     
     # parse ipv4 
     if type == "ipv4":
@@ -103,34 +111,150 @@ def parse_line(line):
     return [range_start, range_end, country, registry]
 
 
-def sort_del_files():
+# ==============================================================================
+# Inetnum Parsing methods 
+
+def merge_inet_files():
+    
+    try: 
+        
+        with open(MERGED_INET_FILE, "wb") as f:
+            
+            for in_file in [ 
+                    os.path.join(DEL_FILES_DIR, APNIC['inet_fname']), 
+                    os.path.join(DEL_FILES_DIR, RIPE['inet_fname'])
+                    ]:
+
+                with open(in_file, "rb") as source:
+
+                    shutil.copyfileobj(source, f)
+
+                    f.write(os.linesep.encode())
+    
+    except IOError as e:
+        
+        print(e)
+
+
+# Parses merged_ine file and writes it into stripped_ine_file
+def parse_inet_files():
+    
+    with open(MERGED_INET_FILE, 'r', encoding='utf-8', errors='ignore') as merged, open (STRIPPED_INET_FILE, 'w', encoding='utf-8', errors='ignore') as stripped:
+        
+        for group in get_groups(merged, "inetnum"):
+            
+            line = parse_inet_group(group)
+            line = "|".join(map(str, line))
+            line = line + '\n'
+            stripped.write(line)
+
+    #os.remove(os.path.join(DEL_FILES_DIR, "merged_ine_file.txt"))
+
+# Returns block of data
+def get_groups(seq, group_by):
+    
+    data = []
+    
+   
+    for line in seq:
+        
+        # escape comments (starts with '#') and empty lines
+        # escape unrelevant data in ripe.inetnum begins with '%'
+        if line.startswith("#") or line.startswith("%"): 
+            continue
+
+        # every inetnum object starts with an entry -> inetnum: ...
+        # so start grouping if a line starts with 'inetnum'
+        # if an object has already been initialized then scann also the
+        # next lines (or data) 
+        if (line.startswith(group_by) or data) and not line.startswith("\n"):
+        
+            line = line.replace(" ", "").replace("\n", "")
+            data.append(line)
+            
+        # note that empty lines are used as a seperator between
+        # inetnum objects. So if line starts with empty line
+        # then yield the data object first and then
+        # reset the object to store next object's data
+        elif line.startswith("\n") and data:
+            yield data
+            data = []
+
+
+# Parses in entry
+def parse_inet_group(entry):
+    
+    record = {}
+    
+    # remove all empty elements in the entry
+    entry = [item for item in entry if item] 
+
+    # split each element (e.g. ["source:APNIC" in the entry to  ["source", "APNIC"]
+    entry = [item.split(':', maxsplit = 1) for item in entry]
+    
+    # create a dictionary
+    # if there are dupplicate items append their values ..
+    # this will prevent deleting items with same key (e.g. descr)
+    for item in entry:
+      
+            # @TODO without this IndexError is thrown
+            if(len(item) > 1):
+
+                key = item[0]
+                value = item[1]
+                
+                if key not in record:
+                    record[key] = value
+                
+                if key == "descr":
+                    record[key] = record[key] + " " + value
+
+                # if a country line has comment, remove the comment
+                if key == "country":
+                    record[key] = value.split("#")[0]
+
+    # extract the ranges out of record
+    range       = record['inetnum'].split("-")
+    range_start = int(ipaddress.ip_address(range[0]))
+    range_end   = int(ipaddress.ip_address(range[1]))
+    
+    country     = record['country']
+    registry    = record['source']
+
+    return [range_start, range_end, country, registry]
+
+
+# ==============================================================================
+# Help Methods used for all files ... 
+
+
+def sort_file(file):
 
     records = []
 
     try:
 
-        # save all records in stripped_del_file into a list
-        with open(STRIPPED_DEL_FILE, "r") as f:
-            
+        # save all records into a list
+        with open(file, "r") as f:
+             
             for line in f:
-               
+            
                 line = line.split("|")
 
                 record = [
                     int(line[0]),           # get range_start
                     int(line[1]),           # get range_end
                     line[2],                # country
-                    line[3].rstrip('\n')    # register
+                    line[3].rstrip('\n')    # register 
                 ]
 
                 records.append(record)
-
-        
+            
         # sort this list
         records.sort()
 
         # write it back 
-        with open(STRIPPED_DEL_FILE, "w") as f:
+        with open(file, "w") as f:
             
             for record in records:
                
@@ -146,14 +270,14 @@ def sort_del_files():
     return records
 
 
-def check_for_overlaping():
+def check_for_overlaping(file):
     
     records = []
 
     try:
 
         # save all records in stripped_del_file into a list
-        with open(STRIPPED_DEL_FILE, "r") as f:
+        with open(file, "r") as f:
             
             for line in f:
                
@@ -165,23 +289,29 @@ def check_for_overlaping():
                     line[2],                # country
                     line[3].rstrip('\n')    # register
                 ]
-
-                records.append(record)
-        
-        for i in range(1, len(records)-1):
-        
-            overlapp = ip_ranges_overlapp(records[i-1], records[i])
-            
-            if overlapp :
                 
-               handle_ranges_overlapp(records[i-1], records[i], records)
-        
+                records.append(record)
+            
+        # check if two records overlapps
+        # since that the list is sorted, overlapping
+        # may only occur in successive records (record[i] and record[i+1])
+        for i in range(1, len(records)-1):
+            
+            # @TODO IndexError !!!
+            if records[i] and records[i-1]:
+
+                overlapp = ip_ranges_overlapp(records[i-1], records[i])
+                
+                if overlapp :
+                    
+                    handle_ranges_overlapp(records[i-1], records[i], records)
+
         # remove all empty items (unvalid) ...
         records = filter(lambda record: len(record) > 0, records)
         records = list(records)
 
 
-        with open(STRIPPED_DEL_FILE, "w") as f:
+        with open(file, "w") as f:
             
             for record in records:
                 
@@ -199,7 +329,7 @@ def handle_ranges_overlapp(record_1, record_2, records):
     
     # if the cause of the conflict is ripencc then change ripencc 
     # entry to remove the confilct
-    if record_1[3] == "ripencc" or record_2[3] == "ripencc":
+    if record_1[3]  == "ripencc" or record_2[3] == "ripencc":
 
         if record_1[3] == "ripencc":
 
@@ -251,17 +381,43 @@ def handle_ranges_overlapp(record_1, record_2, records):
 
 
 def ip_ranges_overlapp(record_1, record_2):
-     
-    range_start_1   = record_1[0]
+
     range_end_1     = record_1[1]
     range_start_2   = record_2[0]
-    range_end_2     = record_2[1]
-    
-    if(range_end_1 < range_start_2 ):   # [1, 2] [3, 4] -> 2 < 3 no overlapping 
-        return False
-    
-    return  range_end_1 > range_start_2 # [1, 3] [2, 4] -> 2 < 3 overlapping 
 
+    # case 1: [1, 3] [2, 4] -> 2 < 3 overlapping
+    # case 2: [1, 3] [3, 4] -> 3 = 3 overlapping
+    return  range_end_1 >= range_start_2 
+
+
+def merge_databases():
+    
+    try: 
+        
+        # merges the delegated files into a one file 
+        with open(os.path.join(DEL_FILES_DIR, "ip2country_2.db"), "wb") as f:
+            
+            for del_file in [ 
+                    os.path.join(STRIPPED_DEL_FILE), 
+                    os.path.join(STRIPPED_INET_FILE),
+                    ]:
+
+                with open(del_file, "rb") as source:
+
+                    shutil.copyfileobj(source, f)
+
+                    f.write(os.linesep.encode())
+ 
+    except IOError as e:
+        
+        print(e)
+
+
+# ==============================================================================
+# @TODO 
+# Diese beide Methoden sollten wo anderes ausgelagert werden,
+# da sie nur die Datenbank nachher auslesen und nach einem Eintrag 
+# suchen und somit eigentlich nicht zum Parser gehören.
 
 def get_country_code(ip):
 
@@ -277,13 +433,10 @@ def get_country_code(ip):
 
             if ip_in_range(ip, range_start, range_end):
 
-                if country == 'N/A':
-                    return country
-                
                 return COUNTRY_DICTIONARY[country], country
     
     return False
-
+    
 
 def ip_in_range(ip, start, end):
     
@@ -293,79 +446,14 @@ def ip_in_range(ip, start, end):
     return start <= ip_int <= end 
 
 
-# merge_in_files
-def merge_in_files():
-    
-    try: 
-        
-        with open(os.path.join(DEL_FILES_DIR, "merged_ine_file.txt"), "wb") as f:
-            for in_file in [ 
-                    os.path.join(DEL_FILES_DIR, "apnic.db.inetnum"), 
-                    #os.path.join(DEL_FILES_DIR, "ripe.db.inetnum")
-                    ]:
-
-                with open(in_file, "rb") as source:
-
-                    shutil.copyfileobj(source, f)
-
-                    f.write(os.linesep.encode())
-    
-    except IOError as e:
-        
-        print(e)
-
-
-# Returns block of data
-def get_groups(seq, group_by):
-    data = []
-    for line in seq:
-        if line.startswith(group_by):
-            if data:
-                if not data[0].startswith(group_by):
-                    data = []
-                else:
-                    yield data[:-1]
-                    data = []
-        data.append(line.replace(" ", "").replace('\n', ""))
-
-    if data:
-        yield data
-
-
-# Parses in entry
-def get_parsed_in_entry(entry):
-    y = []
-    description = ""
-    for item in entry:
-        try:
-            
-            if any(str(item[0]) in s for s in PARSE_ITEMS):
-
-                if not item[0] == "descr":
-                    y.append(item[1])
-                else:
-                    description += item[1] + ' '
-        
-        # @TODO
-        except IndexError as e:
-            pass
-    
-    y.append(description[:-1])
-
-    return y
-
-# Parses merged_ine file and writes it into stripped_ine_file
-def parse_in_files():
-    with open(os.path.join(os.path.join(DEL_FILES_DIR, "merged_ine_file.txt")), 'r', encoding='utf-8', errors='ignore') as merged, open (os.path.join(DEL_FILES_DIR, "stripped_ine_file.txt"), 'w', encoding='utf-8', errors='ignore') as stripped:
-        for i, group in enumerate(get_groups(merged, "inetnum"), start=1):
-            
-            entry = [item.split(':') for item in group]
-            #entry = [re.split(r': +', item) for item in group] # funktioniert nicht warum?
-            stripped.write("|".join(get_parsed_in_entry(entry)) + '\n')
-
-    #os.remove(os.path.join(DEL_FILES_DIR, "merged_ine_file.txt"))
+# ==============================================================================
+# Parser Entry Method 
+# @TODO later add parameters for the command line interpreter (cli)
 
 def run_parser():
+
+    start_time = time.time()
+    print("Parsing Started\n")
 
     print("Merging delegation files ...")
     merge_del_files()          # Fügt del Dateien in del_merged zusammen
@@ -376,19 +464,45 @@ def run_parser():
     print("Striping merged file finished\n")
 
     print("Sorting striped file ...")
-    sort_del_files()            # sortiert del_stripped
+    sort_file(STRIPPED_DEL_FILE)  # sortiert del_stripped
     print("Sorting striped files finished\n")
 
     print("checking for overlapping ...")
-    check_for_overlaping()     # clean del_stripped from overlapping in data
+    check_for_overlaping(STRIPPED_DEL_FILE)     # clean del_stripped from overlapping in data
     print("checking for overlapping finished\n")
     
+    print("Merging inetnum files ...")
+    merge_inet_files()
+    print("Inetnum files merging finished\n")
+
+    print("Parsing merged file ...")
+    parse_inet_files()
+    print("Parsing merged file finished\n")
+
+    print("Sorting striped file ...")
+    sort_file(STRIPPED_INET_FILE)  
+    print("Sorting striped files finished\n")
+
+    print("checking for overlapping ...")
+    check_for_overlaping(STRIPPED_INET_FILE)
+    print("checking for overlapping finished\n")
+
+    print("Preparing the final data base")
+    merge_databases()
+    print("Preparing finished")
+
+    sort_file( os.path.join(DEL_FILES_DIR, "ip2country_2.db"))
+    # @TODO check IndexError : list out of range !!
+    # check_for_overlaping(os.path.join(DEL_FILES_DIR, "ip2country_2.db"))
+
+    end_time = time.time()
+    print("Parsing finished", end = " -> ")
+    print("Total time needed was:", f'{end_time - start_time:.3f}', "s")
+
     return 0
 
 run_parser()
 
-#merge_in_files()
-#parse_in_files()        
 
 # l = ['202.6.91.0-202.6.91.255', 'NLA', 'AU', 'ASSIGNEDPORTABLE', '2008-09-04T06', 'APNIC', ['NationalLibraryofAustralia ParkesPlace CanberraACT2600']]
 
@@ -396,3 +510,36 @@ run_parser()
 # Overlapping example
 # ripencc|DE|ipv4|202.71.144.0|2048|19990830|allocated
 # apnic|IN|ipv4|202.71.144.0|2048|19990830|allocated
+
+
+# save all records in stripped_del_file into a list
+# with open(STRIPPED_INET_FILE, "r") as f:
+
+#     records = [] 
+
+#     for line in f:
+        
+#         line = line.split("|")
+        
+#         record = [
+#             int(line[0]),           # range_start
+#             int(line[1]),           # range_end
+#             line[2],                # country
+#             line[3].rstrip('\n')    # register
+#         ]
+
+#         records.append(record)
+
+# # check if two records overlapps
+# # since that the list is sorted, overlapping
+# # may only occur in successive records (record[i] and record[i+1])
+# for i in range(1, len(records)-1):
+
+#     overlapp = ip_ranges_overlapp(records[i-1], records[i])
+    
+#     if overlapp :
+#         print(records[i-1])
+#         print(records[i])
+#         print("\n")
+#         break
+
