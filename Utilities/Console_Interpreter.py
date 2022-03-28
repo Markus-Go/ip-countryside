@@ -5,6 +5,10 @@ from Console_Selector import *
 
 import re
 
+#TODOs:
+#    - Update text output
+#    - Error handling (e.g. line 21)
+
 def interpreter(input):
     inputList = re.split("\s", input)
     print(inputList)
@@ -13,7 +17,7 @@ def interpreter(input):
     print("Is Command? " + str(isCommand))
 
     if(not isCommand):
-        return False
+        return False    #TODO
     elif(inputList[LOC_CMD] == CMD_EXIT):
         return False
 
@@ -29,7 +33,7 @@ def CheckForCommandKey(cmd):
 
 def CheckForExtensionKey(cmd):
     char_array = list(cmd)
-    if(char_array[0] == KEY_EX):
+    if(KEY_EX in cmd):
         return True
     else:
         return False
