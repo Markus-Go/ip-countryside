@@ -520,7 +520,7 @@ def run_parser():
     print("finished\n")
 
     end_time = time.time()
-    print("Total time needed was:", f'{end_time - start_time:.3f}', "s\n")  # 182.006 s
+    print("Total time needed was:", f'{end_time - start_time:.3f}', "s\n")  # (Mohammed: 182,006s) (Thomas: 1112,578s)
 
     return 0
 
