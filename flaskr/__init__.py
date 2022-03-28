@@ -46,6 +46,7 @@ def create_app(test_config=None):
                 flag = temp[1]
                 address = temp[0]
                 isValid = True
+                comment = "-"
                 try:
                     geolocator = Nominatim(user_agent="Your_Name")
                     location = geolocator.geocode(address)
@@ -53,8 +54,9 @@ def create_app(test_config=None):
                     lon = location.longitude
                 except:
                     isValid = False
+                    lat = 0
+                    lon = 0
                     comment = "Karte aktuell Leider nicht Verfügbar"
-                comment = "-"
             else:
                 temp = get_country_code(ipaddress)
                 if temp == False:
@@ -70,6 +72,7 @@ def create_app(test_config=None):
                     flag = temp[1]
                     address = temp[0]
                     isValid = True
+                    comment = "-"
                     try:
                         geolocator = Nominatim(user_agent="Your_Name")
                         location = geolocator.geocode(address)
@@ -77,14 +80,17 @@ def create_app(test_config=None):
                         lon = location.longitude
                     except:
                         isValid = False
+                        lat = 0
+                        lon = 0
                         comment = "Karte aktuell Leider nicht Verfügbar"
-                    comment = "-"
         else:
             ipaddress = os.popen('curl -s ifconfig.me').readline()
             temp = get_country_code(ipaddress)
             country = temp[0] 
             flag = temp[1]
             address = temp[0]
+            comment = "-"
+            isValid = True
             try:
                 geolocator = Nominatim(user_agent="Your_Name")
                 location = geolocator.geocode(address)
@@ -92,9 +98,9 @@ def create_app(test_config=None):
                 lon = location.longitude
             except:
                 isValid = False
+                lat = 0
+                lon = 0
                 comment = "Karte aktuell Leider nicht Verfügbar"
-            comment = "-"
-            isValid = True
 
         return render_template('index.html', ip=ipaddress, lat=lat, lon=lon, add=address, flag=flag, country=country, comment=comment, isValid=isValid)
 
