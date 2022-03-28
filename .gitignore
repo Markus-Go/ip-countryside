@@ -1,6 +1,7 @@
 #vs solution
 *.sln
 .vs/
+.vscode/
 *.pyproj
 *.pyproj.user
 

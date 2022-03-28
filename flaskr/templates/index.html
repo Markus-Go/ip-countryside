@@ -1,29 +1,71 @@
-<!DOCTYPE html>
-<html lang="en">
-  
-    <head>
-        <meta charset="UTF-8">
+<!doctype html>
+<html>
+<head>
+<meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta http-equiv="X-UA-Compatible" content="ie=edge">
         <title>IP Countryside</title>
 
-        <link rel="icon" type="image/x-icon" href="{{url_for('static', filename='img/favicon.ico')}}">
+        <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
+
         <link rel="stylesheet" href="{{url_for('static', filename='styles/styles.css')}}">
-        
-        <script  type="text/javascript" src="{{url_for('static', filename='javascript/main.js')}}"></script>
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+        integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+        crossorigin=""/>
+        <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+        integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+        crossorigin=""></script>
+</head>
 
-    </head>
-  
-  <body>
-    
-    <h1>{{str}}</h1>
+<body>
+	<div>
+		<div id="navbar">
+		  <ul>
+		  <li><a href="https://github.com/Markus-Go/ip-countryside/tree/master_python">Github</a></li>
+		  <li><a href="">Doku</a></li>
+		  <li><a href="">Contact</a></li>
+		  </ul>
+    	</div>
+		<h1>IP Countryside</h1>
+		<table class = "center">
+			<tr>
+				<td class = right>IP-Adresse:</td>
+				<td class = left> <form method="GET">
+      				<input name="ip" size = 15 value ="{{ip}}" 
+					  pattern="((^\s*((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))\s*$)|(^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$))">
+      				<input type="submit" value="Find">
+    				</form>
+				</td>
+			</tr>
+			<tr>
+				<td class = right>Countryflag:</td>
+				<td class = left><img src="../static/img/{{flag}}.gif" alt ="" width="16px" height="11px"></td>
+			</tr>
+			<tr>
+				<td class = right>Country Code:</td>
+				<td class = left>{{flag}}</td>
+			</tr>
+			<tr>
+				<td class = right>Country:</td>
+				<td class = left>{{country}}</td>
+			</tr>
+			<tr>
+				<td class = right>Comment:</td>
+				<td class = left>{{comment}}</td>
+			</tr>
+		</table>
+		<div id="map"></div>
+		<script src="{{ url_for('static', filename='javascript/main.js') }}"></script>
+    	<script>
 
-    <h1>Country Lookup Demo</h1>
-    
-    <p>Here we provide an on-line demo of our 
-      <a href="https://github.com/Markus-Go/ip-countryside/" target="_BLANK">ip-countryside</a> project.
-    </p>
-    
-  </body>
+		if ("{{isValid}}" == "True") {
+        	L.marker(["{{lat}}", "{{lon}}"]).addTo(map)
+        	.bindPopup("{{ip}}")
+        	.openPopup();
+		}
 
+		</script>
+
+	</div>
+</body>
 </html>

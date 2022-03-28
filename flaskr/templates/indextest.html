@@ -1,0 +1,68 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <title>IP Countryside</title>
+
+        <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
+        
+        <link rel="stylesheet" href="{{url_for('static', filename='styles/styles.css')}}">
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+        integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+        crossorigin=""/>
+        <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+        integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+        crossorigin=""></script>
+</head>
+
+<body>
+	<div>
+		<div id="navbar"> 
+		  <ul> 
+		  <li><a href="https://github.com/Markus-Go/ip-countryside/tree/master_python">Github</a></li> 
+		  <li><a href="">Doku</a></li> 
+		  <li><a href="">Contact</a></li> 
+		  </ul> 
+    	</div>
+		<h1>IP Countryside</h1>
+		<table class = "center">
+			<tr>
+				<td>IP-Adresse:</td>
+				<td> <form method="POST">
+      				<input name="text">
+      				<input type="submit">
+    				</form>
+				</td>
+			</tr>
+			<tr>
+				<td>Countryflag:</td>
+				<td><img src="../../../../../static/img/{{flag}}.gif" alt =""></td>
+			</tr>
+			<tr>
+				<td>ISO Country CODE:</td>
+				<td>Hier kommt der Ländercode</td>	
+			</tr>
+			<tr>
+				<td>Country:</td>
+				<td>Hier steht dann das Land</td>
+			</tr>
+			<tr>
+				<td>Comment:</td>
+				<td>Hier könnte ein Kommentar stehen</td>
+			</tr>
+		</table>
+		<div id="map"></div>    
+		<script src="{{ url_for('static', filename='javascript/main.js') }}"></script>
+    	<script>
+
+        L.marker(["{{lat}}", "{{lon}}"]).addTo(map)
+        .bindPopup("{{ip}}")
+        .openPopup();
+
+		</script>
+	
+	</div>
+</body>
+</html>
