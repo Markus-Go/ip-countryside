@@ -15,9 +15,12 @@ from config import *;
 # Number of entries is much less than the inetnum files ... 
 
 # @TODO Speed up parsing process of inetnum files                                           # Aufwand 13/20
+    # 01. External Sorting Method (Merge Sort) 
+    # 02. Parsing should be done by multiple threads
 
 # @TODO Bugfix in parse_inet_group() -> see todo there ...                                  # Auufwand 5 
 
+# @TODO add city information (when available) to the method parse_inet parse_inet_group     # Aufwand 3
 
 # @TODO Bugfix in parse_inet_group                                                          # Aufwand 3
 # first record of final database is 0.0.0.0 |255.255.255.255
@@ -253,10 +256,9 @@ def parse_inet_group(entry):
     
     if 'descr' in record:
         descr = record['descr']
-        return [range_start, range_end, country, descr, registry]
+        return [range_start, range_end, country, registry, descr]
 
-    else:
-        return [range_start, range_end, country, registry]
+    return [range_start, range_end, country, registry]
 
 
 # ==============================================================================
@@ -270,8 +272,8 @@ def sort_file(file):
     try:
 
         # save all records into a list
-        with open(file, "r") as f:
-             
+        with open(file, "r", encoding='utf-8', errors='ignore') as f:
+            
             for line in f:
                 
                 if line.startswith("\n"):
@@ -293,7 +295,7 @@ def sort_file(file):
         records.sort()
 
         # write it back 
-        with open(file, "w") as f:
+        with open(file, "w", encoding='utf-8', errors='ignore') as f:
             
             for record in records:
                
@@ -316,7 +318,7 @@ def check_for_overlaping(file):
     try:
 
         # save all records in stripped_del_file into a list
-        with open(file, "r") as f:
+        with open(file, "r", encoding='utf-8', errors='ignore') as f:
             
             for line in f:
                 
@@ -355,7 +357,7 @@ def check_for_overlaping(file):
         records = list(records)
 
 
-        with open(file, "w") as f:
+        with open(file, "w", encoding='utf-8', errors='ignore') as f:
             
             for record in records:
                 
@@ -530,7 +532,7 @@ def run_parser():
     print("finished\n")
 
     end_time = time.time()
-    print("Total time needed was:", f'{end_time - start_time:.3f}', "s\n")  # (Mohammed: 182,006s) (Thomas: 1112,578s)
+    print("Total time needed was:", f'{end_time - start_time:.3f}', "s\n")  # (Mohammad: 182,006s) (Thomas: 1112,578s)
 
     #deltempFiles()
     return 0
