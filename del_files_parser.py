@@ -1,31 +1,55 @@
 from multiprocessing.sharedctypes import Value
-from queue import Empty
 import re
 import os
 import shutil
 import fileinput
 import ipaddress
 import time
-from warnings import catch_warnings
 
 from config import *;
 
 
-# Simple version ohne Optimierung und Städte unterstützung
+# Release 0.9.0 coming soon ... 
 
-# @TODO Flussdiagramm vom Parser erstellen 
+# @TODO Bugfix in parse_inet_group() -> see todo there ...                                  # Auufwand 5 
 
-# @TODO overlapping beispiele genauer anschauen und versuchen zu reproduzieren ...
+# @TODO CLeanup: remove temporary files (e.g. merged_*_files, stripped_*_files)             # Aufwand 1
+# after they been processed
 
-# @TODO vergleichen der Ergebnisse mit den von dem 
-# alten Tool 
+# @TODO Bugfix in parse_inet_group                                                          # Aufwand 3
+# first record of final database is 0.0.0.0 |255.255.255.255
+# must be removed this file is coming from the apnic.db.inetnum
 
-# @TODO MAX MindDB API anschauen benutzen 
+# @TODO overlapping beispiele genauer anschauen und versuchen zu reproduzieren ...          # Aufwand 5/8
+# code was simply taken 1:1 from c++ code !!!!!!
+
+# @TODO handle_ranges_overlapp append elements which will change the sorted                 # Aufwand 5
+# database. Therefore replace the append command by insert, you neeed to get 
+# the index at which the record must be added. 
+
+# @TODO define global names for the final database in config and use it in parser.py        # Aufwand 1
+
+# @TODO add city information (when available) to the method parse_inet parse_inet_group     # Aufwand 3
+
+# @TODO vergleichen der Ergebnisse mit den von dem alten Tool                               # Aufwand 5
+
+# @TODO get_country_code() &  ip_in_range() auslagern:                                      # Aufwand 1
+# Diese beide Methoden sollten wo anderes ausgelagert werden,                           
+# da sie nur die Datenbank nachher auslesen und nach einem Eintrag 
+# suchen und somit eigentlich nicht zum Parser gehören.
+
+# @TODO later add parameters for the command line interpreter (cli)                         # Aufwand 5
+
+# @TODO comment and write description for each method & clean code                          # Aufwand 5 
+
+# @TODO Flussdiagramm vom Parser erstellen                                                  # Aufwand 5
+
+# @TODO MAX MindDB API importieren zum testen und anschauen benutzen                        # Aufwand 8
 # wie sie die Objekte einer Datenbank aufbauen ....
 
 
 # ==============================================================================
-# Delegation files methods 
+# Delegation parsing methods 
 
 
 def merge_del_files():
@@ -63,7 +87,7 @@ def parse_del_files():
             for line in fileinput.input(MERGED_DEL_FILE):
                 
                 # get rid of all lines without "ip entry" before parsing
-                if re.search(IPV4_PATTERN, line) :#or re.search(IPV6_PATTERN, line):
+                if re.search(IPV4_PATTERN, line) or re.search(IPV6_PATTERN, line):
 
                     line = parse_del_line(line)
                     line = "|".join(map(str, line))
@@ -90,6 +114,10 @@ def parse_del_line(line):
     network_ip  = record[3]
     mask        = record[4]
     status      = record[6]
+
+    # convert name of ripencc (parser compatibilty) 
+    if registry.lower() == 'ripencc':
+        registry = "RIPE"
 
     # calculate int value of network ip
     range_start = int(ipaddress.ip_address(network_ip))
@@ -213,6 +241,9 @@ def parse_inet_group(entry):
                 if key == "country":
                     record[key] = value.split("#")[0]
 
+                if key == "source" and value == "ripencc":
+                    record[key] = "RIPE"
+
     # extract the ranges out of record
     range       = record['inetnum'].split("-")
     range_start = int(ipaddress.ip_address(range[0]))
@@ -245,10 +276,10 @@ def sort_file(file):
                 line = line.split("|")
             
                 record = [
-                    int(line[0]),           # get range_start
-                    int(line[1]),           # get range_end
-                    line[2],                # country
-                    line[3]                 # register 
+                    int(line[0]),                   # get range_start
+                    int(line[1]),                   # get range_end
+                    line[2],                        # country
+                    line[3].rstrip('\n').upper()    # register 
                 ]
 
                 records.append(record)
@@ -263,7 +294,7 @@ def sort_file(file):
             for record in records:
                
                line = "|".join(map(str, record))
-               line = line + '\n'
+               line = line + "\n"
                f.write(line)
                
 
@@ -284,14 +315,17 @@ def check_for_overlaping(file):
         with open(file, "r") as f:
             
             for line in f:
-               
+                
+                if line.startswith("\n"):
+                    continue
+
                 line = line.split("|")
                 
                 record = [
-                    int(line[0]),           # range_start
-                    int(line[1]),           # range_end
-                    line[2],                # country
-                    line[3].rstrip('\n')    # register
+                    int(line[0]),                   # range_start
+                    int(line[1]),                   # range_end
+                    line[2],                        # country
+                    line[3].rstrip('\n').upper()    # register
                 ]
                 
                 records.append(record)
@@ -299,16 +333,18 @@ def check_for_overlaping(file):
         # check if two records overlapps
         # since that the list is sorted, overlapping
         # may only occur in successive records (record[i] and record[i+1])
+        nr_of_overlapps = 0
         for i in range(1, len(records)-1):
             
-            # @TODO IndexError !!!
             if records[i] and records[i-1]:
-
+                
                 overlapp = ip_ranges_overlapp(records[i-1], records[i])
                 
                 if overlapp :
-                    
+                    nr_of_overlapps = nr_of_overlapps + 1
                     handle_ranges_overlapp(records[i-1], records[i], records)
+
+        print(f"{nr_of_overlapps} overlapps were found and resolved")
 
         # remove all empty items (unvalid) ...
         records = filter(lambda record: len(record) > 0, records)
@@ -331,11 +367,11 @@ def check_for_overlaping(file):
 
 def handle_ranges_overlapp(record_1, record_2, records):
     
-    # if the cause of the conflict is ripencc then change ripencc 
+    # if the cause of the conflict is RIPE then change RIPE 
     # entry to remove the confilct
-    if record_1[3]  == "ripencc" or record_2[3] == "ripencc":
+    if record_1[3]  == "RIPE" or record_2[3] == "RIPE":
 
-        if record_1[3] == "ripencc":
+        if record_1[3] == "RIPE":
 
             if (record_1[0] == record_2[0] and record_1[1] == record_2[1]) or record_1[1] < record_2[1]:
                 record_1 = record_1.clear()
@@ -419,7 +455,7 @@ def merge_databases():
 
 # ==============================================================================
 # @TODO 
-# Diese beide Methoden sollten wo anderes ausgelagert werden,
+# Diese beide Methoden sollten wo anderes ausgelagert werden (e.g. lib.py),
 # da sie nur die Datenbank nachher auslesen und nach einem Eintrag 
 # suchen und somit eigentlich nicht zum Parser gehören.
 
@@ -459,54 +495,49 @@ def run_parser():
     start_time = time.time()
     print("parsing Started\n")
 
-    # print("merging delegation files ...")
-    # merge_del_files()          # Fügt del Dateien in del_merged zusammen
-    # print("merging finished\n")
+    print("merging delegation files ...")
+    merge_del_files()          
+    print("merging finished\n")
 
-    # print("parsing delegation files ...")
-    # parse_del_files()           # formatiert del_merged 
-    # print("parsing finished\n")
+    print("parsing delegation files ...")
+    parse_del_files()           
+    print("parsing finished\n")
 
-    # print("merging inetnum files ...")
-    # merge_inet_files()
-    # print("merging finished\n")
+    print("merging inetnum files ...")
+    merge_inet_files()
+    print("merging finished\n")
 
-    # print("parsing inetnum files ...")
-    # parse_inet_files()
-    # print("parsing finished\n")
+    print("parsing inetnum files ...")
+    parse_inet_files()
+    print("parsing finished\n")
 
-    # print("creating the final database ...")
-    # merge_databases()
+    print("creating the final database ...")
+    merge_databases()
     
-    # print("sorting the final data base")
-    # sort_file(os.path.join(DEL_FILES_DIR, "ip2country_2.db"))
-    
-    check_for_overlaping(os.path.join(DEL_FILES_DIR, "ip2country_2.db"))
-    
+    print("sorting the final data base\n")
+    sort_file(os.path.join(DEL_FILES_DIR, "ip2country_2.db"))
+    #check_for_overlaping(os.path.join(DEL_FILES_DIR, "ip2country_2.db"))
+    print("finished\n")
+
     end_time = time.time()
-    print("parsing finished", end = " -> ")
-    print("Total time needed was:", f'{end_time - start_time:.3f}', "s")
+    print("Total time needed was:", f'{end_time - start_time:.3f}', "s\n")  # 182.006 s
 
     return 0
 
-#run_parser()
+run_parser()
 
 
-# l = ['202.6.91.0-202.6.91.255', 'NLA', 'AU', 'ASSIGNEDPORTABLE', '2008-09-04T06', 'APNIC', ['NationalLibraryofAustralia ParkesPlace CanberraACT2600']]
+# For testing, prints overlapps in the database:
 
-
-# Overlapping example
-# ripencc|DE|ipv4|202.71.144.0|2048|19990830|allocated
-# apnic|IN|ipv4|202.71.144.0|2048|19990830|allocated
-
-
-# save all records in stripped_del_file into a list
-# with open(STRIPPED_INET_FILE, "r") as f:
+# with open(os.path.join(DEL_FILES_DIR, "ip2country_2.db"), "r") as f:
 
 #     records = [] 
 
 #     for line in f:
         
+#         if line.startswith("\n"):
+#             continue
+
 #         line = line.split("|")
         
 #         record = [
@@ -529,4 +560,3 @@ def run_parser():
 #         print(records[i-1])
 #         print(records[i])
 #         print("\n")
-#         break

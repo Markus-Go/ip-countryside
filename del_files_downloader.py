@@ -16,7 +16,7 @@ from config import *
 # and compares it to the one in the subfolder del_files ... 
 
 # @TODO after unzipping inetnum.gz delete the zipped files ...
-# something like that os.remove(os.path.join(DEL_FILES_DIR, "*.gz"))
+# something like that os.remove(os.path.join(DEL_FILES_DIR, "{ALL_ZIPPED_FILESs}.gz"))
 
 def download_del_files(force):
    """
