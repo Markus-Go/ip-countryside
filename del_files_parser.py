@@ -11,10 +11,10 @@ from config import *;
 
 # Release 0.9.0 coming soon ... 
 
+# @TODO Speed up parsing process of inetnum files                                           # Aufwand 13/20
+
 # @TODO Bugfix in parse_inet_group() -> see todo there ...                                  # Auufwand 5 
 
-# @TODO CLeanup: remove temporary files (e.g. merged_*_files, stripped_*_files)             # Aufwand 1
-# after they been processed
 
 # @TODO Bugfix in parse_inet_group                                                          # Aufwand 3
 # first record of final database is 0.0.0.0 |255.255.255.255
@@ -26,10 +26,6 @@ from config import *;
 # @TODO handle_ranges_overlapp append elements which will change the sorted                 # Aufwand 5
 # database. Therefore replace the append command by insert, you neeed to get 
 # the index at which the record must be added. 
-
-# @TODO define global names for the final database in config and use it in parser.py        # Aufwand 1
-
-# @TODO add city information (when available) to the method parse_inet parse_inet_group     # Aufwand 3
 
 # @TODO vergleichen der Ergebnisse mit den von dem alten Tool                               # Aufwand 5
 
@@ -251,8 +247,13 @@ def parse_inet_group(entry):
     
     country     = record['country']
     registry    = record['source']
+    
+    if 'descr' in record:
+        descr = record['descr']
+        return [range_start, range_end, country, descr, registry]
 
-    return [range_start, range_end, country, registry]
+    else:
+        return [range_start, range_end, country, registry]
 
 
 # ==============================================================================
@@ -435,7 +436,7 @@ def merge_databases():
     try: 
         
         # merges the delegated files into a one file 
-        with open(os.path.join(DEL_FILES_DIR, "ip2country_2.db"), "wb") as f:
+        with open(IP2COUNTRY_DB, "wb") as f:
             
             for del_file in [ 
                     os.path.join(STRIPPED_DEL_FILE), 
@@ -490,6 +491,12 @@ def ip_in_range(ip, start, end):
 # Parser Entry Method 
 # @TODO later add parameters for the command line interpreter (cli)
 
+def deltempFiles():
+    os.remove(MERGED_DEL_FILE)
+    os.remove(STRIPPED_DEL_FILE)
+    os.remove(MERGED_INET_FILE)
+    os.remove(STRIPPED_INET_FILE)
+
 def run_parser():
 
     start_time = time.time()
@@ -515,13 +522,14 @@ def run_parser():
     merge_databases()
     
     print("sorting the final data base\n")
-    sort_file(os.path.join(DEL_FILES_DIR, "ip2country_2.db"))
-    #check_for_overlaping(os.path.join(DEL_FILES_DIR, "ip2country_2.db"))
+    sort_file(IP2COUNTRY_DB)
+    check_for_overlaping(IP2COUNTRY_DB)
     print("finished\n")
 
     end_time = time.time()
     print("Total time needed was:", f'{end_time - start_time:.3f}', "s\n")  # (Mohammed: 182,006s) (Thomas: 1112,578s)
 
+    #deltempFiles()
     return 0
 
 run_parser()
