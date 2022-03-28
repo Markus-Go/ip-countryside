@@ -11,6 +11,9 @@ from config import *;
 
 # Release 0.9.0 coming soon ... 
 
+# @TODO check if number of entries in ip2country_2.db is reasonable                         # Aufwand 5/8
+# Number of entries is much less than the inetnum files ... 
+
 # @TODO Speed up parsing process of inetnum files                                           # Aufwand 13/20
 
 # @TODO Bugfix in parse_inet_group() -> see todo there ...                                  # Auufwand 5 
