@@ -178,7 +178,6 @@ def parse_inet_files():
             line = line + '\n'
             stripped.write(line)
 
-    #os.remove(os.path.join(DEL_FILES_DIR, "merged_ine_file.txt"))
 
 # Returns block of data
 def get_groups(seq, group_by):
@@ -188,8 +187,8 @@ def get_groups(seq, group_by):
    
     for line in seq:
         
-        # escape comments (starts with '#') and empty lines
-        # escape unrelevant data in ripe.inetnum begins with '%'
+        # escape comments (starts with '#')
+        # escape unrelevant data in ripe.inetnum (starts with '%')
         if line.startswith("#") or line.startswith("%"): 
             continue
 
@@ -501,6 +500,7 @@ def deltempFiles():
     os.remove(STRIPPED_DEL_FILE)
     os.remove(MERGED_INET_FILE)
     os.remove(STRIPPED_INET_FILE)
+
 
 def run_parser():
 
