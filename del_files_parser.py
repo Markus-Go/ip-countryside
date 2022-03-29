@@ -15,15 +15,11 @@ from config import *;
 # @TODO check if number of entries in ip2country_2.db is reasonable                         # Aufwand 5/8
 # Number of entries is much less than the inetnum files ... 
 
-# @TODO Speed up parsing process of inetnum files                                           # Aufwand 13/20
-    # 01. External Sorting Method (Merge Sort) 
-    # 02. Parsing should be done by multiple threads
-
 # @TODO Bugfix in parse_inet_group() -> see todo there ...                                  # Auufwand 5 
 
 # @TODO add city information (when available) to the method parse_inet parse_inet_group     # Aufwand 3
 
-# @TODO Bugfix in parse_inet_group                                                          # Aufwand 3
+# @TODO Bugfix in parse_inet_group                                                          # Aufwand 3 ->  Done
 # first record of final database is 0.0.0.0 |255.255.255.255
 # must be removed this file is coming from the apnic.db.inetnum
 
@@ -50,6 +46,10 @@ from config import *;
 # @TODO MAX MindDB API importieren zum testen und anschauen benutzen                        # Aufwand 8
 # wie sie die Objekte einer Datenbank aufbauen ....
 
+
+# @TODO Speed up parsing process of inetnum files                                           # Aufwand 13/20
+    # 01. External Sorting Method (Merge Sort) 
+    # 02. Parsing should be done by multiple threads
 
 # ==============================================================================
 # Delegation parsing methods 
@@ -111,8 +111,8 @@ def parse_del_line(line):
     record = line.split("|")
 
     # extract infromation from line
-    registry    = record[0]
-    country     = record[1]
+    registry    = record[0].upper()
+    country     = record[1].upper()
     type        = record[2]
     network_ip  = record[3]
     mask        = record[4]
@@ -124,27 +124,15 @@ def parse_del_line(line):
 
     # parse ipv4 
     if type == "ipv4":
-
-        # check if ip is not for public use (reserved)
-        is_reserved = not ipaddress.IPv4Network(network_ip).is_global
-        if is_reserved:
-            return []
-
         range_end = range_start + int(mask) - 1
 
     # parse ipv6 
     if  type == "ipv6":
         net = ipaddress.IPv6Network(network_ip + "/" + mask)
-
-        # check if ip is not for public use (reserved)
-        is_reserved = not net.is_global
-        if is_reserved:
-            return []
-
         range_end = int(net.broadcast_address)
 
-    # convert name of ripencc (parser compatibilty) 
-    if registry.lower() == 'ripencc':
+    # convert registry from ripencc to RIPE (parser compatibilty) 
+    if registry == 'RIPENCC':
         registry = "RIPE"
 
     # if line doesn't have any country
@@ -166,7 +154,7 @@ def merge_inet_files():
             
             for inet_file in [ 
                     os.path.join(DEL_FILES_DIR, APNIC['inet_fname']), 
-                    os.path.join(DEL_FILES_DIR, RIPE['inet_fname'])
+                    # os.path.join(DEL_FILES_DIR, RIPE['inet_fname'])
                     ]:
 
                 with open(inet_file, "rb") as source:
@@ -250,7 +238,12 @@ def parse_inet_group(entry):
                     record[key] = value
                 
                 if key == "descr":
+                    
+                    if value.split() == "ThisnetworkrangeisnotallocatedtoAPNIC":
+                        return []
+                    
                     record[key] = record[key] + " " + value
+                    
 
                 # if a country line has comment, remove the comment
                 if key == "country":
@@ -260,7 +253,7 @@ def parse_inet_group(entry):
                     record[key] = "RIPE"
 
     # extract the ranges out of record
-    range       = record['inetnum'].split("-")
+    range = record['inetnum'].split("-")
 
     if re.match(IPV4_PATTERN, range[0]):
         
@@ -363,7 +356,7 @@ def check_for_overlaping(file):
                     continue
 
                 line = line.split("|")
-                
+              
                 record = [
                     int(line[0]),                   # get range_start
                     int(line[1]),                   # get range_end
@@ -376,7 +369,7 @@ def check_for_overlaping(file):
                     record.append(line[4].rstrip("\n"))
 
                 records.append(record)
-            
+
         # check if two records overlapps
         # since that the list is sorted, overlapping
         # may only occur in successive records (record[i] and record[i+1])
@@ -420,10 +413,12 @@ def handle_ranges_overlapp(record_1, record_2, records):
 
         if record_1[3] == "RIPE":
 
-            if (record_1[0] == record_2[0] and record_1[1] == record_2[1]) or record_1[1] < record_2[1]:
+            #	[3393687552, 3393689599, 'DE', 'RIPE']
+	        #   [3393687552, 3393689599, 'IN', 'APNIC'] 
+            if record_1[0] == record_2[0] and (record_1[1] == record_2[1] or record_1[1] < record_2[1]):
                 record_1 = record_1.clear()
 
-            elif (record_1[0] < record_2[0] and record_1[1] == record_2[1]) or (record_1[1] >= record_2[0] and record_1[1] <= record_2[1]):
+            elif record_1[0] < record_2[0] and (record_1[1] == record_2[1] or (record_1[1] >= record_2[0] and record_1[1] <= record_2[1])):
                 record_1[1] = record_2[0] - 1
 
             elif record_1[0] < record_2[0] and record_1[1] > record_2[1]:
@@ -452,10 +447,10 @@ def handle_ranges_overlapp(record_1, record_2, records):
     # first entry that cause the conflict        
     else: 
 
-        if (record_1[0] == record_2[0] and record_1[1] == record_2[1]) or record_1[1] < record_2[1]:
+        if record_1[0] == record_2[0] and (record_1[1] == record_2[1] or record_1[1] < record_2[1]):
             record_1 = record_1.clear()
 
-        elif (record_1[0] < record_2[0] and record_1[1] == record_2[1]) or (record_1[1] >= record_2[0] and record_1[1] <= record_2[1]):
+        elif record_1[0] < record_2[0] and (record_1[1] == record_2[1] or (record_1[1] >= record_2[0] and record_1[1] <= record_2[1])):
             record_1[1] = record_2[0] - 1
 
         elif record_1[0] < record_2[0] and record_1[1] > record_2[1]:
@@ -553,15 +548,15 @@ def deltempFiles():
 def run_parser():
 
     start_time = time.time()
-    print("parsing Started\n")
+    # print("parsing Started\n")
 
-    print("merging delegation files ...")
-    merge_del_files()          
-    print("merging finished\n")
+    # print("merging delegation files ...")
+    # merge_del_files()          
+    # print("merging finished\n")
 
-    print("parsing delegation files ...")
-    parse_del_files()           
-    print("parsing finished\n")
+    # print("parsing delegation files ...")
+    # parse_del_files()           
+    # print("parsing finished\n")
 
     print("merging inetnum files ...")
     merge_inet_files()
@@ -571,13 +566,15 @@ def run_parser():
     parse_inet_files()
     print("parsing finished\n")
 
-    print("creating the final database ...")
-    merge_databases()
-    print("sorting the final data base\n")
+    sort_file(STRIPPED_INET_FILE)
+
+    # print("creating the final database ...")
+    # merge_databases()
+    # print("sorting the final data base\n")
     
-    sort_file(IP2COUNTRY_DB)
-    check_for_overlaping(IP2COUNTRY_DB)
-    print("finished\n")
+    # sort_file(IP2COUNTRY_DB)
+    # check_for_overlaping(IP2COUNTRY_DB)
+    # print("finished\n")
 
     end_time = time.time()
     print("Total time needed was:", f'{end_time - start_time:.3f}', "s\n")  # (Mohammad: 182,006s) (Thomas: 1112,578s)
@@ -589,14 +586,15 @@ run_parser()
 
 
 # For testing, prints overlapps in the database:
-def test():
+def test(file):
         
-    with open(IP2COUNTRY_DB, "r", encoding='utf-8', errors='ignore') as f:
+    with open(file, "r", encoding='utf-8', errors='ignore') as f:
 
         records = [] 
 
         for line in f:
             
+           
             if line.startswith("\n"):
                 continue
 
@@ -610,7 +608,8 @@ def test():
             ]
 
             records.append(record)
-    
+          
+
     # check if two records overlapps
     # since that the list is sorted, overlapping
     # may only occur in successive records (record[i] and record[i+1])
@@ -627,5 +626,5 @@ def test():
             print("\n")
             nr_overlapps = nr_overlapps + 1
 
-#test()
 
+#test(STRIPPED_INET_FILE)
