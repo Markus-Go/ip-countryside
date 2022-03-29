@@ -14,9 +14,13 @@
 		<script>
 
 			if ("{{isValid}}" == "True") {
-				L.marker(["{{lat}}", "{{lon}}"]).addTo(map)
-				.bindPopup("{{ip}}")
-				.openPopup();
+				
+				lat = "{{lat}}"
+				lon = "{{lon}}"
+				ip  = "{{ip}}"
+
+				init_map(MAP, lat, lon, ip)
+				
 			}
 	
 		</script>

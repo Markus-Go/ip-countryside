@@ -28,7 +28,8 @@
             <script type="module" src="{{ ASSET_URL }}"></script>
         {% endassets %}
 
-        
+        <script src="{{ url_for('static', filename='src/js/main.js') }}"></script>
+
     </head>
 
     {% include 'components/navbar.html' %}
