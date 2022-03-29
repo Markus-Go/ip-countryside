@@ -9,16 +9,7 @@
         <title>IP Countryside</title>
         
         <!-- Favicon -->
-        <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='/img/favicon.ico') }}">
-
-        <!-- Bootstrap CSS and JS and Custom SCSS -->
-        {% assets "scss_all" %}
-        <link rel=stylesheet type=text/css href="{{ ASSET_URL }}">
-        {% endassets %}
-
-        {% assets "js_all" %}
-        <script src="{{ ASSET_URL }}"></script>
-        {% endassets %}
+        <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='src/img/favicon.ico') }}">
 
         <!-- Library for interactive maps -->
         <link rel="stylesheet" type=text/css href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
@@ -28,6 +19,14 @@
             integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
             crossorigin=""></script>
 
+        <!-- Bootstrap CSS and JS and Custom SCSS -->
+        {% assets "scss_all" %}
+            <link rel=stylesheet type=text/css href="{{ ASSET_URL }}">
+        {% endassets %}
+
+        {% assets "js_all" %}
+            <script type="module" src="{{ ASSET_URL }}"></script>
+        {% endassets %}
 
         
     </head>

@@ -9,12 +9,13 @@ Installation & Dependencies:
   - pip install Flask
   - pip install Flask-Assets libsass
   - pip install geopy
-   
+  - pip install jsmin 
+  
   static assets uses node_modules, if you can install all 
   dependencies simlpy with the following command:
 
   - npm install 
-s
+
 Starting the app:
 
   - $env:FLASK_APP = "flaskr"  

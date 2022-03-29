@@ -14,6 +14,7 @@ from geopy.geocoders import Nominatim
 from del_files_parser import get_country_code;
 
 def create_app(test_config=None):
+
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
 
@@ -28,7 +29,7 @@ def create_app(test_config=None):
 
     if test_config is None:
         # load the instance config, if it exists, when not testing
-        app.config.from_pyfile('flask_config.py', silent=True)
+        app.config.from_pyfile('config.py', silent=True)
     else:
         # load the test config if passed in
         app.config.from_mapping(test_config)
@@ -50,17 +51,23 @@ def create_app(test_config=None):
         "node_modules/popper.js/dist/popper.min.js",
         "node_modules/bootstrap/dist/js/bootstrap.min.js",
         filters="jsmin",
-        output="javascript/generated.js"
+        output="dist/javascript/generated.js"
     )
-    assets.register("js_all", js)
-
+  
     # Bootstrap and SCSS files
     scss = Bundle(
-        "assets/main.scss",  # 1. will read this scss file and generate a css file based on it
+        "src/scss//main.scss",  # 1. will read this scss file and generate a css file based on it
         filters="libsass",   # using this filter: https://webassets.readthedocs.io/en/latest/builtin_filters.html#libsass
-        output="styles/scss-generated.css"  # 2. and output the generated .css file in the static/css folder
+        output="dist/css/scss-generated.css",  # 2. and output the generated .css file in the static/css folder
+        extra={'rel': 'stylesheet/css'}
     )
+    
+    assets.register("js_all", js)
     assets.register("scss_all", scss) 
+
+    # Remove when not developing !!!!!!!!!!
+    js.build()
+    scss.build()
 
     @app.route('/', methods=['GET'])
     def index():
@@ -133,10 +140,5 @@ def create_app(test_config=None):
         output = render_template('index.html', ip=ipaddress, lat=lat, lon=lon, add=address, flag=flag, country=country, comment=comment, isValid=isValid) 
         
         return output 
-
-    @app.after_request
-    def apply_caching(response):
-        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-        return response
 
     return app
