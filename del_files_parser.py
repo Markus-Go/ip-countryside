@@ -280,18 +280,16 @@ def sort_file(file):
 
                 line = line.split("|")
                 
-                # check if there is a description to be added
-                descr = ''
-                if len(line) >= 5:
-                    descr = line[4]
-
                 record = [
                     int(line[0]),                   # get range_start
                     int(line[1]),                   # get range_end
                     line[2],                        # country
-                    line[3].upper(),                # register
-                    descr.rstrip('\n')              # description
+                    line[3].upper().rstrip('\n'),   # register
                 ]
+
+                # check if there is a description to be added
+                if len(line) >= 5:
+                    record.append(line[4].rstrip("\n"))
 
                 records.append(record)
 
@@ -344,7 +342,11 @@ def check_for_overlaping(file):
                     line[3].upper(),                # register
                     descr.rstrip('\n')              # description
                 ]
-                
+
+                # check if there is a description to be added
+                if len(line) >= 5:
+                    record.append(line[4].rstrip("\n"))
+
                 records.append(record)
             
         # check if two records overlapps
@@ -555,35 +557,44 @@ run_parser()
 
 
 # For testing, prints overlapps in the database:
-
-# with open(os.path.join(DEL_FILES_DIR, "ip2country_2.db"), "r") as f:
-
-#     records = [] 
-
-#     for line in f:
+def test():
         
-#         if line.startswith("\n"):
-#             continue
+    with open(IP2COUNTRY_DB, "r", encoding='utf-8', errors='ignore') as f:
 
-#         line = line.split("|")
-        
-#         record = [
-#             int(line[0]),           # range_start
-#             int(line[1]),           # range_end
-#             line[2],                # country
-#             line[3].rstrip('\n')    # register
-#         ]
+        records = [] 
 
-#         records.append(record)
+        for line in f:
+            
+            if line.startswith("\n"):
+                continue
 
-# # check if two records overlapps
-# # since that the list is sorted, overlapping
-# # may only occur in successive records (record[i] and record[i+1])
-# for i in range(1, len(records)-1):
+            line = line.split("|")
+            
+            record = [
+                int(line[0]),           # range_start
+                int(line[1]),           # range_end
+                line[2],                # country
+                line[3].rstrip('\n')    # register
+            ]
 
-#     overlapp = ip_ranges_overlapp(records[i-1], records[i])
+            records.append(record)
     
-#     if overlapp :
-#         print(records[i-1])
-#         print(records[i])
-#         print("\n")
+    # check if two records overlapps
+    # since that the list is sorted, overlapping
+    # may only occur in successive records (record[i] and record[i+1])
+    nr_overlapps = 0
+    for i in range(1, len(records)-1):
+
+        overlapp = ip_ranges_overlapp(records[i-1], records[i])
+        
+        if overlapp :
+            if nr_overlapps == 10:
+                break
+            print(records[i-1])
+            print(records[i])
+            print("\n")
+            nr_overlapps = nr_overlapps + 1
+
+#test()
+# ip = ipaddress.IPv4Network("10.0.0.0")
+# print( ip.is_global)
