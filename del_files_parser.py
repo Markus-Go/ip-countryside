@@ -279,12 +279,18 @@ def sort_file(file):
                     continue
 
                 line = line.split("|")
-            
+                
+                # check if there is a description to be added
+                descr = ''
+                if len(line) >= 5:
+                    descr = line[4]
+
                 record = [
                     int(line[0]),                   # get range_start
                     int(line[1]),                   # get range_end
                     line[2],                        # country
-                    line[3].rstrip('\n').upper()    # register 
+                    line[3].upper(),                # register
+                    descr.rstrip('\n')              # description
                 ]
 
                 records.append(record)
@@ -326,11 +332,17 @@ def check_for_overlaping(file):
 
                 line = line.split("|")
                 
+               # check if there is a description to be added
+                descr = ''
+                if len(line) >= 5:
+                    descr = line[4]
+
                 record = [
-                    int(line[0]),                   # range_start
-                    int(line[1]),                   # range_end
+                    int(line[0]),                   # get range_start
+                    int(line[1]),                   # get range_end
                     line[2],                        # country
-                    line[3].rstrip('\n').upper()    # register
+                    line[3].upper(),                # register
+                    descr.rstrip('\n')              # description
                 ]
                 
                 records.append(record)
@@ -389,7 +401,8 @@ def handle_ranges_overlapp(record_1, record_2, records):
                     record_2[1] + 1,
                     record_1[1],
                     record_1[2],
-                    record_1[3]
+                    record_1[3],
+                    record_1[4]
                 ]
                 
                 records.append(record)
@@ -418,7 +431,8 @@ def handle_ranges_overlapp(record_1, record_2, records):
                 record_2[1] + 1,
                 record_1[1],
                 record_1[2],
-                record_1[3]
+                record_1[3],
+                record_1[4]
             ]
             
             records.append(record)
@@ -507,29 +521,29 @@ def run_parser():
     start_time = time.time()
     print("parsing Started\n")
 
-    print("merging delegation files ...")
-    merge_del_files()          
-    print("merging finished\n")
+    # print("merging delegation files ...")
+    # merge_del_files()          
+    # print("merging finished\n")
 
-    print("parsing delegation files ...")
-    parse_del_files()           
-    print("parsing finished\n")
+    # print("parsing delegation files ...")
+    # parse_del_files()           
+    # print("parsing finished\n")
 
-    print("merging inetnum files ...")
-    merge_inet_files()
-    print("merging finished\n")
+    # print("merging inetnum files ...")
+    # merge_inet_files()
+    # print("merging finished\n")
 
-    print("parsing inetnum files ...")
-    parse_inet_files()
-    print("parsing finished\n")
+    # print("parsing inetnum files ...")
+    # parse_inet_files()
+    # print("parsing finished\n")
 
-    print("creating the final database ...")
-    merge_databases()
+    # print("creating the final database ...")
+    # merge_databases()
+    # print("sorting the final data base\n")
     
-    print("sorting the final data base\n")
-    sort_file(IP2COUNTRY_DB)
-    check_for_overlaping(IP2COUNTRY_DB)
-    print("finished\n")
+    # sort_file(IP2COUNTRY_DB)
+    # check_for_overlaping(IP2COUNTRY_DB)
+    # print("finished\n")
 
     end_time = time.time()
     print("Total time needed was:", f'{end_time - start_time:.3f}', "s\n")  # (Mohammad: 182,006s) (Thomas: 1112,578s)
@@ -537,7 +551,7 @@ def run_parser():
     #deltempFiles()
     return 0
 
-#run_parser()
+run_parser()
 
 
 # For testing, prints overlapps in the database:
