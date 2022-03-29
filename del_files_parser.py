@@ -1,3 +1,4 @@
+from ast import Subscript
 from msilib.schema import Error
 from multiprocessing.sharedctypes import Value
 import re
@@ -6,6 +7,7 @@ import shutil
 import fileinput
 import ipaddress
 import time
+import json
 
 from config import *;
 
@@ -538,6 +540,37 @@ def ip_in_range(ip, start, end):
 
     return start <= ip_int <= end 
 
+def run_toJSON(file):
+    data = {}
+    with open (file,  encoding='utf-8', errors='ignore') as db:
+        with open ('del_files/db.json', 'w',  encoding='utf-8', errors='ignore') as f:
+            f.write("[\n")
+            for line in db:
+                line = line.strip('\n')
+                item = line.split("|")
+                range_start = item[0]
+                range_end   = item[1]
+                country     = item[2]
+                registry   = item[3]
+                try:
+                    # check if there is a description to be added
+                    if len(item) >= 5:
+                        subscription   = item[4]
+
+                except :
+                    subscription =''
+                data = {
+                    'ipFrom': range_start,
+                    'ipTo': range_end,
+                    'CountryCode': country,
+                    'registry': registry,
+                    'subscription': subscription
+                }
+                f.write(json.dumps(data, indent=4))
+                f.write(",\n")
+            f.write("]")
+    return 0
+
 
 # ==============================================================================
 # Parser Entry Method 
@@ -582,11 +615,14 @@ def run_parser():
     end_time = time.time()
     print("Total time needed was:", f'{end_time - start_time:.3f}', "s\n")  # (Mohammad: 182,006s) (Thomas: 1112,578s)
 
+    start_time = time.time()
+    run_toJSON(IP2COUNTRY_DB)
+    end_time = time.time()
+    print("Total time needed was:", f'{end_time - start_time:.3f}', "s\n") 
     #deltempFiles()
     return 0
 
 run_parser()
-
 
 # For testing, prints overlapps in the database:
 def test():
