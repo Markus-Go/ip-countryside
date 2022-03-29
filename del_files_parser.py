@@ -1,3 +1,4 @@
+from msilib.schema import Error
 from multiprocessing.sharedctypes import Value
 import re
 import os
@@ -117,26 +118,39 @@ def parse_del_line(line):
     mask        = record[4]
     status      = record[6]
 
-    # convert name of ripencc (parser compatibilty) 
-    if registry.lower() == 'ripencc':
-        registry = "RIPE"
-
     # calculate int value of network ip
     range_start = int(ipaddress.ip_address(network_ip))
     range_end   = 0
 
-    # if line doesn't have any country
-    if status == "reserved" or status == "available":
-        country = "ZZ"
-    
     # parse ipv4 
     if type == "ipv4":
+
+        # check if ip is not for public use (reserved)
+        is_reserved = not ipaddress.IPv4Network(network_ip).is_global
+        if is_reserved:
+            return []
+
         range_end = range_start + int(mask) - 1
 
     # parse ipv6 
     if  type == "ipv6":
         net = ipaddress.IPv6Network(network_ip + "/" + mask)
+
+        # check if ip is not for public use (reserved)
+        is_reserved = not net.is_global
+        if is_reserved:
+            return []
+
         range_end = int(net.broadcast_address)
+
+    # convert name of ripencc (parser compatibilty) 
+    if registry.lower() == 'ripencc':
+        registry = "RIPE"
+
+    # if line doesn't have any country
+    if status == "reserved" or status == "available":
+        country = "ZZ"
+    
 
     return [range_start, range_end, country, registry]
 
@@ -247,6 +261,20 @@ def parse_inet_group(entry):
 
     # extract the ranges out of record
     range       = record['inetnum'].split("-")
+
+    if re.match(IPV4_PATTERN, range[0]):
+        
+        is_reserved = not ipaddress.IPv4Network(range[0]).is_global
+        if is_reserved:
+            return []
+
+    elif re.match(IPV6_PATTERN, range[0]):
+        
+        is_reserved = not ipaddress.IPv6Network(range[0]).is_global
+        if is_reserved:
+            return []
+
+
     range_start = int(ipaddress.ip_address(range[0]))
     range_end   = int(ipaddress.ip_address(range[1]))
     
@@ -287,9 +315,15 @@ def sort_file(file):
                     line[3].upper().rstrip('\n'),   # register
                 ]
 
-                # check if there is a description to be added
-                if len(line) >= 5:
-                    record.append(line[4].rstrip("\n"))
+                try:
+
+                    # check if there is a description to be added
+                    if len(line) >= 5:
+                        record.append(line[4].rstrip("\n"))
+
+                except Error as e:
+                    print(line)
+                    print(len(line))
 
                 records.append(record)
 
@@ -330,17 +364,11 @@ def check_for_overlaping(file):
 
                 line = line.split("|")
                 
-               # check if there is a description to be added
-                descr = ''
-                if len(line) >= 5:
-                    descr = line[4]
-
                 record = [
                     int(line[0]),                   # get range_start
                     int(line[1]),                   # get range_end
                     line[2],                        # country
-                    line[3].upper(),                # register
-                    descr.rstrip('\n')              # description
+                    line[3].upper().rstrip('\n'),   # register
                 ]
 
                 # check if there is a description to be added
@@ -404,9 +432,11 @@ def handle_ranges_overlapp(record_1, record_2, records):
                     record_1[1],
                     record_1[2],
                     record_1[3],
-                    record_1[4]
                 ]
                 
+                if(len(record) >= 5):
+                    record[4] = record_1[4] 
+
                 records.append(record)
                 record_1[1] = record_2[0] - 1
 
@@ -434,9 +464,11 @@ def handle_ranges_overlapp(record_1, record_2, records):
                 record_1[1],
                 record_1[2],
                 record_1[3],
-                record_1[4]
             ]
             
+            if(len(record) >= 5):
+                record[4] = record_1[4] 
+
             records.append(record)
             record_1[1] = record_2[0] - 1
 
@@ -523,29 +555,29 @@ def run_parser():
     start_time = time.time()
     print("parsing Started\n")
 
-    # print("merging delegation files ...")
-    # merge_del_files()          
-    # print("merging finished\n")
+    print("merging delegation files ...")
+    merge_del_files()          
+    print("merging finished\n")
 
-    # print("parsing delegation files ...")
-    # parse_del_files()           
-    # print("parsing finished\n")
+    print("parsing delegation files ...")
+    parse_del_files()           
+    print("parsing finished\n")
 
-    # print("merging inetnum files ...")
-    # merge_inet_files()
-    # print("merging finished\n")
+    print("merging inetnum files ...")
+    merge_inet_files()
+    print("merging finished\n")
 
-    # print("parsing inetnum files ...")
-    # parse_inet_files()
-    # print("parsing finished\n")
+    print("parsing inetnum files ...")
+    parse_inet_files()
+    print("parsing finished\n")
 
-    # print("creating the final database ...")
-    # merge_databases()
-    # print("sorting the final data base\n")
+    print("creating the final database ...")
+    merge_databases()
+    print("sorting the final data base\n")
     
-    # sort_file(IP2COUNTRY_DB)
-    # check_for_overlaping(IP2COUNTRY_DB)
-    # print("finished\n")
+    sort_file(IP2COUNTRY_DB)
+    check_for_overlaping(IP2COUNTRY_DB)
+    print("finished\n")
 
     end_time = time.time()
     print("Total time needed was:", f'{end_time - start_time:.3f}', "s\n")  # (Mohammad: 182,006s) (Thomas: 1112,578s)
@@ -596,5 +628,4 @@ def test():
             nr_overlapps = nr_overlapps + 1
 
 #test()
-# ip = ipaddress.IPv4Network("10.0.0.0")
-# print( ip.is_global)
+

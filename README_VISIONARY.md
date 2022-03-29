@@ -7,10 +7,9 @@ Installation & Dependencies:
   - py -3 -m venv venv
   - venv\Scripts\activate
   - pip install Flask
-  - pip install Flask-Assets libsass
   - pip install geopy
+  - pip install Flask-Assets libsass
   - pip install jsmin 
-  - pip install geotext 
 
   static assets uses node_modules, if you can install all 
   dependencies simlpy with the following command:
