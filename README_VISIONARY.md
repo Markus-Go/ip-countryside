@@ -1,14 +1,22 @@
 Flask framework:
 
-Installation:
+Installation & Dependencies:
 
-  Windows (Power Shell & Visual Studio Code) in the root directory 
-  of the project run:
+  run theses commands in the root directory:
 
   - py -3 -m venv venv
   - venv\Scripts\activate
   - pip install Flask
-  - pip install Flask-Scss
+  - pip install Flask-Assets libsass
+  - pip install geopy
+   
+  static assets uses node_modules, if you can install all 
+  dependencies simlpy with the following command:
+
+  - npm install 
+s
+Starting the app:
+
   - $env:FLASK_APP = "flaskr"  
   - $env:FLASK_ENV = "development"
   - flask run
@@ -17,12 +25,17 @@ Installation:
  
   Docs: https://flask.palletsprojects.com/en/2.0.x/patterns/packages/
 
+Templating:
+
+  Flask uses for its templating Jinja. It worth it to have a look
+  there! (see https://jinja.palletsprojects.com/en/3.0.x/templates/)
+
 Useful Tools: 
 
   - Extension for csv reader for vs code: https://marketplace.visualstudio.com/items?itemName=mechatroner.rainbow-csv
   - Rainbow Extension has an integrated SQL-like interface for csv files: https://github.com/mechatroner/RBQL
   - Large Text File Viewer: https://web.archive.org/web/20140908181354fw_/http://swiftgear.com/ltfviewer/features.html
-
+  - Jinja Templating: https://jinja.palletsprojects.com/en/3.0.x/templates/
 
 ===================================================================
 

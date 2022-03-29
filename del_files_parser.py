@@ -537,7 +537,7 @@ def run_parser():
     #deltempFiles()
     return 0
 
-run_parser()
+#run_parser()
 
 
 # For testing, prints overlapps in the database:

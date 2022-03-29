@@ -1,0 +1,76 @@
+@import "../node_modules/bootstrap/scss/bootstrap";
+
+@import "navbar";
+@import "footer";
+
+$background:#1a1e21;
+
+body {
+   
+   display:flex; 
+   flex-direction:column; 
+   min-height: 100vh;
+
+   .wrapper {
+        background-color: $background;
+        flex: 1 0 auto;
+        color: $primary;
+
+   }
+
+   .main {
+
+        margin: 2em;
+
+        
+   }
+
+}
+
+.col {
+    padding: 1em;
+}
+
+#map {
+    height: 100%;
+    width: 100%;
+    min-height: 281px;
+
+} 
+
+.table {
+    
+    th {
+        vertical-align: middle;
+    }
+}
+
+.navbar {
+    
+    padding: 1em;
+
+    .navbar-brand {
+
+    }
+
+    .collapse.navbar-collapse {
+
+        flex-direction: row-reverse;
+
+        .navbar-nav {
+
+        }
+    
+    }
+
+}
+
+footer {
+    
+    margin-top: auto;
+
+    .copyright {
+        background-color: rgba(0, 0, 0, 0.2);
+    }
+
+}
