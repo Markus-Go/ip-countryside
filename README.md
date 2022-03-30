@@ -1,4 +1,4 @@
-ip-countryside
+# IP-Countryside
 ==============
 
 This tool creates an ip-to-country database, which can be used in multiple 
@@ -12,12 +12,12 @@ it here</a> (updated weekly).</b>
 
 A demo can be found <a href='https://www.goldiges.de/ip-countryside/' target='_BLANK'>here</a>.
 
-Detailed Information
+## Detailed Information
 --------------------
 ....
 
 
-Prerequisite
+## Prerequisite
 ------------
 
 The following files are required to build the database. The script 'ip_countryside_downloader.py' 
@@ -39,10 +39,10 @@ can be used for downloading them:
    ftp://ftp.afrinic.net/pub/stats/afrinic/delegated-afrinic-latest
 
 
-Installation:
+## Installation:
 ------------
 
-Installation & Dependencies:
+  Dependencies:
 
   run theses commands in the root directory:
 
@@ -54,9 +54,9 @@ Installation & Dependencies:
   - pip install jsmin 
   - pip install md5hash
 
+  
   Flask framework:
   
-
   static assets uses node_modules, if you can install all 
   dependencies simlpy with the following command:
 
@@ -84,34 +84,19 @@ Installation & Dependencies:
     - Large Text File Viewer: https://web.archive.org/web/20140908181354fw_/http://swiftgear.com/ltfviewer/features.html
     - Jinja Templating: https://jinja.palletsprojects.com/en/3.0.x/templates/
 
-How it works
+## How it works
 ------------
 ...
 
-
 ===================================================================
 
-Project structure:
-------------------
-.
-├── flaskrstatic               # Compiled files
-  ├── static                   # Source files 
-  ├── templates                # HTML files
-  ├── __init__                 # Contains Flask application object creation
-├── LICENSE
-├── README_VISIONARY.md
-└── README.md
-
-
-===================================================================
-
-Copyright/ License/ Credits
+## Copyright/ License/ Credits
 ---------------------------
 
 Copyright 2006-2007 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz  
 Copyright 2008-2022 Markus Goldstein
 
-This is free software. Licensed under the [Apache License, Version 2.0](LICENSE.txt).  
+This is free software. Licensed under the MIT (LICENSE.txt).  
 There is NO WARRANTY, to the extent permitted by law.
 
 ![http://madm.dfki.de/lib/tpl/dfki/images/logo.jpg](http://madm.dfki.de/lib/tpl/dfki/images/logo.jpg)

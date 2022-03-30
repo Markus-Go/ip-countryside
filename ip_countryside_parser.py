@@ -7,6 +7,7 @@ import time
 
 from config import *;
 from ip_countryside_db import *;
+from ip_countryside_utilities import *;
 
 # Release 0.9.0 coming soon ... 
 
@@ -610,4 +611,4 @@ def run_parser():
     return 0
 
 
-run_parser()
+#run_parser()
