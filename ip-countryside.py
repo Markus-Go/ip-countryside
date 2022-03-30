@@ -3,11 +3,11 @@ from socket import IP_TOS
 from  ip_countryside_downloader import *
 from  ip_countryside_parser import *
 
-isExitCmd = false
+isExitCmd = False
 
 def main():
     while isExitCmd:
-        if false:
+        if False:
             download_del_files()
     return 0 
 

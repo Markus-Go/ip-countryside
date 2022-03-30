@@ -562,7 +562,7 @@ def merge_databases():
         print(e)
 
 
-def deltempFiles():
+def delete_temp_files():
     os.remove(MERGED_DEL_FILE)
     os.remove(STRIPPED_DEL_FILE)
     os.remove(MERGED_INET_FILE)
@@ -602,7 +602,7 @@ def run_parser():
     print("finished\n")
 
     extract_as_json(IP2COUNTRY_DB)
-    deltempFiles()
+    delete_temp_files()
     
     end_time = time.time()
     print("Total time needed was:", f'{end_time - start_time:.3f}', "s\n") 
