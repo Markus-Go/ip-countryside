@@ -6,8 +6,6 @@ import ipaddress
 import time
 import json
 
-from numpy import rec
-
 from config import *;
 
 
