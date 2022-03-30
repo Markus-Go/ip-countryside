@@ -539,7 +539,7 @@ def ip_ranges_overlapp(record_1, record_2):
     return  range_end_1 >= range_start_2 
  
 
-def merge_databases():
+def merge_stripped_files():
     
     try: 
         
@@ -594,7 +594,7 @@ def run_parser():
     print("parsing finished\n")
  
     print("creating the final database ...")
-    merge_databases()
+    merge_stripped_files()
     print("sorting the final data base\n")
     
     sort_file(IP2COUNTRY_DB)

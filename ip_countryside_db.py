@@ -75,8 +75,8 @@ def extract_as_json(file=IP2COUNTRY_DB):
             for recod in records:
                 
                 data = {
-                    'ipFrom':        recod[0],
-                    'ipTo':          recod[1],
+                    'IpFrom':        recod[0],
+                    'IpTo':          recod[1],
                     'CountryCode':   recod[2],
                     'Registry':      recod[3],
                     'Description':   recod[4],

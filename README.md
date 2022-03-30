@@ -20,7 +20,7 @@ Detailed Information
 Prerequisite
 ------------
 
-The following files are required to build the database. The script 'ip_countryside_downloader.sh' 
+The following files are required to build the database. The script 'ip_countryside_downloader.py' 
 can be used for downloading them:
 
 1.  ripencc Delegation file  
