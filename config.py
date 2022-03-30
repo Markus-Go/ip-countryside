@@ -21,19 +21,22 @@ RECORD = ["inetnum", "netname", "descr", "country", "status", "created", "last-m
 AFRINIC = {
     'host':           "ftp.afrinic.net",
     'del_cwd':        "pub/stats/afrinic/",
-    'del_fname':      "delegated-afrinic-latest"
+    'del_fname':      "delegated-afrinic-latest",
+    'del_md5':        "delegated-afrinic-latest.md5"
 }
 
 LACNIC = {
     'host':           "ftp.lacnic.net",
     'del_cwd':        "pub/stats/lacnic/",
-    'del_fname':      "delegated-lacnic-latest"
+    'del_fname':      "delegated-lacnic-latest",
+    'del_md5':        "delegated-lacnic-latest.md5"
 }
 
 ARIN = {
     'host':           "ftp.arin.net",
     'del_cwd':        "pub/stats/arin/",
-    'del_fname':      "delegated-arin-extended-latest"
+    'del_fname':      "delegated-arin-extended-latest",
+    'del_md5':        "delegated-arin-extended-latest.md5"
 }
 
 APNIC = {
@@ -42,7 +45,8 @@ APNIC = {
     'del_fname':      "delegated-apnic-latest",
     'inet_cwd':       "/apnic/whois/",
     'inet_fname_gz':  "apnic.db.inetnum.gz",
-    'inet_fname':     "apnic.db.inetnum"
+    'inet_fname':     "apnic.db.inetnum",
+    'del_md5':        "delegated-apnic-latest.md5"
 }
 
 RIPE = {
@@ -51,7 +55,8 @@ RIPE = {
     'del_fname':      "delegated-ripencc-latest",
     'inet_cwd':       "/ripe/dbase/split/",
     'inet_fname_gz':  "ripe.db.inetnum.gz",
-    'inet_fname':     "ripe.db.inetnum"
+    'inet_fname':     "ripe.db.inetnum",
+    'del_md5':        "delegated-ripencc-latest.md5"
 }
 
 

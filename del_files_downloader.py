@@ -4,6 +4,7 @@ import shutil
 import os
 
 from config import *
+from md5hash import scan
 
 # @TODO check if download is needed ... 
 # as the last update time of the files doesn't
@@ -15,8 +16,37 @@ from config import *
 # it gets with ftp the corresponding md5 file from the server
 # and compares it to the one in the subfolder del_files ... 
 
+def download_del_files_needed(host, cwd, delFileName):
+    ftp = ftplib.FTP(host)
+    ftp.login()
+    print("Connected to " + host)
+    ftp.cwd(cwd)
+    localfile = delFileName
+
+    if not os.path.exists(delFileName):
+        open(delFileName,'wb').close
+
+    with open('temp', "wb") as file:
+        print("Downloading file " + delFileName)
+        ftp.retrbinary('RETR %s' % delFileName, file.write)
+        print("Finished.")
+
+    if (scan(delFileName) == scan('temp')):
+        ftp.close()
+        print("No changes in file\n")
+        return False
+    else:
+        with open(localfile, "wb") as file:
+            ftp.retrbinary('RETR %s' % delFileName, file.write)
+        ftp.close()
+        print("New changes in file\n")
+        return True
+
+    
+
 # @TODO after unzipping inetnum.gz delete the zipped files ...
 # something like that os.remove(os.path.join(DEL_FILES_DIR, "{ALL_ZIPPED_FILESs}.gz"))
+# is done after download finished
 
 def download_del_files(force):
    """
@@ -57,13 +87,20 @@ def download_del_files(force):
         print(e)
 
    # actual downloading is done in download_del_file function ... 
-   download_del_file(AFRINIC["host"], AFRINIC["del_cwd"], AFRINIC["del_fname"])
-   download_del_file(LACNIC["host"],  LACNIC["del_cwd"],  LACNIC["del_fname"])
-   download_del_file(ARIN["host"],    ARIN["del_cwd"],    ARIN["del_fname"])
-   download_del_file(APNIC["host"],   APNIC["del_cwd"],   APNIC["del_fname"])
-   download_del_file(APNIC["host"],   APNIC["inet_cwd"],  APNIC["inet_fname_gz"], True)
-   download_del_file(RIPE["host"],    RIPE["del_cwd"],    RIPE["del_fname"])
-   download_del_file(RIPE["host"],    RIPE["inet_cwd"],   RIPE["inet_fname_gz"], True)
+   if(download_del_files_needed(AFRINIC["host"], AFRINIC["del_cwd"], AFRINIC["del_md5"])):
+       download_del_file(AFRINIC["host"], AFRINIC["del_cwd"], AFRINIC["del_fname"])
+   if(download_del_files_needed(LACNIC["host"], LACNIC["del_cwd"], LACNIC["del_md5"])):
+      download_del_file(LACNIC["host"],  LACNIC["del_cwd"],  LACNIC["del_fname"])
+   if(download_del_files_needed(ARIN["host"],    ARIN["del_cwd"],    ARIN["del_md5"])):
+      download_del_file(ARIN["host"],    ARIN["del_cwd"],    ARIN["del_fname"])
+   if(download_del_files_needed(APNIC["host"],   APNIC["del_cwd"],   APNIC["del_md5"])):
+      download_del_file(APNIC["host"],   APNIC["del_cwd"],   APNIC["del_fname"])
+   #download_del_file(APNIC["host"],   APNIC["inet_cwd"],  APNIC["inet_fname_gz"], True)
+   if(download_del_files_needed(RIPE["host"],    RIPE["del_cwd"],    RIPE["del_md5"])):
+      download_del_file(RIPE["host"],    RIPE["del_cwd"],    RIPE["del_fname"])
+   #download_del_file(RIPE["host"],    RIPE["inet_cwd"],   RIPE["inet_fname_gz"], True)
+   
+   os.remove(os.path.join(DEL_FILES_DIR, 'temp'))
 
    # return to project's root directory 
    os.chdir("../")
@@ -127,15 +164,12 @@ def download_del_file(host, cwd, delFileName, zipped=False):
                 with open(localfile, "wb") as f_out:
 
                     shutil.copyfileobj(f_in, f_out)
+            #delete zipFile
+            #os.remove(os.path.join(DEL_FILES_DIR, delFileName))
 
     except IOError as e:
 
         print(e)
-
-
-def download_del_files_needed():
-    return False
-
 
 def run_downloader(force=True):
 
