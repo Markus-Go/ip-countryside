@@ -6,17 +6,26 @@ import os
 from config import *
 from md5hash import scan
 
-# @TODO check if download is needed ... 
-# as the last update time of the files doesn't
-# mean necessarily that the content has cahnged (was tested)
-# it's better to compare the md5 values
-# Therefore:
-# download the md5 values for each delegation file
-# implement the method download_del_file_needed() so that 
-# it gets with ftp the corresponding md5 file from the server
-# and compares it to the one in the subfolder del_files ... 
+
+# @TODO is it possible to reduce number of ftp connections ?                -> Aufwand 5/8
+# currently we're opening more than 10 ftp connections
+# maybe we can reduce this number to only 6 ? (If this is more
+# efficient)
+
+# @TODO provide an force optional parameter which forces the download
+# even if download is not neeeded!                                          -> Aufwand 5/8
+
+
+# @TODO since that there aren't any md5 files for the inetnum databases
+# we can use the date instead -> this COULD reduce number of downloads      -> Aufwand 5/8 
+   
+
+# @TODO when project is done:
+# remove the comment where the zipped files are deleted after downloading 
+
 
 def download_del_files_needed(host, cwd, delFileName):
+    
     ftp = ftplib.FTP(host)
     ftp.login()
     print("Connected to " + host)
@@ -42,12 +51,7 @@ def download_del_files_needed(host, cwd, delFileName):
         print("New changes in file\n")
         return True
 
-    
-
-# @TODO after unzipping inetnum.gz delete the zipped files ...
-# something like that os.remove(os.path.join(DEL_FILES_DIR, "{ALL_ZIPPED_FILESs}.gz"))
-# is done after download finished
-
+ 
 def download_del_files(force):
    """
    Downloads all delegation files
@@ -95,15 +99,16 @@ def download_del_files(force):
       download_del_file(ARIN["host"],    ARIN["del_cwd"],    ARIN["del_fname"])
    if(download_del_files_needed(APNIC["host"],   APNIC["del_cwd"],   APNIC["del_md5"])):
       download_del_file(APNIC["host"],   APNIC["del_cwd"],   APNIC["del_fname"])
-   #download_del_file(APNIC["host"],   APNIC["inet_cwd"],  APNIC["inet_fname_gz"], True)
    if(download_del_files_needed(RIPE["host"],    RIPE["del_cwd"],    RIPE["del_md5"])):
       download_del_file(RIPE["host"],    RIPE["del_cwd"],    RIPE["del_fname"])
+   
+   #download_del_file(APNIC["host"],   APNIC["inet_cwd"],  APNIC["inet_fname_gz"], True)
    #download_del_file(RIPE["host"],    RIPE["inet_cwd"],   RIPE["inet_fname_gz"], True)
    
    os.remove(os.path.join(DEL_FILES_DIR, 'temp'))
 
    # return to project's root directory 
-   os.chdir("../")
+   os.chdir(ROOT_DIR)
 
    return True
 
@@ -164,6 +169,7 @@ def download_del_file(host, cwd, delFileName, zipped=False):
                 with open(localfile, "wb") as f_out:
 
                     shutil.copyfileobj(f_in, f_out)
+
             #delete zipFile
             #os.remove(os.path.join(DEL_FILES_DIR, delFileName))
 
@@ -171,8 +177,10 @@ def download_del_file(host, cwd, delFileName, zipped=False):
 
         print(e)
 
+
 def run_downloader(force=True):
 
     download_del_files(force)
+
 
 run_downloader()

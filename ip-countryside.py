@@ -1,7 +1,7 @@
 from socket import IP_TOS
 
-from  del_files_downloader import *
-from  del_files_parser import *
+from  ip_countryside_downloader import *
+from  ip_countryside_parser import *
 
 isExitCmd = false
 

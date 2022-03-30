@@ -11,7 +11,7 @@ from flask_assets import Bundle, Environment
 from geopy.geocoders import Nominatim
 
 
-from del_files_parser import get_country_code;
+from ip_countryside_utilities import get_record_by_ip;
 
 def create_app(test_config=None):
 
@@ -76,7 +76,7 @@ def create_app(test_config=None):
             ipaddress = request.args.get('ip')
             if ipaddress == "":
                 ipaddress = os.popen('curl -s ifconfig.me').readline()
-                temp = get_country_code(ipaddress)
+                temp = get_record_by_ip(ipaddress)
                 country = temp[0] 
                 flag = temp[1]
                 address = temp[0]
@@ -93,7 +93,7 @@ def create_app(test_config=None):
                     lon = 0
                     comment = "Karte aktuell Leider nicht Verfügbar"
             else:
-                temp = get_country_code(ipaddress)
+                temp = get_record_by_ip(ipaddress)
                 if temp == False:
                     country = "-" 
                     flag = "Arrr"
@@ -120,7 +120,7 @@ def create_app(test_config=None):
                         comment = "Karte aktuell Leider nicht Verfügbar"
         else:
             ipaddress = os.popen('curl -s ifconfig.me').readline()
-            temp = get_country_code(ipaddress)
+            temp = get_record_by_ip(ipaddress)
             country = temp[0] 
             flag = temp[1]
             address = temp[0]

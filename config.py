@@ -9,6 +9,8 @@ STRIPPED_DEL_FILE      = os.path.join(DEL_FILES_DIR, "stipped_del_file.csv")
 MERGED_INET_FILE       = os.path.join(DEL_FILES_DIR, "merged_inet_file.csv")
 STRIPPED_INET_FILE     = os.path.join(DEL_FILES_DIR, "stipped_inet_file.csv")
 IP2COUNTRY_DB          = os.path.join(DEL_FILES_DIR, "ip2country_2.db")
+IP2COUNTRY_DB_JSON     = os.path.join(DEL_FILES_DIR, "db.json")
+IP2COUNTRY_DB_YAML     = os.path.join(DEL_FILES_DIR, "db.yaml")
 
 # Regex for matching ip versions
 IPV4_PATTERN = "[0-9]+(?:\.[0-9]+){3}"
@@ -43,20 +45,20 @@ APNIC = {
     'host':           "ftp.apnic.net",
     'del_cwd':        "pub/stats/apnic/",
     'del_fname':      "delegated-apnic-latest",
+    'del_md5':        "delegated-apnic-latest.md5",
     'inet_cwd':       "/apnic/whois/",
     'inet_fname_gz':  "apnic.db.inetnum.gz",
     'inet_fname':     "apnic.db.inetnum",
-    'del_md5':        "delegated-apnic-latest.md5"
 }
 
 RIPE = {
     'host':           "ftp.ripe.net",
     'del_cwd':        "ripe/stats/",
     'del_fname':      "delegated-ripencc-latest",
+    'del_md5':        "delegated-ripencc-latest.md5",
     'inet_cwd':       "/ripe/dbase/split/",
     'inet_fname_gz':  "ripe.db.inetnum.gz",
     'inet_fname':     "ripe.db.inetnum",
-    'del_md5':        "delegated-ripencc-latest.md5"
 }
 
 

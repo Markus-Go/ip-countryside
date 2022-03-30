@@ -4,45 +4,21 @@ import shutil
 import fileinput
 import ipaddress
 import time
-import json
 
 from config import *;
-
+from ip_countryside_db import *;
 
 # Release 0.9.0 coming soon ... 
 
-# hoch priorisiert
-# @TODO modify the methods to make the code readable                                        # Aufwand 5  -> Done
-# for example add the method read_db_record which read lines
-# from both database types (del & inet). And returns a record
-# The method must be robust for number of available entries.
 
 # @TODO handle_ranges_overlapp() have now a structure to modify the data                    # Aufwand 5
 # base records. (The PDF can be helpful)           
 # Info: we need to know which entries should be removed. 
 # One can also take date into consideration.
 
-
-# @TODO check if number of entries in ip2country_2.db is reasonable                         # Aufwand 5/8 -> Done
-# Number of entries is much less than the inetnum files ... 
-
-
 # @TODO Bugfix in parse_inet_group() -> see todo there ...                                  # Auufwand 5 
 
-
-# @TODO Bugfix in parse_inet_group                                                          # Aufwand 3 ->  Done
-# first record of final database is 0.0.0.0 |255.255.255.255
-# must be removed this file is coming from the apnic.db.inetnum
-
-
 # @TODO vergleichen der Ergebnisse mit den von dem alten Tool                               # Aufwand 5
-
-
-# @TODO get_country_code() &  ip_in_range() auslagern:                                      # Aufwand 1
-# Diese beide Methoden sollten wo anderes ausgelagert werden,                           
-# da sie nur die Datenbank nachher auslesen und nach einem Eintrag 
-# suchen und somit eigentlich nicht zum Parser gehören.
-
 
 # @TODO comment and write description for each method & clean code                          # Aufwand 5 
 
@@ -57,7 +33,7 @@ from config import *;
     # 01. External Sorting Method (Merge Sort) 
     # 02. Parsing should be done by multiple threads
 
-# @TODO add city information (when available) to the method parse_inet parse_inet_group     # Aufwand 3
+# @TODO add city information (when available) to the method parse_inet parse_inet_group     # Aufwand 21
 
 # ==============================================================================
 # Delegation parsing methods 
@@ -100,7 +76,9 @@ def parse_del_files():
                 # get rid of all lines without "ip entry" before parsing
                 if re.search(IPV4_PATTERN, line) or re.search(IPV6_PATTERN, line):
 
+                    # actual parsing of a line is done in parse_del_line
                     line = parse_del_line(line)
+
                     line = "|".join(map(str, line))
                     line = line + '\n'
                     f.write(line)
@@ -123,6 +101,7 @@ def parse_del_line(line):
     country     = record[1].upper()
     type        = record[2]
     network_ip  = record[3]
+    date        = record[5]
     mask        = record[4]
     status      = record[6]
 
@@ -132,23 +111,34 @@ def parse_del_line(line):
 
     # parse ipv4 
     if type == "ipv4":
+        
+        is_reserved = not ipaddress.IPv4Network(range_start).is_global
+        if is_reserved:
+            return []
+
         range_end = range_start + int(mask) - 1
+        
 
     # parse ipv6 
     if  type == "ipv6":
+
         net = ipaddress.IPv6Network(network_ip + "/" + mask)
+        is_reserved = not net.is_global
+        if is_reserved:
+            return []
+        
         range_end = int(net.broadcast_address)
 
-    # convert registry from ripencc to RIPE (parser compatibilty) 
+    # convert registry from RIPENCC to RIPE (parser compatibilty) 
     if registry == 'RIPENCC':
         registry = "RIPE"
 
     # if line doesn't have any country
-    if status == "reserved" or status == "available":
+    if status == 'reserved' or status == "available":
         country = "ZZ"
     
 
-    return [range_start, range_end, country, registry]
+    return [range_start, range_end, country, registry, date]
 
 
 # ==============================================================================
@@ -181,7 +171,7 @@ def parse_inet_files():
     
     with open(MERGED_INET_FILE, 'r', encoding='utf-8', errors='ignore') as merged, open (STRIPPED_INET_FILE, 'w', encoding='utf-8', errors='ignore') as stripped:
         
-        for group in get_groups(merged, "inetnum"):
+        for group in get_inet_group(merged, "inetnum"):
             
             line = parse_inet_group(group)
             line = "|".join(map(str, line))
@@ -190,7 +180,7 @@ def parse_inet_files():
 
 
 # Returns block of data
-def get_groups(seq, group_by):
+def get_inet_group(seq, group_by):
     
     data = []
     
@@ -235,9 +225,11 @@ def parse_inet_group(entry):
     # if there are dupplicate items append their values ..
     # this will prevent deleting items with same key (e.g. descr)
     for item in entry:
-      
-            # @TODO without this IndexError is thrown
+            
+            # @TODO viele Einträge mit nur einem Index
+            # Warum ? -> parser-bug ? investigate ... 
             if(len(item) > 1):
+                
 
                 key = item[0]
                 value = item[1]
@@ -259,6 +251,7 @@ def parse_inet_group(entry):
 
                 if key == "source" and value == "ripencc":
                     record[key] = "RIPE"
+            
 
     # extract the ranges out of record
     range = record['inetnum'].split("-")
@@ -293,16 +286,12 @@ def parse_inet_group(entry):
 # Help Methods used for all files ... 
 
 
-def sort_file(file):
+def sort_file(file=IP2COUNTRY_DB):
 
     records = []
 
     # get records from final db
     records = read_db(file)
-
-    records = filter(lambda record: len(record) > 0, records)
-    
-    records = list(records)
 
     # sort this list
     records.sort()
@@ -325,7 +314,7 @@ def sort_file(file):
     return records
 
 
-def check_for_overlaping(file):
+def check_for_overlaping(file=IP2COUNTRY_DB):
     
     records = []
 
@@ -336,21 +325,16 @@ def check_for_overlaping(file):
     # since that the list is sorted, overlapping
     # may only occur in successive records (record[i] and record[i+1])
     nr_of_overlapps = 0
-    for i in range(1, len(records)-1):
+    for i in range(1, len(records)):
+            
+        overlapp = ip_ranges_overlapp(records[i-1], records[i])
         
-        if records[i] and records[i-1]:
+        if overlapp :
             
-            overlapp = ip_ranges_overlapp(records[i-1], records[i])
-            
-            if overlapp :
-                nr_of_overlapps = nr_of_overlapps + 1
-                handle_ranges_overlapp(records[i-1], records[i], records)
-
+            nr_of_overlapps = nr_of_overlapps + 1
+            handle_ranges_overlapp(records[i-1], records[i], records)
+              
     print(f"{nr_of_overlapps} overlapps detected")
-
-    # remove all empty items (unvalid) ...
-    records = filter(lambda record: len(record) > 0, records)
-    records = list(records)
 
     try:
     
@@ -408,6 +392,7 @@ def handle_ranges_overlapp(record_1, record_2, records):
                 # SS
                 # no cases !
                 else:
+                    
                     pass
 
         # case 2
@@ -554,53 +539,6 @@ def ip_ranges_overlapp(record_1, record_2):
     return  range_end_1 >= range_start_2 
  
 
-def read_db(file):
-
-    records = []
-    try:
-
-        # save all records into a list
-        with open(file, "r", encoding='utf-8', errors='ignore') as f:
-            
-            for line in f:
-                
-                record = read_db_record(line)
-                records.append(record)
-
-    except IOError as e:
-        
-        print(e)
-
-    return records
-
-
-def read_db_record(line):
-    
-    if line.startswith("\n"):
-        return []
-
-    line = line.split("|")
-
-    if(len(line) >= 3):
-
-        range_start     = int(line[0]) 
-        range_end       = int(line[1]) 
-        country         = line[2].upper()
-        registry        = line[3].rstrip('\n').upper()
-        descr           = ""
-        last_modified   = ""
-
-        if len(line) >= 5:
-            descr = line[4].rstrip("\n")
-
-        if len(line) >= 6:
-            last_modified = line[5].rstrip("\n")
-
-        return [range_start, range_end, country, registry, descr, last_modified]
-
-    return []
-    
-
 def merge_databases():
     
     try: 
@@ -623,74 +561,6 @@ def merge_databases():
         
         print(e)
 
-# ==============================================================================
-# @TODO 
-# Diese beide Methoden sollten wo anderes ausgelagert werden (e.g. lib.py),
-# da sie nur die Datenbank nachher auslesen und nach einem Eintrag 
-# suchen und somit eigentlich nicht zum Parser gehören.
-
-def get_country_code(ip):
-
-    with open(STRIPPED_DEL_FILE) as file:
-
-        for line in file:
-
-            item = line.split("|")
-
-            range_start = int(item[0])
-            range_end   = int(item[1])
-            country     = item[2].rstrip('\n')
-
-            if ip_in_range(ip, range_start, range_end):
-
-                return COUNTRY_DICTIONARY[country], country
-    
-    return False
-    
-
-def ip_in_range(ip, start, end):
-    
-    ip = ipaddress.ip_address(ip)
-    ip_int = int(ip)
-
-    return start <= ip_int <= end 
-
-
-def run_toJSON(file):
-    data = {}
-    with open (file,  encoding='utf-8', errors='ignore') as db:
-        with open ('del_files/db.json', 'w',  encoding='utf-8', errors='ignore') as f:
-            f.write("[\n")
-            for line in db:
-                line = line.strip('\n')
-                item = line.split("|")
-                range_start = item[0]
-                range_end   = item[1]
-                country     = item[2]
-                registry   = item[3]
-                try:
-                    # check if there is a description to be added
-                    if len(item) >= 5:
-                        subscription   = item[4]
-
-                except :
-                    subscription =''
-                data = {
-                    'ipFrom': range_start,
-                    'ipTo': range_end,
-                    'CountryCode': country,
-                    'registry': registry,
-                    'subscription': subscription
-                }
-                f.write(json.dumps(data, indent=4))
-                f.write(",\n")
-            f.write("]")
-    return 0
-
-
-# ==============================================================================
-# Parser Entry Method 
-# @TODO later add parameters for the command line interpreter (cli)
 
 def deltempFiles():
     os.remove(MERGED_DEL_FILE)
@@ -699,45 +569,45 @@ def deltempFiles():
     os.remove(STRIPPED_INET_FILE)
 
 
+# ==============================================================================
+# Parser Entry Method 
+
 def run_parser():
 
     start_time = time.time()
-    # print("parsing Started\n")
+    print("parsing Started\n")
 
-    # print("merging delegation files ...")
-    # merge_del_files()          
-    # print("merging finished\n")
+    print("merging delegation files ...")
+    merge_del_files()          
+    print("merging finished\n")
 
-    # print("parsing delegation files ...")
-    # parse_del_files()           
-    # print("parsing finished\n")
+    print("parsing delegation files ...")
+    parse_del_files()           
+    print("parsing finished\n")
 
-    # print("merging inetnum files ...")
-    # merge_inet_files()
-    # print("merging finished\n")
+    print("merging inetnum files ...")
+    merge_inet_files()
+    print("merging finished\n")
 
-    # print("parsing inetnum files ...")
-    # parse_inet_files()
-    # print("parsing finished\n")
+    print("parsing inetnum files ...")
+    parse_inet_files()
+    print("parsing finished\n")
  
-    # print("creating the final database ...")
-    # merge_databases()
-    # print("sorting the final data base\n")
+    print("creating the final database ...")
+    merge_databases()
+    print("sorting the final data base\n")
     
-    # sort_file(IP2COUNTRY_DB)
+    sort_file(IP2COUNTRY_DB)
     check_for_overlaping(IP2COUNTRY_DB)
     print("finished\n")
 
-    end_time = time.time()
-    print("Total time needed was:", f'{end_time - start_time:.3f}', "s\n")  # (Mohammad: 182,006s) (Thomas: 1112,578s)
-
-    start_time = time.time()
-    run_toJSON(IP2COUNTRY_DB)
+    extract_as_json(IP2COUNTRY_DB)
+    deltempFiles()
+    
     end_time = time.time()
     print("Total time needed was:", f'{end_time - start_time:.3f}', "s\n") 
-    #deltempFiles()
+    
     return 0
 
 
 run_parser()
-
