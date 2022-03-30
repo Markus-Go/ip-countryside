@@ -16,7 +16,7 @@ IPV6_PATTERN = "(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,
 
 # RIAS information
 
-PARSE_ITEMS = ["inetnum", "netname", "descr", "country", "status", "created", "last-modified", "source"]
+RECORD = ["inetnum", "netname", "descr", "country", "status", "created", "last-modified", "source"]
 
 AFRINIC = {
     'host':           "ftp.afrinic.net",
