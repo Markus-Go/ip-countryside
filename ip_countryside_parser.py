@@ -257,7 +257,7 @@ def parse_inet_group(entry):
                     if value.strip().upper() == "THIS NETWORK RANGE IS NOT ALLOCATED TO APNIC":
                         return []
                     
-                    record[key] = " " + value
+                    record[key] = value + " " 
 
                 # if a country line has comment, remove the comment
                 if key == "country":
@@ -627,7 +627,6 @@ def run_parser():
     
     print("finished\n")
 
-    # extract_as_json(IP2COUNTRY_DB)
     # delete_temp_files()
     
     end_time = time.time()
