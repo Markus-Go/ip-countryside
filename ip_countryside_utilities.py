@@ -4,8 +4,6 @@ import ipaddress
 # @TODO Method should call read_db() to get records in form of list     -> Aufwand 1
 # Use a filter instead  
 
-# @TODO Can we apply binary search on the list to find the record ?      -> Aufwand 5/8
-# Code efficiency
 def get_record_by_ip(ip):
 
     with open(IP2COUNTRY_DB, encoding='utf-8', errors='ignore') as file:

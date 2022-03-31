@@ -56,7 +56,7 @@ def create_app(test_config=None):
   
     # Bootstrap and SCSS files
     scss = Bundle(
-        "src/scss//main.scss",  # 1. will read this scss file and generate a css file based on it
+        "src/scss/main.scss",  # 1. will read this scss file and generate a css file based on it
         filters="libsass",   # using this filter: https://webassets.readthedocs.io/en/latest/builtin_filters.html#libsass
         output="dist/css/scss-generated.css",  # 2. and output the generated .css file in the static/css folder
         extra={'rel': 'stylesheet/css'}

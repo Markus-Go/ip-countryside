@@ -4,6 +4,7 @@ import shutil
 import fileinput
 import ipaddress
 import time
+from datetime import datetime
 
 from config import *;
 from ip_countryside_db import *;
@@ -78,11 +79,13 @@ def parse_del_files():
                 if re.search(IPV4_PATTERN, line) or re.search(IPV6_PATTERN, line):
 
                     # actual parsing of a line is done in parse_del_line
-                    line = parse_del_line(line)
+                    record = parse_del_line(line)
+                    
+                    if record:
 
-                    line = "|".join(map(str, line))
-                    line = line + '\n'
-                    f.write(line)
+                        line = "|".join(map(str, record))
+                        line = line + '\n'
+                        f.write(line)
 
     except IOError as e:
         
@@ -174,10 +177,12 @@ def parse_inet_files():
         
         for group in get_inet_group(merged, "inetnum"):
             
-            line = parse_inet_group(group)
-            line = "|".join(map(str, line))
-            line = line + '\n'
-            stripped.write(line)
+            record = parse_inet_group(group)
+            
+            if record:
+                line = "|".join(map(str, record))
+                line = line + '\n'
+                stripped.write(line)
 
 
 # Returns block of data
@@ -253,34 +258,45 @@ def parse_inet_group(entry):
                 if key == "source" and value == "ripencc":
                     record[key] = "RIPE"
             
-
+                if key == "last-modified":
+                    record[key] = value
+            
+           
     # extract the ranges out of record
     range = record['inetnum'].split("-")
-
+    
     if re.match(IPV4_PATTERN, range[0]):
         
+        # check if ranges are not reserved
         is_reserved = not ipaddress.IPv4Network(range[0]).is_global
         if is_reserved:
             return []
 
     elif re.match(IPV6_PATTERN, range[0]):
         
+        # check if ranges are not reserved
         is_reserved = not ipaddress.IPv6Network(range[0]).is_global
         if is_reserved:
             return []
 
 
-    range_start = int(ipaddress.ip_address(range[0]))
-    range_end   = int(ipaddress.ip_address(range[1]))
+    range_start   = int(ipaddress.ip_address(range[0]))
+    range_end     = int(ipaddress.ip_address(range[1]))
+    country       = record['country']
+    registry      = record['source']
+    last_modified = ""
+    descr         = "" 
+     
+    if "last-modified" in record:
+        last_modified = str(datetime.strptime(record['last-modified'], "%Y-%m-%dT%H:%M:%S%fZ")) # returns YY-MM-DD HH:MM:SS
+        last_modified = last_modified.split(" ")[0]     # returns YY-MM-DD 
+        last_modified = last_modified.replace("-", "")  # returns YYMMDD
+
+    if "descr" in record:
+        descr = record["descr"]
+
     
-    country     = record['country']
-    registry    = record['source']
-
-    if 'descr' in record:
-        descr = record['descr']
-        return [range_start, range_end, country, registry, descr]
-
-    return [range_start, range_end, country, registry]
+    return [range_start, range_end, country, registry, last_modified, descr]
 
 
 # ==============================================================================
@@ -369,6 +385,9 @@ def handle_ranges_overlapp(record_1, record_2, records):
             
             if country_1 != country_2:
                 
+                print(record_1)
+                print(record_2)
+                   
                 if registry_1 == registry_2:
 
                     # DS 
@@ -458,10 +477,6 @@ def handle_ranges_overlapp(record_1, record_2, records):
                 # [3708228916, 3708228919, 'CN', 'APNIC']
                 # [3708228918, 3708228959, 'CN', 'APNIC']
                 else:
-                    print(record_1)
-                    print(record_2)
-                    print("\n")
-             
                     pass
                 
         # case 4
@@ -544,7 +559,7 @@ def merge_stripped_files():
     
     try: 
         
-        # merges the delegated files into a one file 
+        # merges the stripped files into a one file (final database)
         with open(IP2COUNTRY_DB, "wb") as f:
             
             for del_file in [ 
@@ -578,32 +593,33 @@ def run_parser():
     start_time = time.time()
     print("parsing Started\n")
 
-    print("merging delegation files ...")
-    merge_del_files()          
-    print("merging finished\n")
+    # print("merging delegation files ...")
+    # merge_del_files()          
+    # print("merging finished\n")
 
-    print("parsing delegation files ...")
-    parse_del_files()           
-    print("parsing finished\n")
+    # print("parsing delegation files ...")
+    # parse_del_files()           
+    # print("parsing finished\n")
 
-    print("merging inetnum files ...")
-    merge_inet_files()
-    print("merging finished\n")
+    # print("merging inetnum files ...")
+    # merge_inet_files()
+    # print("merging finished\n")
 
     print("parsing inetnum files ...")
     parse_inet_files()
     print("parsing finished\n")
  
-    print("creating the final database ...")
-    merge_stripped_files()
-    print("sorting the final data base\n")
+    # print("creating the final database ...")
+    # merge_stripped_files()
     
-    sort_file(IP2COUNTRY_DB)
-    check_for_overlaping(IP2COUNTRY_DB)
+    # print("sorting the final data base\n")
+    # sort_file(IP2COUNTRY_DB)
+    # check_for_overlaping(IP2COUNTRY_DB)
+    
     print("finished\n")
 
-    extract_as_json(IP2COUNTRY_DB)
-    delete_temp_files()
+    # extract_as_json(IP2COUNTRY_DB)
+    # delete_temp_files()
     
     end_time = time.time()
     print("Total time needed was:", f'{end_time - start_time:.3f}', "s\n") 
