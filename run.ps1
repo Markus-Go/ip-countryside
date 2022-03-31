@@ -32,4 +32,4 @@ if ($null -ne $u) {
 
 if ($null -eq $env:FLASK_APP) { $env:FLASK_APP = "flaskr" }
 if ($null -eq $env:FLASK_ENV) { $env:FLASK_ENV = "development" }
-# flask run
+flask run

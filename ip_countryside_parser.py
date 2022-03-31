@@ -1,3 +1,4 @@
+from dataclasses import replace
 import re
 import os
 import shutil
@@ -203,8 +204,16 @@ def get_inet_group(seq, group_by):
         # if an object has already been initialized then scann also the
         # next lines (or data) 
         if (line.startswith(group_by) or data) and not line.startswith("\n"):
-        
-            line = line.replace(" ", "").replace("\n", "")
+            
+            # don't remove spaces from description lines
+            if line.startswith('descr'):
+                
+                line = line.replace("\n", "")
+            
+            else :
+                
+                line = line.replace(" ","").replace("\n", "")
+            
             data.append(line)
             
         # note that empty lines are used as a seperator between
@@ -223,7 +232,7 @@ def parse_inet_group(entry):
     
     # remove all empty elements in the entry
     entry = [item for item in entry if item] 
-
+    
     # split each element (e.g. ["source:APNIC" in the entry to  ["source", "APNIC"]
     entry = [item.split(':', maxsplit = 1) for item in entry]
     
@@ -238,18 +247,17 @@ def parse_inet_group(entry):
                 
 
                 key = item[0]
-                value = item[1]
+                value = item[1].strip()
                 
                 if key not in record:
                     record[key] = value
                 
                 if key == "descr":
                     
-                    if value.split() == "ThisnetworkrangeisnotallocatedtoAPNIC":
+                    if value.strip().upper() == "THIS NETWORK RANGE IS NOT ALLOCATED TO APNIC":
                         return []
                     
-                    record[key] = record[key] + " " + value
-                    
+                    record[key] = " " + value
 
                 # if a country line has comment, remove the comment
                 if key == "country":
@@ -593,28 +601,29 @@ def run_parser():
     start_time = time.time()
     print("parsing Started\n")
 
-    # print("merging delegation files ...")
-    # merge_del_files()          
-    # print("merging finished\n")
+    print("merging delegation files ...")
+    merge_del_files()          
+    print("merging finished\n")
 
-    # print("parsing delegation files ...")
-    # parse_del_files()           
-    # print("parsing finished\n")
+    print("parsing delegation files ...")
+    parse_del_files()           
+    print("parsing finished\n")
 
-    # print("merging inetnum files ...")
-    # merge_inet_files()
-    # print("merging finished\n")
+    print("merging inetnum files ...")
+    merge_inet_files()
+    print("merging finished\n")
 
     print("parsing inetnum files ...")
     parse_inet_files()
     print("parsing finished\n")
- 
-    # print("creating the final database ...")
-    # merge_stripped_files()
     
-    # print("sorting the final data base\n")
-    # sort_file(IP2COUNTRY_DB)
-    # check_for_overlaping(IP2COUNTRY_DB)
+    
+    print("creating the final database ...")
+    merge_stripped_files()
+    
+    print("sorting the final data base\n")
+    sort_file(IP2COUNTRY_DB)
+    #check_for_overlaping(IP2COUNTRY_DB)
     
     print("finished\n")
 
@@ -627,4 +636,4 @@ def run_parser():
     return 0
 
 
-#run_parser()
+run_parser()
