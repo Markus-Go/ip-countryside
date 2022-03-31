@@ -1,5 +1,5 @@
 # IP-Countryside
-==============
+
 
 This tool creates an ip-to-country database, which can be used in multiple 
 applications for geolocating internet users based on  their IP address.
@@ -13,12 +13,12 @@ it here</a> (updated weekly).</b>
 A demo can be found <a href='https://www.goldiges.de/ip-countryside/' target='_BLANK'>here</a>.
 
 ## Detailed Information
---------------------
+
 ....
 
 
 ## Prerequisite
-------------
+
 
 The following files are required to build the database. The script 'ip_countryside_downloader.py' 
 can be used for downloading them:
@@ -40,7 +40,7 @@ can be used for downloading them:
 
 
 ## Installation:
-------------
+
 
   Dependencies:
 
@@ -85,13 +85,13 @@ can be used for downloading them:
     - Jinja Templating: https://jinja.palletsprojects.com/en/3.0.x/templates/
 
 ## How it works
-------------
+
 ...
 
-===================================================================
+
 
 ## Copyright/ License/ Credits
----------------------------
+
 
 Copyright 2006-2007 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz  
 Copyright 2008-2022 Markus Goldstein
