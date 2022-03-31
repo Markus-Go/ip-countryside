@@ -53,7 +53,8 @@ can be used for downloading them:
   - pip install Flask-Assets libsass
   - pip install jsmin 
   - pip install md5hash
-
+  - pip install locationtagger
+  - 
   
   Flask framework:
   
