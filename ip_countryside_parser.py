@@ -7,6 +7,7 @@ import ipaddress
 import time
 from datetime import datetime
 import locationtagger
+import multiprocessing as mp
 
 from config import *;
 from ip_countryside_db import *;
@@ -39,25 +40,7 @@ from ip_countryside_utilities import *;
 
 # @TODO add city information (when available) to the method parse_inet parse_inet_group     # Aufwand 21
 
-def get_city(string, countryCode):
 
-    place_entity = locationtagger.find_locations(text = string)
-    
-    # getting all country cities
-    #print("The countries cities in text : ")
-    #print(place_entity.country_cities)
-
-    for c in place_entity.country_cities:
-        if c.upper() == COUNTRY_DICTIONARY[countryCode]:
-            #print(place_entity.country_cities[c], "is in",COUNTRY_DICTIONARY[countryCode])
-            return place_entity.country_cities[c][0]  
-    return "No City information"      
-
-#string = "Dalian Ulm Bureau"
-string = "Ulm Dalian"
-#string = "Munich, London etc. Pakistan and Bangladesh share its borders Dalian"
-countryCode = "CN"
-print(get_city(string, countryCode))
 
 # ==============================================================================
 # Delegation parsing methods 
@@ -193,7 +176,7 @@ def merge_inet_files():
 
 
 # Parses merged_ine file and writes it into stripped_ine_file
-def parse_inet_files():
+def parse_inet_files_single():
     
     with open(MERGED_INET_FILE, 'r', encoding='utf-8', errors='ignore') as merged, open (STRIPPED_INET_FILE, 'w', encoding='utf-8', errors='ignore') as stripped:
         
@@ -328,6 +311,87 @@ def parse_inet_group(entry):
     return [range_start, range_end, country, registry, last_modified, descr]
 
 
+
+def parse_inet_multicore(kb = 5):
+
+    # Fetch number of cpu cores
+    cpu_cores = mp.cpu_count()
+
+    # Clears the previous file
+    if os.path.exists(STRIPPED_INET_FILE):
+        file = open(STRIPPED_INET_FILE, "r+")
+        file.truncate(0)
+        file.close()
+
+    # get file size and set chuck size
+    filesize = os.path.getsize(MERGED_INET_FILE)
+    split_size = 1024 * 1024 * kb
+
+    # determine if it needs to be split
+    if filesize > split_size:
+
+        # create pool, initialize chunk start location (cursor)
+        pool = mp.Pool(cpu_cores)
+        cursor = 0
+        with open(MERGED_INET_FILE, 'r', encoding='utf-8', errors='ignore') as fh:
+
+            # for every chunk in the file...
+            for chunk in range(filesize // split_size):
+
+                # determine where the chunk ends, is it the last one?
+                if cursor + split_size > filesize:
+                    end = filesize
+                else:
+                    end = cursor + split_size
+
+                # seek to end of chunk and read next line to ensure you 
+                # pass entire lines to the processfile function
+                fh.seek(end)
+                fh.readline()
+                
+                s = fh.readline()
+                while s != '\n' and s != "":    
+                    s = fh.readline()
+                    #print("Chunk: ", chunk , fh.tell(), '\n', s)           
+
+                # get current file location
+                end = fh.tell()
+
+                # add chunk to process pool, save reference to get results
+                proc = pool.apply_async(parse_inet_chunk, [MERGED_INET_FILE, cursor, end])
+                
+                 # terminate when no more chunks are needed
+                if split_size > end - cursor:
+                    break
+
+                #Debug
+                #fh.seek(cursor)
+                #lines = fh.readlines(end - cursor)  
+                #print(*lines, '\n----------------------------------------\n')
+
+                # setup next chunk
+                cursor = end
+
+        # close and wait for pool to finish
+        pool.close()
+        pool.join()
+
+
+# process file chunk 
+def parse_inet_chunk(file, start=0, stop=0):
+    i = 0
+    with open(MERGED_INET_FILE, 'r', encoding='utf-8', errors='ignore') as inetnum_file, open (STRIPPED_INET_FILE, 'a', encoding='utf-8', errors='ignore') as parsed_file:
+        # Read only specified part of the file
+        inetnum_file.seek(start)
+        lines = inetnum_file.readlines(stop - start)      
+
+        for group in get_inet_group(lines, "inetnum"):
+            line = parse_inet_group(group)
+            line = "|".join(map(str, line))
+            line = line + '\n'
+            parsed_file.write(line)
+
+
 # ==============================================================================
 # Help Methods used for all files ... 
 
@@ -380,7 +444,7 @@ def check_for_overlaping(file=IP2COUNTRY_DB):
             nr_of_overlapps = nr_of_overlapps + 1
             handle_ranges_overlapp(records[i-1], records[i], records)
               
-    print(f"{nr_of_overlapps} overlapps detected")
+    #print(f"{nr_of_overlapps} overlapps detected")
 
     try:
     
@@ -613,6 +677,25 @@ def delete_temp_files():
     os.remove(MERGED_INET_FILE)
     os.remove(STRIPPED_INET_FILE)
 
+#def get_city(string, countryCode):
+
+#    place_entity = locationtagger.find_locations(text = string)
+    
+#    # getting all country cities
+#    #print("The countries cities in text : ")
+#    #print(place_entity.country_cities)
+
+#    for c in place_entity.country_cities:
+#        if c.upper() == COUNTRY_DICTIONARY[countryCode]:
+#            #print(place_entity.country_cities[c], "is in",COUNTRY_DICTIONARY[countryCode])
+#            return place_entity.country_cities[c][0]  
+#    return "No City information"      
+
+#string = "Dalian Ulm Bureau"
+string = "Ulm Dalian"
+#string = "Munich, London etc. Pakistan and Bangladesh share its borders Dalian"
+countryCode = "CN"
+#print(get_city(string, countryCode))
 
 # ==============================================================================
 # Parser Entry Method 
@@ -634,11 +717,15 @@ def run_parser():
     merge_inet_files()
     print("merging finished\n")
 
+    start_parse = time.time()
     print("parsing inetnum files ...")
-    parse_inet_files()
+    parse_inet_files_single()
+    #parse_inet_multicore()
     print("parsing finished\n")
-    
-    
+
+    end_parse = time.time()
+    print("Total time for parsing was:", f'{end_parse - start_parse:.3f}', "s\n") 
+ 
     print("creating the final database ...")
     merge_stripped_files()
     
@@ -656,4 +743,7 @@ def run_parser():
     return 0
 
 
-run_parser()
+
+# Needed if for multiprocessing not to crash
+if __name__ == "__main__":   
+    run_parser()
