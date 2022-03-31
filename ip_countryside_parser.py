@@ -4,6 +4,7 @@ import shutil
 import fileinput
 import ipaddress
 import time
+import locationtagger
 
 from config import *;
 from ip_countryside_db import *;
@@ -35,6 +36,26 @@ from ip_countryside_utilities import *;
     # 02. Parsing should be done by multiple threads
 
 # @TODO add city information (when available) to the method parse_inet parse_inet_group     # Aufwand 21
+
+def get_city(string, countryCode):
+
+    place_entity = locationtagger.find_locations(text = string)
+    
+    # getting all country cities
+    #print("The countries cities in text : ")
+    #print(place_entity.country_cities)
+
+    for c in place_entity.country_cities:
+        if c.upper() == COUNTRY_DICTIONARY[countryCode]:
+            #print(place_entity.country_cities[c], "is in",COUNTRY_DICTIONARY[countryCode])
+            return place_entity.country_cities[c][0]  
+    return "No City information"      
+
+#string = "Dalian Ulm Bureau"
+string = "Ulm Dalian"
+#string = "Munich, London etc. Pakistan and Bangladesh share its borders Dalian"
+countryCode = "CN"
+print(get_city(string, countryCode))
 
 # ==============================================================================
 # Delegation parsing methods 
