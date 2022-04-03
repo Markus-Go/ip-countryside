@@ -6,8 +6,8 @@ import fileinput
 import ipaddress
 import time
 from datetime import datetime
-import locationtagger
 import multiprocessing as mp
+#import  locationtagger 
 
 from config import *;
 from ip_countryside_db import *;
@@ -233,7 +233,7 @@ def get_inet_group(seq, group_by):
 def parse_inet_group(entry):
     
     record = {}
-    
+
     # remove all empty elements in the entry
     entry = [item for item in entry if item] 
     
@@ -255,13 +255,14 @@ def parse_inet_group(entry):
                 
                 if key not in record:
                     record[key] = value
-                
-                if key == "descr":
+
+                # merge all descriptio entries into one 
+                elif key in record and key == "descr":
                     
                     if value.strip().upper() == "THIS NETWORK RANGE IS NOT ALLOCATED TO APNIC":
                         return []
                     
-                    record[key] = value + " " 
+                    record[key] = record[key] + " " + value 
 
                 # if a country line has comment, remove the comment
                 if key == "country":
@@ -309,7 +310,6 @@ def parse_inet_group(entry):
 
     
     return [range_start, range_end, country, registry, last_modified, descr]
-
 
 
 def parse_inet_multicore(kb = 5):
@@ -677,22 +677,23 @@ def delete_temp_files():
     os.remove(MERGED_INET_FILE)
     os.remove(STRIPPED_INET_FILE)
 
-#def get_city(string, countryCode):
 
-#    place_entity = locationtagger.find_locations(text = string)
+def get_city(string, countryCode):
+
+   place_entity = locationtagger.find_locations(text = string)
     
-#    # getting all country cities
-#    #print("The countries cities in text : ")
-#    #print(place_entity.country_cities)
+   # getting all country cities
+   #print("The countries cities in text : ")
+   #print(place_entity.country_cities)
 
-#    for c in place_entity.country_cities:
-#        if c.upper() == COUNTRY_DICTIONARY[countryCode]:
-#            #print(place_entity.country_cities[c], "is in",COUNTRY_DICTIONARY[countryCode])
-#            return place_entity.country_cities[c][0]  
-#    return "No City information"      
+   for c in place_entity.country_cities:
+       if c.upper() == COUNTRY_DICTIONARY[countryCode]:
+           #print(place_entity.country_cities[c], "is in",COUNTRY_DICTIONARY[countryCode])
+           return place_entity.country_cities[c][0]  
+   return "No City information"      
 
-#string = "Dalian Ulm Bureau"
-string = "Ulm Dalian"
+string = "Dalian Ulm Bureau"
+#string = "Ulm Dalian"
 #string = "Munich, London etc. Pakistan and Bangladesh share its borders Dalian"
 countryCode = "CN"
 #print(get_city(string, countryCode))
@@ -720,13 +721,13 @@ def run_parser():
     start_parse = time.time()
     print("parsing inetnum files ...")
     parse_inet_files_single()
-    #parse_inet_multicore()
+    # parse_inet_multicore()
     print("parsing finished\n")
 
     end_parse = time.time()
     print("Total time for parsing was:", f'{end_parse - start_parse:.3f}', "s\n") 
  
-    print("creating the final database ...")
+    # print("creating the final database ...")
     merge_stripped_files()
     
     print("sorting the final data base\n")

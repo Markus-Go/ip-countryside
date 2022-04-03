@@ -1,10 +1,13 @@
 # @TODO 
-# if parameter i is set then -> install depencdencies (python module) 
+# if parameter i is set then -> install depencdencies (python module) -> Done 
+# 
+
 
 # $i forces installing dependencies
-# $u forces updating packets
 
-param($i, $u)
+
+param($i)
+
 if ($null -ne $i) {
     # pip install geopy
     # pip install Flask
@@ -15,21 +18,16 @@ if ($null -ne $i) {
     # $npm_path = $PSScriptRoot.ToString() + "\flaskr\static"
     # Write-Host $npm_path
     # npm --prefix  $npm_path install
-    
-
-}
-
-if ($null -ne $u) {
-    
 }
 
 
-# py -3 -m venv venv 
 
-
-# venv\Scripts\activate
-
+py -3 -m venv venv 
+venv\Scripts\activate
 
 if ($null -eq $env:FLASK_APP) { $env:FLASK_APP = "flaskr" }
 if ($null -eq $env:FLASK_ENV) { $env:FLASK_ENV = "development" }
+
+
+
 flask run
