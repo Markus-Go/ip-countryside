@@ -6,7 +6,7 @@ import fileinput
 import ipaddress
 import time
 from datetime import datetime
-import locationtagger
+#import locationtagger
 import multiprocessing as mp
 
 from config import *;
@@ -333,6 +333,7 @@ def parse_inet_multicore(kb = 5):
         # create pool, initialize chunk start location (cursor)
         pool = mp.Pool(cpu_cores)
         cursor = 0
+        results = []
         with open(MERGED_INET_FILE, 'r', encoding='utf-8', errors='ignore') as fh:
 
             # for every chunk in the file...
@@ -354,15 +355,21 @@ def parse_inet_multicore(kb = 5):
                     s = fh.readline()
                     #print("Chunk: ", chunk , fh.tell(), '\n', s)           
 
+
                 # get current file location
                 end = fh.tell()
 
+                # print("Chunksize for chunk ",chunk,  str(end - cursor))
+
+
                 # add chunk to process pool, save reference to get results
                 proc = pool.apply_async(parse_inet_chunk, [MERGED_INET_FILE, cursor, end])
-                
+                results.append(proc)
+
                  # terminate when no more chunks are needed
                 if split_size > end - cursor:
                     break
+ 
 
                 #Debug
                 #fh.seek(cursor)
@@ -371,25 +378,33 @@ def parse_inet_multicore(kb = 5):
 
                 # setup next chunk
                 cursor = end
+               
 
         # close and wait for pool to finish
         pool.close()
         pool.join()
 
+        with open(STRIPPED_INET_FILE, 'w', encoding='utf-8', errors='ignore') as parsed:
+            for proc in results:
+                chunk_result = proc.get()
+                for entry in chunk_result:
+                    entry_string = '|'.join(map(str, entry))
+                    entry_string += '\n'
+                    parsed.write(entry_string)
+
 
 # process file chunk 
 def parse_inet_chunk(file, start=0, stop=0):
-    i = 0
-    with open(MERGED_INET_FILE, 'r', encoding='utf-8', errors='ignore') as inetnum_file, open (STRIPPED_INET_FILE, 'a', encoding='utf-8', errors='ignore') as parsed_file:
+    record = []
+    with open(file, 'r', encoding='utf-8', errors='ignore') as inetnum_file:
         # Read only specified part of the file
         inetnum_file.seek(start)
         lines = inetnum_file.readlines(stop - start)      
-
+        #print(*lines, '\n----------------------------------------\n')
         for group in get_inet_group(lines, "inetnum"):
             line = parse_inet_group(group)
-            line = "|".join(map(str, line))
-            line = line + '\n'
-            parsed_file.write(line)
+            record.append(line)
+    return record
 
 
 # ==============================================================================
@@ -701,7 +716,7 @@ print(get_city(string, countryCode))
 def run_parser():
 
     start_time = time.time()
-    print("parsing Started\n")
+    print("parsing started\n")
 
     print("merging delegation files ...")
     merge_del_files()          
@@ -718,25 +733,25 @@ def run_parser():
     start_parse = time.time()
     print("parsing inetnum files ...")
     parse_inet_files_single()
-    #parse_inet_multicore()
+    parse_inet_multicore()
     print("parsing finished\n")
 
     end_parse = time.time()
-    print("Total time for parsing was:", f'{end_parse - start_parse:.3f}', "s\n") 
+    print("total time for parsing was:", f'{end_parse - start_parse:.3f}', "s\n") 
  
     print("creating the final database ...")
     merge_stripped_files()
     
     print("sorting the final data base\n")
-    sort_file(IP2COUNTRY_DB)
-    #check_for_overlaping(IP2COUNTRY_DB)
+    sort_file(ip2country_db)
+    check_for_overlaping(ip2country_db)
     
     print("finished\n")
 
-    # delete_temp_files()
+    delete_temp_files()
     
     end_time = time.time()
-    print("Total time needed was:", f'{end_time - start_time:.3f}', "s\n") 
+    print("total time needed was:", f'{end_time - start_time:.3f}', "s\n") 
     
     return 0
 
