@@ -11,6 +11,9 @@ STRIPPED_INET_FILE     = os.path.join(DEL_FILES_DIR, "stipped_inet_file.csv")
 IP2COUNTRY_DB          = os.path.join(DEL_FILES_DIR, "ip2country_2.db")
 IP2COUNTRY_DB_JSON     = os.path.join(DEL_FILES_DIR, "db.json")
 IP2COUNTRY_DB_YAML     = os.path.join(DEL_FILES_DIR, "db.yaml")
+IP2COUNTRY_DB_YAML     = os.path.join(DEL_FILES_DIR, "db.yaml")
+APNIC_DB_IRT           = os.path.join(DEL_FILES_DIR, "apnic.db.irt")
+APNIC_IRT              = os.path.join(DEL_FILES_DIR, "apnic.irt")
 
 # Regex for matching ip versions
 IPV4_PATTERN = "[0-9]+(?:\.[0-9]+){3}"
@@ -24,21 +27,24 @@ AFRINIC = {
     'host':           "ftp.afrinic.net",
     'del_cwd':        "pub/stats/afrinic/",
     'del_fname':      "delegated-afrinic-latest",
-    'del_md5':        "delegated-afrinic-latest.md5"
+    'del_md5':        "delegated-afrinic-latest.md5",
+    'del_timestamp':  "delegated-afrinic-latest.timestamp"
 }
 
 LACNIC = {
     'host':           "ftp.lacnic.net",
     'del_cwd':        "pub/stats/lacnic/",
     'del_fname':      "delegated-lacnic-latest",
-    'del_md5':        "delegated-lacnic-latest.md5"
+    'del_md5':        "delegated-lacnic-latest.md5",
+    'del_timestamp':  "delegated-lacnic-latest.timestamp"
 }
 
 ARIN = {
     'host':           "ftp.arin.net",
     'del_cwd':        "pub/stats/arin/",
     'del_fname':      "delegated-arin-extended-latest",
-    'del_md5':        "delegated-arin-extended-latest.md5"
+    'del_md5':        "delegated-arin-extended-latest.md5",
+    'del_timestamp':  "delegated-arin-extended-latest.timestamp"
 }
 
 APNIC = {
@@ -46,9 +52,11 @@ APNIC = {
     'del_cwd':        "pub/stats/apnic/",
     'del_fname':      "delegated-apnic-latest",
     'del_md5':        "delegated-apnic-latest.md5",
+    'del_timestamp':  "delegated-apnic-latest.timestamp",
     'inet_cwd':       "/apnic/whois/",
     'inet_fname_gz':  "apnic.db.inetnum.gz",
     'inet_fname':     "apnic.db.inetnum",
+    'inet_timestamp': "apnic.db.inetnum.timestamp"
 }
 
 RIPE = {
@@ -56,9 +64,11 @@ RIPE = {
     'del_cwd':        "ripe/stats/",
     'del_fname':      "delegated-ripencc-latest",
     'del_md5':        "delegated-ripencc-latest.md5",
+    'del_timestamp':  "delegated-ripencc-latest.timestamp",
     'inet_cwd':       "/ripe/dbase/split/",
     'inet_fname_gz':  "ripe.db.inetnum.gz",
     'inet_fname':     "ripe.db.inetnum",
+    'inet_timestamp': "ripe.db.inetnum.timestamp"
 }
 
 

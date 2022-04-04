@@ -677,25 +677,23 @@ def delete_temp_files():
     os.remove(MERGED_INET_FILE)
     os.remove(STRIPPED_INET_FILE)
 
-#def get_city(string, countryCode):
+def get_city(string, countryCode):
 
-#    place_entity = locationtagger.find_locations(text = string)
-    
-#    # getting all country cities
-#    #print("The countries cities in text : ")
-#    #print(place_entity.country_cities)
+    place_entity = locationtagger.find_locations(text = string)
+   
+    # getting all country cities
+    print("The countries cities in text : ")
+    print(place_entity.country_cities)
 
-#    for c in place_entity.country_cities:
-#        if c.upper() == COUNTRY_DICTIONARY[countryCode]:
-#            #print(place_entity.country_cities[c], "is in",COUNTRY_DICTIONARY[countryCode])
-#            return place_entity.country_cities[c][0]  
-#    return "No City information"      
+    for c in place_entity.country_cities:
+        if c.upper() == COUNTRY_DICTIONARY[countryCode]:
+            #print(place_entity.country_cities[c], "is in",COUNTRY_DICTIONARY[countryCode])
+            return place_entity.country_cities[c][0]  
+    return "No City information"      
 
-#string = "Dalian Ulm Bureau"
-string = "Ulm Dalian"
-#string = "Munich, London etc. Pakistan and Bangladesh share its borders Dalian"
-countryCode = "CN"
-#print(get_city(string, countryCode))
+string = "11F Shibuya cross tower, 2-15-1, Shibuya-ku Shibuya, Tokyo 150-0002, Japan"
+countryCode = "JP"
+print(get_city(string, countryCode))
 
 # ==============================================================================
 # Parser Entry Method 
@@ -745,5 +743,101 @@ def run_parser():
 
 
 # Needed if for multiprocessing not to crash
-if __name__ == "__main__":   
-    run_parser()
+#if __name__ == "__main__":   
+#    run_parser()
+
+# Parses merged_ine file and writes it into stripped_ine_file
+def parse_irt_files():
+    
+    with open(APNIC_DB_IRT, 'r', encoding='utf-8', errors='ignore') as merged, open (APNIC_IRT, 'w', encoding='utf-8', errors='ignore') as stripped:
+        
+        for group in get_irt_group(merged, "irt"):
+            
+            record = parse_irt_group(group)
+            
+            if record:
+                line = "|".join(map(str, record))
+                line = line + '\n'
+                stripped.write(line)
+
+def get_irt_group(seq, group_by):
+    
+    data = []
+    
+   
+    for line in seq:
+        
+        # escape comments (starts with '#')
+        # escape unrelevant data in ripe.inetnum (starts with '%')
+        if line.startswith("#") or line.startswith("%"): 
+            continue
+
+        # every inetnum object starts with an entry -> inetnum: ...
+        # so start grouping if a line starts with 'inetnum'
+        # if an object has already been initialized then scann also the
+        # next lines (or data) 
+        if (line.startswith(group_by) or data) and not line.startswith("\n"):
+            
+            # don't remove spaces from description lines
+            if line.startswith('address'):
+                
+                line = line.replace("\n", "")
+            
+            else :
+                
+                line = line.replace(" ","").replace("\n", "")
+            
+            data.append(line)
+            
+        # note that empty lines are used as a seperator between
+        # inetnum objects. So if line starts with empty line
+        # then yield the data object first and then
+        # reset the object to store next object's data
+        elif line.startswith("\n") and data:
+            yield data
+            data = []
+
+
+# Parses in entry
+def parse_irt_group(entry):
+    
+    record = {}
+    
+    # remove all empty elements in the entry
+    entry = [item for item in entry if item] 
+    
+    # split each element (e.g. ["source:APNIC" in the entry to  ["source", "APNIC"]
+    entry = [item.split(':', maxsplit = 1) for item in entry]
+    
+    # create a dictionary
+    # if there are dupplicate items append their values ..
+    # this will prevent deleting items with same key (e.g. descr)
+    for item in entry:
+            
+            # @TODO viele Einträge mit nur einem Index
+            # Warum ? -> parser-bug ? investigate ... 
+            if(len(item) > 1):
+                
+
+                key = item[0]
+                value = item[1].strip()
+                
+                if key not in record:
+                    record[key] = value
+                
+                if key == "address":                 
+                    record[key] = value + " " 
+
+                # if a country line has comment, remove the comment
+                if key == "mnt-by":
+                    record[key] = value
+
+    irt       = record['irt']
+    address      = record['address']
+    mnt_by = record['mnt-by']
+     
+
+    
+    return [irt, address, mnt_by] 
+
+#parse_irt_files()
