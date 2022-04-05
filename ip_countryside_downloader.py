@@ -6,6 +6,7 @@ import os
 
 from config import *
 from md5hash import scan
+from datetime import datetime
 
 
 # @TODO is it possible to reduce number of ftp connections ?                -> Aufwand 5/8
@@ -24,6 +25,41 @@ from md5hash import scan
 # @TODO when project is done:
 # remove the comment where the zipped files are deleted after downloading 
 
+def get_timestamp(host, cwd, delFileName, localfile):
+
+    ftp = ftplib.FTP(host)
+    ftp.login()
+    print("Connected to " + host)
+    ftp.cwd(cwd)
+
+    if not os.path.exists(localfile):
+        open(localfile,'w').close
+    
+    datetimeftp = ftp.sendcmd('MDTM ' + delFileName)
+    modifiedTimeFtp = datetime.strptime(datetimeftp[4:], "%Y%m%d%H%M%S").strftime("%d %b %Y %H:%M:%S")
+    
+    with open(localfile, "r") as file:
+        last = file.readline()
+        try:
+            last = datetime.strptime(last, "%d %b %Y %H:%M:%S")
+            diff = datetime.strptime(datetimeftp[4:], "%Y%m%d%H%M%S") - last
+        except:
+            with open(localfile, "w") as file:
+                file.writelines(modifiedTimeFtp)
+            ftp.close()
+            print("No timestamp yet\n")
+            return True
+        
+    if (diff.days >= 7):
+        with open(localfile, "w") as file:
+            file.writelines(modifiedTimeFtp)
+        ftp.close()
+        print("1 week or older\n")
+        return True
+    else:
+        ftp.close()
+        print("younger than one week\n")
+        return False
 
 def download_del_files_needed(host, cwd, delFileName):
     
@@ -90,23 +126,48 @@ def download_del_files(force):
    except OSError as e:
     
         print(e)
+    
+   # download if md5 changed
 
    # actual downloading is done in download_del_file function ... 
-   if(download_del_files_needed(AFRINIC["host"], AFRINIC["del_cwd"], AFRINIC["del_md5"])):
+   #if(download_del_files_needed(AFRINIC["host"], AFRINIC["del_cwd"], AFRINIC["del_md5"])):
+   #    download_del_file(AFRINIC["host"], AFRINIC["del_cwd"], AFRINIC["del_fname"])
+   #if(download_del_files_needed(LACNIC["host"], LACNIC["del_cwd"], LACNIC["del_md5"])):
+   #   download_del_file(LACNIC["host"],  LACNIC["del_cwd"],  LACNIC["del_fname"])
+   #if(download_del_files_needed(ARIN["host"],    ARIN["del_cwd"],    ARIN["del_md5"])):
+   #   download_del_file(ARIN["host"],    ARIN["del_cwd"],    ARIN["del_fname"])
+   #if(download_del_files_needed(APNIC["host"],   APNIC["del_cwd"],   APNIC["del_md5"])):
+   #   download_del_file(APNIC["host"],   APNIC["del_cwd"],   APNIC["del_fname"])
+   #if(download_del_files_needed(RIPE["host"],    RIPE["del_cwd"],    RIPE["del_md5"])):
+   #   download_del_file(RIPE["host"],    RIPE["del_cwd"],    RIPE["del_fname"])
+
+   #download if older than one week
+
+   if(get_timestamp(AFRINIC["host"], AFRINIC["del_cwd"], AFRINIC["del_fname"], AFRINIC["del_timestamp"])):
        download_del_file(AFRINIC["host"], AFRINIC["del_cwd"], AFRINIC["del_fname"])
-   if(download_del_files_needed(LACNIC["host"], LACNIC["del_cwd"], LACNIC["del_md5"])):
+   if(get_timestamp(LACNIC["host"], LACNIC["del_cwd"], LACNIC["del_fname"], LACNIC["del_timestamp"])):
       download_del_file(LACNIC["host"],  LACNIC["del_cwd"],  LACNIC["del_fname"])
-   if(download_del_files_needed(ARIN["host"],    ARIN["del_cwd"],    ARIN["del_md5"])):
+   if(get_timestamp(ARIN["host"],    ARIN["del_cwd"],    ARIN["del_fname"],    ARIN["del_timestamp"])):
       download_del_file(ARIN["host"],    ARIN["del_cwd"],    ARIN["del_fname"])
-   if(download_del_files_needed(APNIC["host"],   APNIC["del_cwd"],   APNIC["del_md5"])):
+   if(get_timestamp(APNIC["host"],   APNIC["del_cwd"],   APNIC["del_fname"],   APNIC["del_timestamp"])):
       download_del_file(APNIC["host"],   APNIC["del_cwd"],   APNIC["del_fname"])
-   if(download_del_files_needed(RIPE["host"],    RIPE["del_cwd"],    RIPE["del_md5"])):
+   if(get_timestamp(RIPE["host"],    RIPE["del_cwd"],    RIPE["del_fname"],    RIPE["del_timestamp"])):
       download_del_file(RIPE["host"],    RIPE["del_cwd"],    RIPE["del_fname"])
+
+    #irt files
+   if(get_timestamp(APNIC["host"],   APNIC["inet_cwd"],  APNIC["irt_fname_gz"], APNIC["irt_timestamp"])):
+      download_del_file(APNIC["host"],   APNIC["inet_cwd"],  APNIC["irt_fname_gz"], True)
+   if(get_timestamp(RIPE["host"],    RIPE["inet_cwd"],   RIPE["irt_fname_gz"], RIPE["irt_timestamp"])):  
+      download_del_file(RIPE["host"],    RIPE["inet_cwd"],   RIPE["irt_fname_gz"], True)
+
+    #zip files
+   if(get_timestamp(APNIC["host"],   APNIC["inet_cwd"],  APNIC["inet_fname_gz"], APNIC["inet_timestamp"])):
+      download_del_file(APNIC["host"],   APNIC["inet_cwd"],  APNIC["inet_fname_gz"], True)
+   if(get_timestamp(RIPE["host"],    RIPE["inet_cwd"],   RIPE["inet_fname_gz"], RIPE["inet_timestamp"])):  
+      download_del_file(RIPE["host"],    RIPE["inet_cwd"],   RIPE["inet_fname_gz"], True)
    
-   #download_del_file(APNIC["host"],   APNIC["inet_cwd"],  APNIC["inet_fname_gz"], True)
-   #download_del_file(RIPE["host"],    RIPE["inet_cwd"],   RIPE["inet_fname_gz"], True)
-   
-   os.remove(os.path.join(DEL_FILES_DIR, 'temp'))
+   if os.path.exists('temp'):
+       os.remove(os.path.join(DEL_FILES_DIR, 'temp'))
 
    # return to project's root directory 
    os.chdir(ROOT_DIR)
@@ -184,4 +245,4 @@ def run_downloader(force=True):
     download_del_files(force)
 
 
-#run_downloader()
+run_downloader()

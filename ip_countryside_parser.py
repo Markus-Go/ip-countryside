@@ -333,6 +333,7 @@ def parse_inet_multicore(kb = 5):
         # create pool, initialize chunk start location (cursor)
         pool = mp.Pool(cpu_cores)
         cursor = 0
+        results = []
         with open(MERGED_INET_FILE, 'r', encoding='utf-8', errors='ignore') as fh:
 
             # for every chunk in the file...
@@ -354,15 +355,21 @@ def parse_inet_multicore(kb = 5):
                     s = fh.readline()
                     #print("Chunk: ", chunk , fh.tell(), '\n', s)           
 
+
                 # get current file location
                 end = fh.tell()
 
+                # print("Chunksize for chunk ",chunk,  str(end - cursor))
+
+
                 # add chunk to process pool, save reference to get results
                 proc = pool.apply_async(parse_inet_chunk, [MERGED_INET_FILE, cursor, end])
-                
+                results.append(proc)
+
                  # terminate when no more chunks are needed
                 if split_size > end - cursor:
                     break
+ 
 
                 #Debug
                 #fh.seek(cursor)
@@ -371,25 +378,33 @@ def parse_inet_multicore(kb = 5):
 
                 # setup next chunk
                 cursor = end
+               
 
         # close and wait for pool to finish
         pool.close()
         pool.join()
 
+        with open(STRIPPED_INET_FILE, 'w', encoding='utf-8', errors='ignore') as parsed:
+            for proc in results:
+                chunk_result = proc.get()
+                for entry in chunk_result:
+                    entry_string = '|'.join(map(str, entry))
+                    entry_string += '\n'
+                    parsed.write(entry_string)
+
 
 # process file chunk 
 def parse_inet_chunk(file, start=0, stop=0):
-    i = 0
-    with open(MERGED_INET_FILE, 'r', encoding='utf-8', errors='ignore') as inetnum_file, open (STRIPPED_INET_FILE, 'a', encoding='utf-8', errors='ignore') as parsed_file:
+    record = []
+    with open(file, 'r', encoding='utf-8', errors='ignore') as inetnum_file:
         # Read only specified part of the file
         inetnum_file.seek(start)
         lines = inetnum_file.readlines(stop - start)      
-
+        #print(*lines, '\n----------------------------------------\n')
         for group in get_inet_group(lines, "inetnum"):
             line = parse_inet_group(group)
-            line = "|".join(map(str, line))
-            line = line + '\n'
-            parsed_file.write(line)
+            record.append(line)
+    return record
 
 
 # ==============================================================================
@@ -677,25 +692,22 @@ def delete_temp_files():
     os.remove(MERGED_INET_FILE)
     os.remove(STRIPPED_INET_FILE)
 
-
 def get_city(string, countryCode):
 
-   place_entity = locationtagger.find_locations(text = string)
-    
-   # getting all country cities
-   #print("The countries cities in text : ")
-   #print(place_entity.country_cities)
+    place_entity = locationtagger.find_locations(text = string)
+   
+    # getting all country cities
+    print("The countries cities in text : ")
+    print(place_entity.country_cities)
 
-   for c in place_entity.country_cities:
-       if c.upper() == COUNTRY_DICTIONARY[countryCode]:
-           #print(place_entity.country_cities[c], "is in",COUNTRY_DICTIONARY[countryCode])
-           return place_entity.country_cities[c][0]  
-   return "No City information"      
+    for c in place_entity.country_cities:
+        if c.upper() == COUNTRY_DICTIONARY[countryCode]:
+            #print(place_entity.country_cities[c], "is in",COUNTRY_DICTIONARY[countryCode])
+            return place_entity.country_cities[c][0]  
+    return "No City information"      
 
-string = "Dalian Ulm Bureau"
-#string = "Ulm Dalian"
-#string = "Munich, London etc. Pakistan and Bangladesh share its borders Dalian"
-countryCode = "CN"
+#string = "11F Shibuya cross tower, 2-15-1, Shibuya-ku Shibuya, Tokyo 150-0002, Japan"
+#countryCode = "JP"
 #print(get_city(string, countryCode))
 
 # ==============================================================================
@@ -704,7 +716,7 @@ countryCode = "CN"
 def run_parser():
 
     start_time = time.time()
-    print("parsing Started\n")
+    print("parsing started\n")
 
     print("merging delegation files ...")
     merge_del_files()          
@@ -721,30 +733,224 @@ def run_parser():
     start_parse = time.time()
     print("parsing inetnum files ...")
     parse_inet_files_single()
-    # parse_inet_multicore()
+
+    parse_inet_multicore()
     print("parsing finished\n")
 
     end_parse = time.time()
-    print("Total time for parsing was:", f'{end_parse - start_parse:.3f}', "s\n") 
+    print("total time for parsing was:", f'{end_parse - start_parse:.3f}', "s\n") 
  
     # print("creating the final database ...")
     merge_stripped_files()
     
     print("sorting the final data base\n")
     sort_file(IP2COUNTRY_DB)
-    #check_for_overlaping(IP2COUNTRY_DB)
+    check_for_overlaping(IP2COUNTRY_DB)
     
     print("finished\n")
 
-    # delete_temp_files()
+    delete_temp_files()
     
     end_time = time.time()
-    print("Total time needed was:", f'{end_time - start_time:.3f}', "s\n") 
+    print("total time needed was:", f'{end_time - start_time:.3f}', "s\n") 
     
     return 0
 
 
 
 # Needed if for multiprocessing not to crash
-if __name__ == "__main__":   
-    run_parser()
+#if __name__ == "__main__":   
+#    run_parser()
+
+# Parses merged_ine file and writes it into stripped_ine_file
+def parse_irt_files():
+    
+    with open(APNIC_DB_IRT, 'r', encoding='utf-8', errors='ignore') as merged, open (IRTTOADDRESS, 'w', encoding='utf-8', errors='ignore') as stripped:
+
+        stripped.write("IRTTOADDRESS = {\n")
+        
+        for group in get_irt_group(merged, "irt"):
+            
+            record = parse_irt_group(group)
+            
+            if record:
+                line = '":"'.join(map(str, record))
+                line = '"' + line + '",\n'
+                stripped.write(line)
+        stripped.write("}")
+
+def get_irt_group(seq, group_by):
+    
+    data = []
+    
+   
+    for line in seq:
+        
+        # escape comments (starts with '#')
+        # escape unrelevant data in ripe.inetnum (starts with '%')
+        if line.startswith("#") or line.startswith("%"): 
+            continue
+
+        # every inetnum object starts with an entry -> inetnum: ...
+        # so start grouping if a line starts with 'inetnum'
+        # if an object has already been initialized then scann also the
+        # next lines (or data) 
+        if (line.startswith(group_by) or data) and not line.startswith("\n"):
+            
+            # don't remove spaces from description lines
+            if line.startswith('address'):
+                
+                line = line.replace("\n", "")
+            
+            else :
+                
+                line = line.replace(" ","").replace("\n", "")
+            
+            line = line.replace('"', "'")
+            
+            data.append(line)
+            
+        # note that empty lines are used as a seperator between
+        # inetnum objects. So if line starts with empty line
+        # then yield the data object first and then
+        # reset the object to store next object's data
+        elif line.startswith("\n") and data:
+            yield data
+            data = []
+
+
+# Parses in entry
+def parse_irt_group(entry):
+    
+    record = {}
+    
+    # remove all empty elements in the entry
+    entry = [item for item in entry if item] 
+    
+    # split each element (e.g. ["source:APNIC" in the entry to  ["source", "APNIC"]
+    entry = [item.split(':', maxsplit = 1) for item in entry]
+    
+    # create a dictionary
+    # if there are dupplicate items append their values ..
+    # this will prevent deleting items with same key (e.g. descr)
+    for item in entry:
+            
+            # @TODO viele Einträge mit nur einem Index
+            # Warum ? -> parser-bug ? investigate ... 
+            if(len(item) > 1):
+                
+
+                key = item[0]
+                value = item[1].strip()
+                
+                if key not in record:
+                    record[key] = value
+                
+                if key == "address":                 
+                    record[key] = record[key] + value + " " 
+
+    irt       = record['irt']
+    address      = record['address']
+     
+
+    
+    return [irt, address]#, mnt_by] 
+
+parse_irt_files()
+
+def parse_irt_files_mnt_by():
+    
+    with open(APNIC_DB_IRT, 'r', encoding='utf-8', errors='ignore') as merged, open (MNT_BYTOADDRESS, 'w', encoding='utf-8', errors='ignore') as stripped:
+
+        stripped.write("IRTTOADDRESS = {\n")
+        
+        for group in get_irt_group_mnt_by(merged, "irt"):
+            
+            record = parse_irt_group_mnt_by(group)
+            
+            if record:
+                line = '":"'.join(map(str, record))
+                line = '"' + line + '",\n'
+                stripped.write(line)
+        stripped.write("}")
+
+def get_irt_group_mnt_by(seq, group_by):
+    
+    data = []
+    
+   
+    for line in seq:
+        
+        # escape comments (starts with '#')
+        # escape unrelevant data in ripe.inetnum (starts with '%')
+        if line.startswith("#") or line.startswith("%"): 
+            continue
+
+        # every inetnum object starts with an entry -> inetnum: ...
+        # so start grouping if a line starts with 'inetnum'
+        # if an object has already been initialized then scann also the
+        # next lines (or data) 
+        if (line.startswith(group_by) or data) and not line.startswith("\n"):
+            
+            # don't remove spaces from description lines
+            if line.startswith('address'):
+                
+                line = line.replace("\n", "")
+            
+            else :
+                
+                line = line.replace(" ","").replace("\n", "")
+            
+            line = line.replace('"', "'")
+            
+            data.append(line)
+            
+        # note that empty lines are used as a seperator between
+        # inetnum objects. So if line starts with empty line
+        # then yield the data object first and then
+        # reset the object to store next object's data
+        elif line.startswith("\n") and data:
+            yield data
+            data = []
+
+
+# Parses in entry
+def parse_irt_group_mnt_by(entry):
+    
+    record = {}
+    
+    # remove all empty elements in the entry
+    entry = [item for item in entry if item] 
+    
+    # split each element (e.g. ["source:APNIC" in the entry to  ["source", "APNIC"]
+    entry = [item.split(':', maxsplit = 1) for item in entry]
+    
+    # create a dictionary
+    # if there are dupplicate items append their values ..
+    # this will prevent deleting items with same key (e.g. descr)
+    for item in entry:
+            
+            # @TODO viele Einträge mit nur einem Index
+            # Warum ? -> parser-bug ? investigate ... 
+            if(len(item) > 1):
+                
+
+                key = item[0]
+                value = item[1].strip()
+                
+                if key not in record:
+                    record[key] = value
+                
+                if key == "address":                 
+                    record[key] = record[key] + value + " " 
+
+                # if a country line has comment, remove the comment
+                if key == "mnt-by":
+                    record[key] = value
+
+    mnt_by = record['mnt-by']
+    address      = record['address']
+    
+    return [mnt_by, address]
+
+parse_irt_files_mnt_by()
