@@ -6,7 +6,7 @@ import fileinput
 import ipaddress
 import time
 from datetime import datetime
-#import locationtagger
+import locationtagger
 import multiprocessing as mp
 
 from config import *;
@@ -706,9 +706,9 @@ def get_city(string, countryCode):
             return place_entity.country_cities[c][0]  
     return "No City information"      
 
-string = "11F Shibuya cross tower, 2-15-1, Shibuya-ku Shibuya, Tokyo 150-0002, Japan"
-countryCode = "JP"
-print(get_city(string, countryCode))
+#string = "11F Shibuya cross tower, 2-15-1, Shibuya-ku Shibuya, Tokyo 150-0002, Japan"
+#countryCode = "JP"
+#print(get_city(string, countryCode))
 
 # ==============================================================================
 # Parser Entry Method 
@@ -743,8 +743,8 @@ def run_parser():
     merge_stripped_files()
     
     print("sorting the final data base\n")
-    sort_file(ip2country_db)
-    check_for_overlaping(ip2country_db)
+    sort_file(IP2COUNTRY_DB)
+    check_for_overlaping(IP2COUNTRY_DB)
     
     print("finished\n")
 
@@ -764,16 +764,19 @@ def run_parser():
 # Parses merged_ine file and writes it into stripped_ine_file
 def parse_irt_files():
     
-    with open(APNIC_DB_IRT, 'r', encoding='utf-8', errors='ignore') as merged, open (APNIC_IRT, 'w', encoding='utf-8', errors='ignore') as stripped:
+    with open(APNIC_DB_IRT, 'r', encoding='utf-8', errors='ignore') as merged, open (IRTTOADDRESS, 'w', encoding='utf-8', errors='ignore') as stripped:
+
+        stripped.write("IRTTOADDRESS = {\n")
         
         for group in get_irt_group(merged, "irt"):
             
             record = parse_irt_group(group)
             
             if record:
-                line = "|".join(map(str, record))
-                line = line + '\n'
+                line = '":"'.join(map(str, record))
+                line = '"' + line + '",\n'
                 stripped.write(line)
+        stripped.write("}")
 
 def get_irt_group(seq, group_by):
     
@@ -801,6 +804,8 @@ def get_irt_group(seq, group_by):
             else :
                 
                 line = line.replace(" ","").replace("\n", "")
+            
+            line = line.replace('"', "'")
             
             data.append(line)
             
@@ -841,18 +846,18 @@ def parse_irt_group(entry):
                     record[key] = value
                 
                 if key == "address":                 
-                    record[key] = value + " " 
+                    record[key] = record[key] + value + " " 
 
                 # if a country line has comment, remove the comment
-                if key == "mnt-by":
-                    record[key] = value
+                #if key == "mnt-by":
+                #    record[key] = value
 
     irt       = record['irt']
     address      = record['address']
-    mnt_by = record['mnt-by']
+    #mnt_by = record['mnt-by']
      
 
     
-    return [irt, address, mnt_by] 
+    return [irt, address]#, mnt_by] 
 
-#parse_irt_files()
+parse_irt_files()
