@@ -56,7 +56,9 @@ APNIC = {
     'inet_cwd':       "/apnic/whois/",
     'inet_fname_gz':  "apnic.db.inetnum.gz",
     'inet_fname':     "apnic.db.inetnum",
-    'inet_timestamp': "apnic.db.inetnum.timestamp"
+    'inet_timestamp': "apnic.db.inetnum.timestamp",
+    'irt_fname_gz':   "apnic.db.irt.gz",
+    'irt_timestamp':  "apnic.db.irt.timestamp"
 }
 
 RIPE = {
@@ -68,7 +70,9 @@ RIPE = {
     'inet_cwd':       "/ripe/dbase/split/",
     'inet_fname_gz':  "ripe.db.inetnum.gz",
     'inet_fname':     "ripe.db.inetnum",
-    'inet_timestamp': "ripe.db.inetnum.timestamp"
+    'inet_timestamp': "ripe.db.inetnum.timestamp",
+    'irt_fname_gz':   "ripe.db.irt.gz",
+    'irt_timestamp':  "ripe.db.irt.timestamp"
 }
 
 

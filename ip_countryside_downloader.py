@@ -153,6 +153,13 @@ def download_del_files(force):
    if(get_timestamp(RIPE["host"],    RIPE["del_cwd"],    RIPE["del_fname"],    RIPE["del_timestamp"])):
       download_del_file(RIPE["host"],    RIPE["del_cwd"],    RIPE["del_fname"])
 
+    #irt files
+   if(get_timestamp(APNIC["host"],   APNIC["inet_cwd"],  APNIC["irt_fname_gz"], APNIC["irt_timestamp"])):
+      download_del_file(APNIC["host"],   APNIC["inet_cwd"],  APNIC["irt_fname_gz"], True)
+   if(get_timestamp(RIPE["host"],    RIPE["inet_cwd"],   RIPE["irt_fname_gz"], RIPE["irt_timestamp"])):  
+      download_del_file(RIPE["host"],    RIPE["inet_cwd"],   RIPE["irt_fname_gz"], True)
+
+    #zip files
    if(get_timestamp(APNIC["host"],   APNIC["inet_cwd"],  APNIC["inet_fname_gz"], APNIC["inet_timestamp"])):
       download_del_file(APNIC["host"],   APNIC["inet_cwd"],  APNIC["inet_fname_gz"], True)
    if(get_timestamp(RIPE["host"],    RIPE["inet_cwd"],   RIPE["inet_fname_gz"], RIPE["inet_timestamp"])):  
