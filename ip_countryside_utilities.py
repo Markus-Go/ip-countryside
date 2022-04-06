@@ -15,11 +15,12 @@ def get_record_by_ip(ip):
             range_start = int(item[0])
             range_end   = int(item[1])
             country     = item[2].rstrip('\n')
-            
+
             if ip_in_range(ip, range_start, range_end):
 
                 return COUNTRY_DICTIONARY[country], country
             
+
     return False
     
 

@@ -4,10 +4,12 @@ import os
 import shutil
 import fileinput
 import ipaddress
+from subprocess import call
 import time
 from datetime import datetime
 import multiprocessing as mp
-#import  locationtagger 
+
+import locationtagger
 
 from config import *;
 from ip_countryside_db import *;
@@ -39,7 +41,6 @@ from ip_countryside_utilities import *;
     # 02. Parsing should be done by multiple threads
 
 # @TODO add city information (when available) to the method parse_inet parse_inet_group     # Aufwand 21
-
 
 
 # ==============================================================================
@@ -160,8 +161,8 @@ def merge_inet_files():
         with open(MERGED_INET_FILE, "wb") as f:
             
             for inet_file in [ 
-                    os.path.join(DEL_FILES_DIR, APNIC['inet_fname']), 
-                    os.path.join(DEL_FILES_DIR, RIPE['inet_fname'])
+                  os.path.join(DEL_FILES_DIR, APNIC['inet_fname']), 
+                  os.path.join(DEL_FILES_DIR, RIPE['inet_fname'])
                     ]:
 
                 with open(inet_file, "rb") as source:
@@ -227,89 +228,6 @@ def get_inet_group(seq, group_by):
         elif line.startswith("\n") and data:
             yield data
             data = []
-
-
-# Parses in entry
-def parse_inet_group(entry):
-    
-    record = {}
-
-    # remove all empty elements in the entry
-    entry = [item for item in entry if item] 
-    
-    # split each element (e.g. ["source:APNIC" in the entry to  ["source", "APNIC"]
-    entry = [item.split(':', maxsplit = 1) for item in entry]
-    
-    # create a dictionary
-    # if there are dupplicate items append their values ..
-    # this will prevent deleting items with same key (e.g. descr)
-    for item in entry:
-            
-            # @TODO viele Einträge mit nur einem Index
-            # Warum ? -> parser-bug ? investigate ... 
-            if(len(item) > 1):
-                
-
-                key = item[0]
-                value = item[1].strip()
-                
-                if key not in record:
-                    record[key] = value
-
-                # merge all descriptio entries into one 
-                elif key in record and key == "descr":
-                    
-                    if value.strip().upper() == "THIS NETWORK RANGE IS NOT ALLOCATED TO APNIC":
-                        return []
-                    
-                    record[key] = record[key] + " " + value 
-
-                # if a country line has comment, remove the comment
-                if key == "country":
-                    record[key] = value.split("#")[0]
-
-                if key == "source" and value == "ripencc":
-                    record[key] = "RIPE"
-            
-                if key == "last-modified":
-                    record[key] = value
-            
-           
-    # extract the ranges out of record
-    range = record['inetnum'].split("-")
-    
-    if re.match(IPV4_PATTERN, range[0]):
-        
-        # check if ranges are not reserved
-        is_reserved = not ipaddress.IPv4Network(range[0]).is_global
-        if is_reserved:
-            return []
-
-    elif re.match(IPV6_PATTERN, range[0]):
-        
-        # check if ranges are not reserved
-        is_reserved = not ipaddress.IPv6Network(range[0]).is_global
-        if is_reserved:
-            return []
-
-
-    range_start   = int(ipaddress.ip_address(range[0]))
-    range_end     = int(ipaddress.ip_address(range[1]))
-    country       = record['country']
-    registry      = record['source']
-    last_modified = ""
-    descr         = "" 
-     
-    if "last-modified" in record:
-        last_modified = str(datetime.strptime(record['last-modified'], "%Y-%m-%dT%H:%M:%S%fZ")) # returns YY-MM-DD HH:MM:SS
-        last_modified = last_modified.split(" ")[0]     # returns YY-MM-DD 
-        last_modified = last_modified.replace("-", "")  # returns YYMMDD
-
-    if "descr" in record:
-        descr = record["descr"]
-
-    
-    return [range_start, range_end, country, registry, last_modified, descr]
 
 
 def parse_inet_multicore(kb = 5):
@@ -407,59 +325,127 @@ def parse_inet_chunk(file, start=0, stop=0):
     return record
 
 
-# ==============================================================================
-# Help Methods used for all files ... 
+# Parses in entry
+def parse_inet_group(entry):
+    
+    record = {}
 
-
-def sort_file(file=IP2COUNTRY_DB):
-
-    records = []
-
-    # get records from final db
-    records = read_db(file)
-
-    # sort this list
-    records.sort()
-
-    try:
-
-        # write it back 
-        with open(file, "w", encoding='utf-8', errors='ignore') as f:
+    # remove all empty elements in the entry
+    entry = [item for item in entry if item] 
+    
+    # split each element (e.g. ["source:APNIC" in the entry to  ["source", "APNIC"]
+    entry = [item.split(':', maxsplit = 1) for item in entry]
+    
+    # create a dictionary
+    # if there are dupplicate items append their values ..
+    # this will prevent deleting items with same key (e.g. descr)
+    for item in entry:
             
-            for record in records:
-               
-               line = "|".join(map(str, record))
-               line = line + "\n"
-               f.write(line)
+            # @TODO viele Einträge mit nur einem Index
+            # Warum ? -> parser-bug ? investigate ... 
+            if(len(item) > 1):
+                
 
-    except IOError as e:
+                key = item[0]
+                value = item[1].strip()
+                
+                if key not in record:
+                    record[key] = value
+                    
+                # merge all descriptio entries into one 
+                elif key in record and key == "descr":
+                    
+                    record[key] = record[key] + " " + value 
+                
+                # for example: in ripe.db.inetnum some ip ranges with the description 
+                # "IPV4 ADDRESS BLOCK NOT MANAGED BY THE RIPE NCC" may appear -> these 
+                # don't need to be parsed at all.
+                # -> otherwise 5430 conflicts 
+                if key == "descr":
+                    if ("THIS NETWORK RANGE IS NOT ALLOCATED TO APNIC."  in value.strip().upper() or
+                        "NOT ALLOCATED BY APNIC"                         in value.strip().upper() or
+                        "IPV4 ADDRESS BLOCK NOT MANAGED BY THE RIPE NCC" in value.strip().upper() or
+                        "TRANSFERRED TO THE ARIN REGION"                 in value.strip().upper() or
+                        "TRANSFERRED TO THE RIPE REGION"                 in value.strip().upper()):
+                        return []
+                    
+                # if a country line has comment, remove the comment
+                if key == "country":
+                    record[key] = value.split("#")[0]
+
+                if key == "source" and value == "ripencc":
+                    record[key] = "RIPE"
+            
+                if key == "last-modified":
+                    record[key] = value
+            
+           
+    # extract the ranges out of record
+    range = record['inetnum'].split("-")
+    
+    if re.match(IPV4_PATTERN, range[0]):
         
-        print(e)
+        # check if ranges are not reserved
+        is_reserved = not ipaddress.IPv4Network(range[0]).is_global
+        if is_reserved:
+            return []
 
-    return records
+    elif re.match(IPV6_PATTERN, range[0]):
+        
+        # check if ranges are not reserved
+        is_reserved = not ipaddress.IPv6Network(range[0]).is_global
+        if is_reserved:
+            return []
+
+
+    range_start   = int(ipaddress.ip_address(range[0]))
+    range_end     = int(ipaddress.ip_address(range[1]))
+    country       = record['country']
+    registry      = record['source']
+    last_modified = ""
+    descr         = "" 
+     
+    if "last-modified" in record:
+        last_modified = str(datetime.strptime(record['last-modified'], "%Y-%m-%dT%H:%M:%S%fZ")) # returns YY-MM-DD HH:MM:SS
+        last_modified = last_modified.split(" ")[0]     # returns YY-MM-DD 
+        last_modified = last_modified.replace("-", "")  # returns YYMMDD
+
+    if "descr" in record:
+        descr = record["descr"]
+
+    
+    return [range_start, range_end, country, registry, last_modified, descr]
+
+
+# ==============================================================================
+# Methods used for resolving conflicts ... 
 
 
 def check_for_overlaping(file=IP2COUNTRY_DB):
     
-    records = []
+    
+    # temp file to store overlapped records
+    with open(os.path.join(DEL_FILES_DIR, "overlapping"), "w", encoding='utf-8', errors='ignore') as f:
 
-    # get records from final db
-    records = read_db(file)
+        records = []
 
-    # check if two records overlapps
-    # since that the list is sorted, overlapping
-    # may only occur in successive records (record[i] and record[i+1])
-    nr_of_overlapps = 0
-    for i in range(1, len(records)):
+        # get records from final db
+        records = read_db(file)
+
+        # check if two records overlapps
+        # since that the list is sorted, overlapping
+        # may only occur in successive records (record[i] and record[i+1])
+        nr_of_overlapps = 0
+        for i in range(1, len(records)):
             
-        overlapp = ip_ranges_overlapp(records[i-1], records[i])
-        
-        if overlapp :
+            overlapp = ip_ranges_overlapp(records[i-1], records[i])
             
-            nr_of_overlapps = nr_of_overlapps + 1
-            handle_ranges_overlapp(records[i-1], records[i], records)
-              
-    #print(f"{nr_of_overlapps} overlapps detected")
+            if overlapp :
+
+                handle_ranges_overlapp(records[i-1], records[i], f)
+                nr_of_overlapps = nr_of_overlapps + 1
+          
+    print(f"{nr_of_overlapps} overlapps detected")
 
     try:
     
@@ -467,51 +453,72 @@ def check_for_overlaping(file=IP2COUNTRY_DB):
             
             for record in records:
                 
-                line = "|".join(map(str, record))
-                line = line + '\n'
-                f.write(line)
+                if record:
+                    
+                    # check if record's registry is valid 
+                    if record[3] != "XX":
+
+                        line = "|".join(map(str, record))
+                        line = line + '\n'
+                        f.write(line)
 
     except IOError as e:
         
         print(e)
 
 
-def handle_ranges_overlapp(record_1, record_2, records):
+def ip_ranges_overlapp(record_1, record_2):
+    
+    range_end_1     = record_1[1]
+    range_start_2   = record_2[0]
+
+    # case 1: [1, 3] [2, 4] -> 2 < 3 overlapping
+    # case 2: [1, 3] [3, 4] -> 3 = 3 overlapping
+    return  range_end_1 >= range_start_2 
+
+
+def handle_ranges_overlapp(record_1, record_2, f):
     
         ip_from_1  = record_1[0]
         ip_to_1    = record_1[1]
         country_1  = record_1[2].upper()
         registry_1 = record_1[3].upper()
-
+        date_1     = int(record_1[4])
+        desc_1     = record_1[5]
+        
         ip_from_2  = record_2[0]
         ip_to_2    = record_2[1]
         country_2  = record_2[2].upper()
         registry_2 = record_2[3].upper()
+        date_2     = int(record_2[4])
+        desc_2     = record_2[5]
 
         # case 1
         if ip_from_1 == ip_from_2 and ip_to_1 == ip_to_2:
             
             if country_1 != country_2:
                 
-                print(record_1)
-                print(record_2)
-                   
+                 # DS
                 if registry_1 == registry_2:
 
-                    # DS 
-                    # no cases
-                    pass
+                    # this case is always caused by a del file and 
+                    # it's corresponding inetnum file. (e.g. delegated-apnic vs apnic.db.inetnum)
+                    # since that the inetnum files are more trust worthy -> simply take
+                    # the record from the inetnum file
+                    # inetnum records have always newer date and always have description
+                    if date_1 > date_2:
+                        record_2[3] = "XX"
 
+                    elif date_2 > date_1:
+                        record_1[3] = "XX"
+
+                # DD
+                # no cases !        
                 else: 
-                    
-                    # DD
-                    # [3393687552, 3393689599, 'DE', 'RIPE']
-                    # [3393687552, 3393689599, 'IN', 'APNIC']
                     pass
     
-                
             else:
-                
+            
                 # SD
                 # no cases !
                 if registry_1 != registry_2:
@@ -520,8 +527,8 @@ def handle_ranges_overlapp(record_1, record_2, records):
                 # SS
                 # no cases !
                 else:
-                    
-                    pass
+                    pass 
+
 
         # case 2
         if ip_from_1 == ip_from_2 and ip_to_1 < ip_to_2:
@@ -556,6 +563,7 @@ def handle_ranges_overlapp(record_1, record_2, records):
                 else:
                     pass
             
+
         # case 3
         if ip_from_1 < ip_from_2 and ip_to_1 < ip_to_2 and ip_to_1 > ip_from_2:
             
@@ -586,7 +594,8 @@ def handle_ranges_overlapp(record_1, record_2, records):
                 # [3708228918, 3708228959, 'CN', 'APNIC']
                 else:
                     pass
-                
+
+
         # case 4
         if ip_from_1 < ip_from_2 and ip_to_1 > ip_to_2:
             
@@ -619,6 +628,7 @@ def handle_ranges_overlapp(record_1, record_2, records):
 
                 else:
                     pass
+        
         
         # case 5
         if ip_from_1 < ip_from_2 and ip_to_1 == ip_to_2:
@@ -653,15 +663,9 @@ def handle_ranges_overlapp(record_1, record_2, records):
                     pass
 
 
-def ip_ranges_overlapp(record_1, record_2):
+# ==============================================================================
+# Help Methods used for all files ... 
 
-    range_end_1     = record_1[1]
-    range_start_2   = record_2[0]
-
-    # case 1: [1, 3] [2, 4] -> 2 < 3 overlapping
-    # case 2: [1, 3] [3, 4] -> 3 = 3 overlapping
-    return  range_end_1 >= range_start_2 
- 
 
 def merge_stripped_files():
     
@@ -686,29 +690,40 @@ def merge_stripped_files():
         print(e)
 
 
+def sort_file(file=IP2COUNTRY_DB):
+
+    records = []
+
+    # get records from final db
+    records = read_db(file)
+
+    # sort this list
+    records.sort()
+
+    try:
+
+        # write it back 
+        with open(file, "w", encoding='utf-8', errors='ignore') as f:
+            
+            for record in records:
+               
+               line = "|".join(map(str, record))
+               line = line + "\n"
+               f.write(line)
+
+    except IOError as e:
+        
+        print(e)
+
+    return records
+
+
 def delete_temp_files():
     os.remove(MERGED_DEL_FILE)
     os.remove(STRIPPED_DEL_FILE)
     os.remove(MERGED_INET_FILE)
     os.remove(STRIPPED_INET_FILE)
 
-def get_city(string, countryCode):
-
-    place_entity = locationtagger.find_locations(text = string)
-   
-    # getting all country cities
-    print("The countries cities in text : ")
-    print(place_entity.country_cities)
-
-    for c in place_entity.country_cities:
-        if c.upper() == COUNTRY_DICTIONARY[countryCode]:
-            #print(place_entity.country_cities[c], "is in",COUNTRY_DICTIONARY[countryCode])
-            return place_entity.country_cities[c][0]  
-    return "No City information"      
-
-#string = "11F Shibuya cross tower, 2-15-1, Shibuya-ku Shibuya, Tokyo 150-0002, Japan"
-#countryCode = "JP"
-#print(get_city(string, countryCode))
 
 # ==============================================================================
 # Parser Entry Method 
@@ -718,38 +733,23 @@ def run_parser():
     start_time = time.time()
     print("parsing started\n")
 
-    print("merging delegation files ...")
-    merge_del_files()          
-    print("merging finished\n")
+    # merge_del_files()          
+    # parse_del_files()           
 
-    print("parsing delegation files ...")
-    parse_del_files()           
-    print("parsing finished\n")
+    # merge_inet_files()
+    # parse_inet_files_single()
+    # parse_inet_multicore()
 
-    print("merging inetnum files ...")
-    merge_inet_files()
-    print("merging finished\n")
-
-    start_parse = time.time()
-    print("parsing inetnum files ...")
-    parse_inet_files_single()
-
-    parse_inet_multicore()
-    print("parsing finished\n")
-
-    end_parse = time.time()
-    print("total time for parsing was:", f'{end_parse - start_parse:.3f}', "s\n") 
- 
-    # print("creating the final database ...")
-    merge_stripped_files()
+    # print("merging ...")
+    # merge_stripped_files()
     
-    print("sorting the final data base\n")
-    sort_file(IP2COUNTRY_DB)
-    check_for_overlaping(IP2COUNTRY_DB)
+    print("sorting ... ")
+    sort_file()
     
-    print("finished\n")
-
-    delete_temp_files()
+    print("resolving conflicts ... ")
+    check_for_overlaping()
+    
+    #delete_temp_files()
     
     end_time = time.time()
     print("total time needed was:", f'{end_time - start_time:.3f}', "s\n") 
@@ -757,200 +757,6 @@ def run_parser():
     return 0
 
 
-
 # Needed if for multiprocessing not to crash
-#if __name__ == "__main__":   
-#    run_parser()
-
-# Parses merged_ine file and writes it into stripped_ine_file
-def parse_irt_files():
-    
-    with open(APNIC_DB_IRT, 'r', encoding='utf-8', errors='ignore') as merged, open (IRTTOADDRESS, 'w', encoding='utf-8', errors='ignore') as stripped:
-
-        stripped.write("IRTTOADDRESS = {\n")
-        
-        for group in get_irt_group(merged, "irt"):
-            
-            record = parse_irt_group(group)
-            
-            if record:
-                line = '":"'.join(map(str, record))
-                line = '"' + line + '",\n'
-                stripped.write(line)
-        stripped.write("}")
-
-def get_irt_group(seq, group_by):
-    
-    data = []
-    
-   
-    for line in seq:
-        
-        # escape comments (starts with '#')
-        # escape unrelevant data in ripe.inetnum (starts with '%')
-        if line.startswith("#") or line.startswith("%"): 
-            continue
-
-        # every inetnum object starts with an entry -> inetnum: ...
-        # so start grouping if a line starts with 'inetnum'
-        # if an object has already been initialized then scann also the
-        # next lines (or data) 
-        if (line.startswith(group_by) or data) and not line.startswith("\n"):
-            
-            # don't remove spaces from description lines
-            if line.startswith('address'):
-                
-                line = line.replace("\n", "")
-            
-            else :
-                
-                line = line.replace(" ","").replace("\n", "")
-            
-            line = line.replace('"', "'")
-            
-            data.append(line)
-            
-        # note that empty lines are used as a seperator between
-        # inetnum objects. So if line starts with empty line
-        # then yield the data object first and then
-        # reset the object to store next object's data
-        elif line.startswith("\n") and data:
-            yield data
-            data = []
-
-
-# Parses in entry
-def parse_irt_group(entry):
-    
-    record = {}
-    
-    # remove all empty elements in the entry
-    entry = [item for item in entry if item] 
-    
-    # split each element (e.g. ["source:APNIC" in the entry to  ["source", "APNIC"]
-    entry = [item.split(':', maxsplit = 1) for item in entry]
-    
-    # create a dictionary
-    # if there are dupplicate items append their values ..
-    # this will prevent deleting items with same key (e.g. descr)
-    for item in entry:
-            
-            # @TODO viele Einträge mit nur einem Index
-            # Warum ? -> parser-bug ? investigate ... 
-            if(len(item) > 1):
-                
-
-                key = item[0]
-                value = item[1].strip()
-                
-                if key not in record:
-                    record[key] = value
-                
-                if key == "address":                 
-                    record[key] = record[key] + value + " " 
-
-    irt       = record['irt']
-    address      = record['address']
-     
-
-    
-    return [irt, address]#, mnt_by] 
-
-parse_irt_files()
-
-def parse_irt_files_mnt_by():
-    
-    with open(APNIC_DB_IRT, 'r', encoding='utf-8', errors='ignore') as merged, open (MNT_BYTOADDRESS, 'w', encoding='utf-8', errors='ignore') as stripped:
-
-        stripped.write("IRTTOADDRESS = {\n")
-        
-        for group in get_irt_group_mnt_by(merged, "irt"):
-            
-            record = parse_irt_group_mnt_by(group)
-            
-            if record:
-                line = '":"'.join(map(str, record))
-                line = '"' + line + '",\n'
-                stripped.write(line)
-        stripped.write("}")
-
-def get_irt_group_mnt_by(seq, group_by):
-    
-    data = []
-    
-   
-    for line in seq:
-        
-        # escape comments (starts with '#')
-        # escape unrelevant data in ripe.inetnum (starts with '%')
-        if line.startswith("#") or line.startswith("%"): 
-            continue
-
-        # every inetnum object starts with an entry -> inetnum: ...
-        # so start grouping if a line starts with 'inetnum'
-        # if an object has already been initialized then scann also the
-        # next lines (or data) 
-        if (line.startswith(group_by) or data) and not line.startswith("\n"):
-            
-            # don't remove spaces from description lines
-            if line.startswith('address'):
-                
-                line = line.replace("\n", "")
-            
-            else :
-                
-                line = line.replace(" ","").replace("\n", "")
-            
-            line = line.replace('"', "'")
-            
-            data.append(line)
-            
-        # note that empty lines are used as a seperator between
-        # inetnum objects. So if line starts with empty line
-        # then yield the data object first and then
-        # reset the object to store next object's data
-        elif line.startswith("\n") and data:
-            yield data
-            data = []
-
-
-# Parses in entry
-def parse_irt_group_mnt_by(entry):
-    
-    record = {}
-    
-    # remove all empty elements in the entry
-    entry = [item for item in entry if item] 
-    
-    # split each element (e.g. ["source:APNIC" in the entry to  ["source", "APNIC"]
-    entry = [item.split(':', maxsplit = 1) for item in entry]
-    
-    # create a dictionary
-    # if there are dupplicate items append their values ..
-    # this will prevent deleting items with same key (e.g. descr)
-    for item in entry:
-            
-            # @TODO viele Einträge mit nur einem Index
-            # Warum ? -> parser-bug ? investigate ... 
-            if(len(item) > 1):
-                
-
-                key = item[0]
-                value = item[1].strip()
-                
-                if key not in record:
-                    record[key] = value
-                
-                if key == "address":                 
-                    record[key] = record[key] + value + " " 
-
-                # if a country line has comment, remove the comment
-                if key == "mnt-by":
-                    record[key] = value
-
-    mnt_by = record['mnt-by']
-    address      = record['address']
-    
-    return [mnt_by, address]
-
-parse_irt_files_mnt_by()
+if __name__ == "__main__":   
+   run_parser()

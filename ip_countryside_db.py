@@ -19,7 +19,7 @@ def read_db(file=IP2COUNTRY_DB):
                 
                 record = read_db_record(line)
                 
-                if(record):
+                if record:
                     
                     records.append(record)
 
@@ -33,7 +33,7 @@ def read_db(file=IP2COUNTRY_DB):
 def read_db_record(line):
     
     # record index:    0       1   2    3           4            5          
-    # record format: ip_from|ip_to|cc|registry|last-modified|description|
+    # record format: ip_from|ip_to|cc|registry|last-modified|description
 
     if line.startswith("\n"):
         return []
