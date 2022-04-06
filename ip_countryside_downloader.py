@@ -4,7 +4,7 @@ import shutil
 import os
 
 from config import *
-from md5hash import scan
+#from md5hash import scan
 from datetime import datetime
 
 
