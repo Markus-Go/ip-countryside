@@ -9,6 +9,7 @@ from datetime import datetime
 #import locationtagger
 import multiprocessing as mp
 from del_files.irtToAddress import *;
+from del_files.mnt_byToAddress import *;
 
 from config import *;
 from ip_countryside_db import *;
@@ -277,6 +278,10 @@ def parse_inet_group(entry):
                 
                 if key == "mnt-irt":
                     record[key] = value
+                
+                if key == "mnt-by":
+                    record[key] = value
+
             
            
     # extract the ranges out of record
@@ -304,6 +309,7 @@ def parse_inet_group(entry):
     last_modified = ""
     descr         = "" 
     mnt_irt       = ""
+    mnt_by        = ""
      
     if "last-modified" in record:
         last_modified = str(datetime.strptime(record['last-modified'], "%Y-%m-%dT%H:%M:%S%fZ")) # returns YY-MM-DD HH:MM:SS
@@ -316,15 +322,24 @@ def parse_inet_group(entry):
     if "mnt-irt" in record: 
         try: 
             mnt_irt = IRTTOADDRESS_DIC[record["mnt-irt"]].strip()
+            return [range_start, range_end, country, registry, last_modified, descr, mnt_irt]
         except:
             mnt_irt = ""
+    elif "mnt-by" in record:
+        try:
+            mnt_by = MNTBY_TOADDRESS_DIC[record["mnt-by"]].strip()
+            return [range_start, range_end, country, registry, last_modified, descr, mnt_by]
+        except:
+            mnt_by = ""
 
-    return [range_start, range_end, country, registry, last_modified, descr, mnt_irt]
+    return [range_start, range_end, country, registry, last_modified, descr]
+
+    
 
 # Parses merged_ine file and writes it into stripped_ine_file
 def parse_irt_files():
     
-    with open(APNIC_DB_IRT, 'r', encoding='utf-8', errors='ignore') as merged, open (IRTTOADDRESS_FILE, 'w', encoding='utf-8', errors='ignore') as stripped:
+    with open(APNIC_DB_IRT, 'r', encoding='utf-8', errors='ignore') as merged, open (IRTTOADDRESS, 'w', encoding='utf-8', errors='ignore') as stripped:
 
         stripped.write("\nIRTTOADDRESS_DIC = {\n")
         
@@ -419,6 +434,104 @@ def parse_irt_group(entry):
 
     
     return [irt, address]#, mnt_by] 
+
+
+def parse_irt_files_mnt_by():
+    
+    with open(APNIC_DB_IRT, 'r', encoding='utf-8', errors='ignore') as merged, open (MNT_BYTOADDRESS, 'w', encoding='utf-8', errors='ignore') as stripped:
+
+        stripped.write("MNTBY_TOADDRESS_DIC = {\n")
+        
+        for group in get_irt_group_mnt_by(merged, "irt"):
+            
+            record = parse_irt_group_mnt_by(group)
+            
+            if record:
+                line = '":"'.join(map(str, record))
+                line = '"' + line + '",\n'
+                stripped.write(line)
+        stripped.write("}")
+
+def get_irt_group_mnt_by(seq, group_by):
+    
+    data = []
+    
+   
+    for line in seq:
+        
+        # escape comments (starts with '#')
+        # escape unrelevant data in ripe.inetnum (starts with '%')
+        if line.startswith("#") or line.startswith("%"): 
+            continue
+
+        # every inetnum object starts with an entry -> inetnum: ...
+        # so start grouping if a line starts with 'inetnum'
+        # if an object has already been initialized then scann also the
+        # next lines (or data) 
+        if (line.startswith(group_by) or data) and not line.startswith("\n"):
+            
+            # don't remove spaces from description lines
+            if line.startswith('address'):
+                
+                line = line.replace("\n", "")
+            
+            else :
+                
+                line = line.replace(" ","").replace("\n", "")
+            
+            line = line.replace('"', "'")
+            
+            data.append(line)
+            
+        # note that empty lines are used as a seperator between
+        # inetnum objects. So if line starts with empty line
+        # then yield the data object first and then
+        # reset the object to store next object's data
+        elif line.startswith("\n") and data:
+            yield data
+            data = []
+
+
+# Parses in entry
+def parse_irt_group_mnt_by(entry):
+    
+    record = {}
+    
+    # remove all empty elements in the entry
+    entry = [item for item in entry if item] 
+    
+    # split each element (e.g. ["source:APNIC" in the entry to  ["source", "APNIC"]
+    entry = [item.split(':', maxsplit = 1) for item in entry]
+    
+    # create a dictionary
+    # if there are dupplicate items append their values ..
+    # this will prevent deleting items with same key (e.g. descr)
+    for item in entry:
+            
+            # @TODO viele Einträge mit nur einem Index
+            # Warum ? -> parser-bug ? investigate ... 
+            if(len(item) > 1):
+                
+
+                key = item[0]
+                value = item[1].strip()
+                
+                if key not in record:
+                    record[key] = value
+                
+                if key == "address":                 
+                    record[key] = record[key] + value + " " 
+
+                # if a country line has comment, remove the comment
+                if key == "mnt-by":
+                    record[key] = value
+
+    mnt_by = record['mnt-by']
+    address      = record['address']
+    
+    return [mnt_by, address]
+
+
 
 def parse_inet_multicore(kb = 5):
 
@@ -842,7 +955,9 @@ def run_parser():
     print("Parsing and creating irtToAdress ...")
     parse_irt_files()
     print("Parsing irt finished\n")
-
+    print("Parsing and creating mnt ...")
+    parse_irt_files_mnt_by()
+    print("Parsing mnt finished\n")
     start_parse = time.time()
     print("parsing inetnum files ...")
     #parse_inet_files_single()
@@ -874,174 +989,16 @@ def run_parser():
 if __name__ == "__main__":   
     run_parser()
     
-   
-    for line in seq:
-        
-        # escape comments (starts with '#')
-        # escape unrelevant data in ripe.inetnum (starts with '%')
-        if line.startswith("#") or line.startswith("%"): 
-            continue
-
-        # every inetnum object starts with an entry -> inetnum: ...
-        # so start grouping if a line starts with 'inetnum'
-        # if an object has already been initialized then scann also the
-        # next lines (or data) 
-        if (line.startswith(group_by) or data) and not line.startswith("\n"):
-            
-            # don't remove spaces from description lines
-            if line.startswith('address'):
-                
-                line = line.replace("\n", "")
-            
-            else :
-                
-                line = line.replace(" ","").replace("\n", "")
-            
-            line = line.replace('"', "'")
-            
-            data.append(line)
-            
-        # note that empty lines are used as a seperator between
-        # inetnum objects. So if line starts with empty line
-        # then yield the data object first and then
-        # reset the object to store next object's data
-        elif line.startswith("\n") and data:
-            yield data
-            data = []
-
-
-# Parses in entry
-def parse_irt_group(entry):
-    
-    record = {}
-    
-    # remove all empty elements in the entry
-    entry = [item for item in entry if item] 
-    
-    # split each element (e.g. ["source:APNIC" in the entry to  ["source", "APNIC"]
-    entry = [item.split(':', maxsplit = 1) for item in entry]
-    
-    # create a dictionary
-    # if there are dupplicate items append their values ..
-    # this will prevent deleting items with same key (e.g. descr)
-    for item in entry:
-            
-            # @TODO viele Einträge mit nur einem Index
-            # Warum ? -> parser-bug ? investigate ... 
-            if(len(item) > 1):
-                
-
-                key = item[0]
-                value = item[1].strip()
-                
-                if key not in record:
-                    record[key] = value
-                
-                if key == "address":                 
-                    record[key] = record[key] + value + " " 
-
-    irt       = record['irt']
-    address      = record['address']
-     
-
-    
-    return [irt, address]#, mnt_by] 
-
-parse_irt_files()
-
-def parse_irt_files_mnt_by():
-    
-    with open(APNIC_DB_IRT, 'r', encoding='utf-8', errors='ignore') as merged, open (MNT_BYTOADDRESS, 'w', encoding='utf-8', errors='ignore') as stripped:
-
-        stripped.write("IRTTOADDRESS = {\n")
-        
-        for group in get_irt_group_mnt_by(merged, "irt"):
-            
-            record = parse_irt_group_mnt_by(group)
-            
-            if record:
-                line = '":"'.join(map(str, record))
-                line = '"' + line + '",\n'
-                stripped.write(line)
-        stripped.write("}")
-
-def get_irt_group_mnt_by(seq, group_by):
-    
-    data = []
     
    
-    for line in seq:
-        
-        # escape comments (starts with '#')
-        # escape unrelevant data in ripe.inetnum (starts with '%')
-        if line.startswith("#") or line.startswith("%"): 
-            continue
-
-        # every inetnum object starts with an entry -> inetnum: ...
-        # so start grouping if a line starts with 'inetnum'
-        # if an object has already been initialized then scann also the
-        # next lines (or data) 
-        if (line.startswith(group_by) or data) and not line.startswith("\n"):
-            
-            # don't remove spaces from description lines
-            if line.startswith('address'):
-                
-                line = line.replace("\n", "")
-            
-            else :
-                
-                line = line.replace(" ","").replace("\n", "")
-            
-            line = line.replace('"', "'")
-            
-            data.append(line)
-            
-        # note that empty lines are used as a seperator between
-        # inetnum objects. So if line starts with empty line
-        # then yield the data object first and then
-        # reset the object to store next object's data
-        elif line.startswith("\n") and data:
-            yield data
-            data = []
-
-
-# Parses in entry
-def parse_irt_group_mnt_by(entry):
     
-    record = {}
-    
-    # remove all empty elements in the entry
-    entry = [item for item in entry if item] 
-    
-    # split each element (e.g. ["source:APNIC" in the entry to  ["source", "APNIC"]
-    entry = [item.split(':', maxsplit = 1) for item in entry]
-    
-    # create a dictionary
-    # if there are dupplicate items append their values ..
-    # this will prevent deleting items with same key (e.g. descr)
-    for item in entry:
-            
-            # @TODO viele Einträge mit nur einem Index
-            # Warum ? -> parser-bug ? investigate ... 
-            if(len(item) > 1):
-                
 
-                key = item[0]
-                value = item[1].strip()
-                
-                if key not in record:
-                    record[key] = value
-                
-                if key == "address":                 
-                    record[key] = record[key] + value + " " 
 
-                # if a country line has comment, remove the comment
-                if key == "mnt-by":
-                    record[key] = value
 
-    mnt_by = record['mnt-by']
-    address      = record['address']
-    
-    return [mnt_by, address]
 
-parse_irt_files_mnt_by()
+
+ 
+
+
+
+
