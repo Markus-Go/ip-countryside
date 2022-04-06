@@ -14,7 +14,8 @@ IP2COUNTRY_DB_YAML     = os.path.join(DEL_FILES_DIR, "db.yaml")
 IP2COUNTRY_DB_YAML     = os.path.join(DEL_FILES_DIR, "db.yaml")
 APNIC_DB_IRT           = os.path.join(DEL_FILES_DIR, "apnic.db.irt")
 APNIC_IRT              = os.path.join(DEL_FILES_DIR, "apnic.irt")
-IRTTOADDRESS_FILE           = os.path.join(DEL_FILES_DIR, "irtToAddress.py")
+IRTTOADDRESS           = os.path.join(DEL_FILES_DIR, "irtToAddress.py")
+MNT_BYTOADDRESS        = os.path.join(DEL_FILES_DIR, "mnt_byToAddress.py")
 
 # Regex for matching ip versions
 IPV4_PATTERN = "[0-9]+(?:\.[0-9]+){3}"
