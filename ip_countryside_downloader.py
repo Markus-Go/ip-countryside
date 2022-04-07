@@ -61,6 +61,7 @@ def get_timestamp(host, cwd, delFileName, localfile):
         print("younger than one week\n")
         return False
 
+
 def download_del_files_needed(host, cwd, delFileName):
     
     ftp = ftplib.FTP(host)

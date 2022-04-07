@@ -11,7 +11,7 @@ STRIPPED_INET_FILE     = os.path.join(DEL_FILES_DIR, "stipped_inet_file")
 IP2COUNTRY_DB          = os.path.join(DEL_FILES_DIR, "ip2country_2")
 IP2COUNTRY_DB_JSON     = os.path.join(DEL_FILES_DIR, "db.json")
 IP2COUNTRY_DB_YAML     = os.path.join(DEL_FILES_DIR, "db.yaml")
-IP2COUNTRY_DB_YAML     = os.path.join(DEL_FILES_DIR, "db.yaml")
+
 APNIC_DB_IRT           = os.path.join(DEL_FILES_DIR, "apnic.db.irt")
 APNIC_IRT              = os.path.join(DEL_FILES_DIR, "apnic.irt")
 IRTTOADDRESS           = os.path.join(DEL_FILES_DIR, "irtToAddress.py")

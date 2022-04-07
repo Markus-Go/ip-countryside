@@ -50,7 +50,7 @@ def read_db_record(line):
         descr           = ""
 
         if len(line) >= 5:
-            last_modified = line[4].rstrip("\n")
+            last_modified = int(line[4].rstrip("\n"))
 
         if len(line) >= 6:
             descr = line[5].rstrip("\n")
