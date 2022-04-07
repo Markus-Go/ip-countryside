@@ -724,19 +724,19 @@ def run_parser():
 
 
     # print("parsing del files ...")
-    # merge_del_files()          
-    # parse_del_files()           
+    merge_del_files()          
+    parse_del_files()           
     
 
-    # print("parsing inetnum files ...")
-    # merge_inet_files()
-    # #parse_inet_files_single()
-    # parse_inet_files_multicore()
+    print("parsing inetnum files ...")
+    merge_inet_files()
+    #parse_inet_files_single()
+    parse_inet_files_multicore()
 
-    # merge_stripped_files()
+    merge_stripped_files()
     
-    # print("resolving overlapps ...")
-    # sort_file()
+    print("resolving overlapps ...")
+    sort_file()
     check_for_overlaping()
     
     print("finished\n")
