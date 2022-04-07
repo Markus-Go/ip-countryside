@@ -79,6 +79,10 @@ def create_app(test_config=None):
                 temp = get_record_by_ip(ipaddress)
                 country = temp[0] 
                 flag = temp[1]
+                try:
+                    city = temp[2]
+                except:
+                    city ="-"
                 address = temp[0]
                 isValid = True
                 comment = "-"
@@ -97,6 +101,7 @@ def create_app(test_config=None):
                 if temp == False:
                     country = "-" 
                     flag = "Arrr"
+                    city = "-"
                     comment = "No Valid IP-Adress"
                     lat = 0
                     lon = 0
@@ -106,6 +111,10 @@ def create_app(test_config=None):
                     country = temp[0] 
                     flag = temp[1]
                     address = temp[0]
+                    try:
+                        city = temp[2]
+                    except:
+                        city ="-"
                     isValid = True
                     comment = "-"
                     try:
@@ -123,6 +132,10 @@ def create_app(test_config=None):
             temp = get_record_by_ip(ipaddress)
             country = temp[0] 
             flag = temp[1]
+            try:
+                    city = temp[2]
+            except:
+                city ="-"
             address = temp[0]
             comment = "-"
             isValid = True
@@ -137,7 +150,7 @@ def create_app(test_config=None):
                 lon = 0
                 comment = "Karte aktuell Leider nicht Verfügbar"
 
-        output = render_template('index.html', ip=ipaddress, lat=lat, lon=lon, add=address, flag=flag, country=country, comment=comment, isValid=isValid) 
+        output = render_template('index.html', ip=ipaddress, lat=lat, lon=lon, add=address, flag=flag, country=country, comment=comment, isValid=isValid, city=city) 
         
         return output 
 
