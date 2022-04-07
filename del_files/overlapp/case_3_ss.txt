@@ -1,0 +1,323 @@
+Case SS
+
+[308, 314, 'CN', 'APNIC', 20080904, 'Beijing HUA BIN ZHUANG YUAN LV SE XIU XIAN JIAN SHEN JU LE BU CO.LTD CO.LTD Chaoyang Distric, Beijing']
+ [312, 327, 'CN', 'APNIC', 20080904, 'Beijing SHENG HUI GU WEN BEI JING CO.LTD CO.LTD Chaoyang Distric, Beijing']
+
+
+Case SS
+
+[3680314248, 3680314263, 'MY', 'APNIC', 20080904, 'MTN SRI LANKA BRF']
+ [3680314256, 3680314271, 'MY', 'APNIC', 20080904, 'YUNNAM HAIR CARE SDN BHD BINTANG']
+
+
+Case SS
+
+[3683688970, 3683688973, 'CN', 'APNIC', 20080904, "XI'AN ZHANG BAO HE Xi'an city, shaanxi"]
+ [3683688972, 3683688975, 'CN', 'APNIC', 20080904, "XI'AN LIAN HU WHOLE WORLD NET CITY Xi'an city, shaanxi"]
+
+
+Case SS
+
+[3683734448, 3683734451, 'CN', 'APNIC', 20080904, "XI'AN REN MIN ROAD GRADE SCHOOL Xi'an city, shaanxi"]
+ [3683734449, 3683734453, 'CN', 'APNIC', 20080904, "XI'AN JIAO DA INDUSTRY COMPANY Xi'an city, shaanxi"]
+
+
+Case SS
+
+[3683734449, 3683734453, 'CN', 'APNIC', 20080904, "XI'AN JIAO DA INDUSTRY COMPANY Xi'an city, shaanxi"]
+ [3683734452, 3683734455, 'CN', 'APNIC', 20080904, "XI'AN YAN LIANG GUAN SHAN PRIMARY MIDDLE SCHOOL Xi'an city, shaanxi"]
+
+
+Case SS
+
+[3683752994, 3683753001, 'CN', 'APNIC', 20080904, 'Baoji Baoji city, shaanxi']
+ [3683752995, 3683753002, 'CN', 'APNIC', 20080904, 'Baoji Baoji city, shaanxi']
+
+
+Case SS
+
+[3683752995, 3683753002, 'CN', 'APNIC', 20080904, 'Baoji Baoji city, shaanxi']
+ [3683752997, 3683753004, 'CN', 'APNIC', 20080904, 'Baoji Baoji city, shaanxi']
+
+
+Case SS
+
+[3683801408, 3683801411, 'CN', 'APNIC', 20080904, 'QINGDAO-SHENGYIN-Co,Qingdao city,Shandong province']
+ [3683801410, 3683801417, 'CN', 'APNIC', 20080904, 'Qingdao-shengyingzhiye-Co,Qingdao city,Shandong province']
+
+
+Case SS
+
+[3683808512, 3683808515, 'CN', 'APNIC', 20080904, 'Weifang-laodongli-Corp,Weifang city,Shandong province']
+ [3683808514, 3683808529, 'CN', 'APNIC', 20080904, 'Weifang-wfwahaha,Weifang city,Shandong province']
+
+
+Case SS
+
+[3683808722, 3683808729, 'CN', 'APNIC', 20080904, 'Weifang-wftushuguan,Weifang city,Shandong province']
+ [3683808728, 3683808731, 'CN', 'APNIC', 20080904, 'Weifang-wchgongyeyuan,Weifang city,Shandong province']
+
+
+Case SS
+
+[3683809816, 3683809819, 'CN', 'APNIC', 20080904, 'Weifang-ludengguanli,Weifang city,Shandong province']
+ [3683809818, 3683809821, 'CN', 'APNIC', 20080904, 'Weifang-jinxuezh_wb,Weifang city,Shandong province']
+
+
+Case SS
+
+[3683829300, 3683829303, 'CN', 'APNIC', 20080904, 'Linyi-sensen-Netbar,Linyi city,Shandong province']
+ [3683829301, 3683829304, 'CN', 'APNIC', 20080904, 'Linyi-Sensen-Bar,Linyi city,Shandong province']
+
+
+Case SS
+
+[3683830600, 3683830603, 'CN', 'APNIC', 20080904, 'Weihai-fengyuling,Weihai city,Shandong province']
+ [3683830602, 3683830605, 'CN', 'APNIC', 20080904, 'Weihai-Jiayoudianzi-Corp,Weihai city,Shandong province']
+
+
+Case SS
+
+[3683830602, 3683830605, 'CN', 'APNIC', 20080904, 'Weihai-Jiayoudianzi-Corp,Weihai city,Shandong province']
+ [3683830604, 3683830607, 'CN', 'APNIC', 20080904, 'Weihai-jiayou-Co,Weihai city,Shandong province']
+
+
+Case SS
+
+[3683830688, 3683830691, 'CN', 'APNIC', 20080904, 'Weihai-Wangxibin-bar,Weihai city,Shandong province']
+ [3683830690, 3683830693, 'CN', 'APNIC', 20080904, 'Weihai-jingya-Bar,Weihai city,Shandong province']
+
+
+Case SS
+
+[3684015360, 3684015871, 'CN', 'APNIC', 20080904, 'shanxi taiyuan catv cable modem ip address']
+ [3684015616, 3684016127, 'CN', 'APNIC', 20080904, 'shanxi telecomm taiyuan branch broadband ADSL port ip address']
+
+
+Case SS
+
+[3684269696, 3684269713, 'CN', 'APNIC', 20080904, 'ChongQing YinHe Hotel']
+ [3684269712, 3684269727, 'CN', 'APNIC', 20080904, 'ChongQing HuaLong Website']
+
+
+Case SS
+
+[3689816832, 3689816959, 'CN', 'APNIC', 20080904, 'BEIJING YI-YUAN-MING-ZHU CO.LTD CO.LTD']
+ [3689816928, 3689817087, 'CN', 'APNIC', 20080904, 'Beijing SHI JI JIA SHUO CO.LTD CO.LTD Dongcheng Distric, Beijing']
+
+
+Case SS
+
+[3700839424, 3700840447, 'JP', 'APNIC', 20040122, '']
+ [3700839936, 3700840703, 'JP', 'APNIC', 20190220, 'NTT Communications Corporation OTEMACHI PLACE WEST TOWER 2-3-1 Otemachi Chiyoda-ku,Tokyo 100-8019 Japan']
+
+
+Case SS
+
+[3701278208, 3701278719, 'JP', 'APNIC', 20031105, '']
+ [3701278464, 3701293055, 'JP', 'APNIC', 20200206, 'NIPPON TELEGRAPH AND TELEPHONE EAST CORPORATION 3-19-2 Nishi-Shinjuku, Shinjuku-ku, Tokyo 163-8019, Japan']
+
+
+Case SS
+
+[3702206594, 3702206625, 'CN', 'APNIC', 20080904, 'Longyuan Net Bar,Urumqi,Xinjiang']
+ [3702206597, 3702206628, 'CN', 'APNIC', 20080904, 'Xinjiang Coal Security Bureau,Urumqi,Xinjiang']
+
+
+Case SS
+
+[3706134208, 3706134211, 'CN', 'APNIC', 20080904, 'Beijing ShangPin Business Develop Liability Co., Ltd']
+ [3706134209, 3706134214, 'CN', 'APNIC', 20080904, 'BP ZhuHai Chemical Co., Ltd National Internet Registry Chaoyang District, Beijing']
+
+
+Case SS
+
+[3706134209, 3706134214, 'CN', 'APNIC', 20080904, 'BP ZhuHai Chemical Co., Ltd National Internet Registry Chaoyang District, Beijing']
+ [3706134212, 3706134215, 'CN', 'APNIC', 20080904, 'ZhuHai BiPi Laboratory Co., Ltd']
+
+
+Case SS
+
+[3707916940, 3707916943, 'CN', 'APNIC', 20080904, 'linyi city Bureau of Finance']
+ [3707916942, 3707916945, 'CN', 'APNIC', 20080904, 'linyi city shangjian department']
+
+
+Case SS
+
+[3707946704, 3707946711, 'CN', 'APNIC', 20080904, 'liaochengbenjudakehu']
+[3707946706, 3707946719, 'CN', 'APNIC', 20080904, 'liaochengxintianyouinternet bar']
+
+
+Case SS
+
+[3707953852, 3707953855, 'CN', 'APNIC', 20080904, 'DongYing-228shoufeizhan']
+ [3707953854, 3707953857, 'CN', 'APNIC', 20080904, 'oil land Communicate COMPANY']
+
+
+Case SS
+
+[3708024576, 3708025087, 'CN', 'APNIC', 20080904, 'Yunnan Electric Communication Company']
+ [3708024832, 3708026879, 'CN', 'APNIC', 20080904, 'Great Wall Broodband Network ,Yunnan']
+
+
+Case SS
+
+[3708192288, 3708192295, 'CN', 'APNIC', 20080904, 'CHANGSHENG-BAR,CHANGZHOU,JIANGSU Province']
+ [3708192289, 3708192296, 'CN', 'APNIC', 20080904, 'changsheng CAR CO., changzhou,JIANGSU province']
+
+
+Case SS
+
+[3708228916, 3708228919, 'CN', 'APNIC', 20080904, 'JiaJiaLe-Shopping KuErLe']
+ [3708228918, 3708228959, 'CN', 'APNIC', 20080904, 'LanTianE-Hotel']
+
+
+Case SS
+
+[3708260128, 3708260161, 'CN', 'APNIC', 20120725, 'China Unicom Liuzhou city network']
+ [3708260160, 3708260163, 'CN', 'APNIC', 20120725, 'China Life Insurance Limited by Share Ltd']
+
+
+Case SS
+
+[3716481976, 3716481985, 'VN', 'APNIC', 20080904, 'SIG Co Ltd Level 2 Broadway Building, 100 Nguyen Luong Bang, Dist 12, HCMC']
+ [3716481984, 3716481991, 'VN', 'APNIC', 20090623, 'Cong ty Tai chinh Viet Societe General']
+
+
+Case SS
+
+[3716550928, 3716550939, 'IN', 'APNIC', 20080904, 'PERFETTI VAN MELLE INDIA PVT LTD']
+ [3716550938, 3716550971, 'IN', 'APNIC', 20080904, 'TATA TELESERVICES LTD NEWDELHI']
+
+
+Case SS
+
+[3716575204, 3716575218, 'IN', 'APNIC', 20080904, 'GROUP 4 FALCK']
+ [3716575216, 3716575219, 'IN', 'APNIC', 20080904, 'IFLEX SOLUTIONS']
+
+
+Case SS
+
+[3716578256, 3716578271, 'IN', 'APNIC', 20080904, 'JAY ENGINEERING WORKS']
+ [3716578268, 3716578279, 'IN', 'APNIC', 20080904, 'TRINA SYSTEMS PVT LTD']
+
+
+Case SS
+
+[3721817471, 3721817598, 'CN', 'APNIC', 20080904, 'Jinan Longteng Internet Bar']
+ [3721817472, 3721817599, 'CN', 'APNIC', 20080904, 'JINAN lichengshitong Net Bar']
+
+
+Case SS
+
+[3728799744, 3728800767, 'CN', 'APNIC', 20080904, 'Chinanet shanghai boardband adsl 072']
+ [3728800512, 3728801791, 'CN', 'APNIC', 20080904, 'Chinanet shanghai boardband adsl 073']
+
+
+Case SS
+
+[3733205312, 3733205315, 'CN', 'APNIC', 20080904, 'Qingzhou Xinyi Internet Bar']
+ [3733205314, 3733205317, 'CN', 'APNIC', 20080904, 'Qingzhou Wenxin Internet Bar']
+
+
+Case SS
+
+[3733205314, 3733205317, 'CN', 'APNIC', 20080904, 'Qingzhou Wenxin Internet Bar']
+ [3733205316, 3733205319, 'CN', 'APNIC', 20080904, 'Qingzhou Hongguang Internet Bar']
+
+
+Case SS
+
+[3733205836, 3733205839, 'CN', 'APNIC', 20080904, 'Qingzhou Shandong Crane']
+ [3733205838, 3733205841, 'CN', 'APNIC', 20080904, 'Qingzhou Demeike Pharmacy']
+
+
+Case SS
+
+[3733213352, 3733213355, 'CN', 'APNIC', 20080904, 'Jining bo da internet bar']
+ [3733213353, 3733213359, 'CN', 'APNIC', 20080904, 'jining zouchengxinxigang']
+
+
+Case SS
+
+[3733213476, 3733213480, 'CN', 'APNIC', 20080904, 'jining zouchengpingyansijuyou-internet bar']
+ [3733213478, 3733213485, 'CN', 'APNIC', 20080904, 'jining zouchengwenhuaju']
+
+
+Case SS
+
+[3733213656, 3733213659, 'CN', 'APNIC', 20080904, 'jining zoucheng mazhuangjuweihui']
+ [3733213658, 3733213663, 'CN', 'APNIC', 20080904, 'jining zoucheng tongli-internet bar']
+
+
+Case SS
+
+[3733216320, 3733216335, 'CN', 'APNIC', 20080904, 'jining jiaxiang jia guan gong si']
+ [3733216328, 3733216343, 'CN', 'APNIC', 20080904, 'Jining jia guan company']
+
+
+Case SS
+
+[3733216820, 3733216823, 'CN', 'APNIC', 20080904, 'jining wenshang ling dian Internet Bar']
+ [3733216822, 3733216829, 'CN', 'APNIC', 20080904, 'Jining wei shan town government']
+
+
+Case SS
+
+[3733216822, 3733216829, 'CN', 'APNIC', 20080904, 'Jining wei shan town government']
+ [3733216828, 3733216831, 'CN', 'APNIC', 20080904, 'jining wenshang tian long Internet Bar']
+
+
+Case SS
+
+[3733261600, 3733261631, 'CN', 'APNIC', 20080904, 'Dezhou new century internet bar']
+ [3733261609, 3733261638, 'CN', 'APNIC', 20080904, 'Dezhou Qikang Internet Bar']
+
+
+Case SS
+
+[3733261609, 3733261638, 'CN', 'APNIC', 20080904, 'Dezhou Qikang Internet Bar']
+ [3733261632, 3733261663, 'CN', 'APNIC', 20080904, 'Dezhou new century internet bar']
+
+
+Case SS
+
+[3733332442, 3733332449, 'CN', 'APNIC', 20080904, 'Binzhou Chuangye Internet Bar']
+ [3733332448, 3733332455, 'CN', 'APNIC', 20080904, 'Binzhou Yinhe Internet Bar']
+
+
+Case SS
+
+[3733345560, 3733345565, 'CN', 'APNIC', 20080904, 'ZiBoShiMeiRong']
+ [3733345564, 3733345567, 'CN', 'APNIC', 20080904, 'ZiBoMingYuYunShuYouXianGongSi']
+
+
+Case SS
+
+[3735925264, 3735925271, 'CN', 'APNIC', 20080904, 'Weifang-guangming_wb,Weifang city,Shandong province']
+ [3735925267, 3735925274, 'CN', 'APNIC', 20080904, 'weifang-dahua,Weifang city,Shandong province']
+
+
+Case SS
+
+[3735925267, 3735925274, 'CN', 'APNIC', 20080904, 'weifang-dahua,Weifang city,Shandong province']
+ [3735925272, 3735925279, 'CN', 'APNIC', 20080904, 'Weifang-saiyang_wb,Weifang city,Shandong province']
+
+
+Case SS
+
+[3735925546, 3735925553, 'CN', 'APNIC', 20080904, 'Weifang-dadi_iad,Weifang city,Shandong province']
+ [3735925552, 3735925555, 'CN', 'APNIC', 20080904, 'Weifang-xintiandi_wb,Weifang city,Shandong province']
+
+
+Case SS
+
+[3735943522, 3735943525, 'CN', 'APNIC', 20080904, 'ZiBo-ZiXuanFeng-Bar,ZiBo city,Shandong province']
+ [3735943524, 3735943527, 'CN', 'APNIC', 20080904, 'ZiBo-DiQiuCun-Bar,ZiBo city,Shandong province']
+
+
+Case SS
+
+[3736015800, 3736016059, 'CN', 'APNIC', 20080904, 'Liaocheng-jiwei-BanGong,Liaocheng city,Shandong province']
+ [3736015804, 3736016063, 'CN', 'APNIC', 20080904, 'Liaocheng-chaiju-BanGong,Liaocheng city,Shandong province']
+

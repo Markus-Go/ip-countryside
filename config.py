@@ -4,11 +4,11 @@ import os
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 DEL_FILES_DIR = os.path.join(ROOT_DIR, "del_files")
 
-MERGED_DEL_FILE        = os.path.join(DEL_FILES_DIR, "merged_del_file")
-STRIPPED_DEL_FILE      = os.path.join(DEL_FILES_DIR, "stipped_del_file")
-MERGED_INET_FILE       = os.path.join(DEL_FILES_DIR, "merged_inet_file")
-STRIPPED_INET_FILE     = os.path.join(DEL_FILES_DIR, "stipped_inet_file")
-IP2COUNTRY_DB          = os.path.join(DEL_FILES_DIR, "ip2country_2")
+MERGED_DEL_FILE        = os.path.join(DEL_FILES_DIR, "merged_del_file.csv")
+STRIPPED_DEL_FILE      = os.path.join(DEL_FILES_DIR, "stipped_del_file.csv")
+MERGED_INET_FILE       = os.path.join(DEL_FILES_DIR, "merged_inet_file.csv")
+STRIPPED_INET_FILE     = os.path.join(DEL_FILES_DIR, "stipped_inet_file.csv")
+IP2COUNTRY_DB          = os.path.join(DEL_FILES_DIR, "ip2country_2.db")
 IP2COUNTRY_DB_JSON     = os.path.join(DEL_FILES_DIR, "db.json")
 IP2COUNTRY_DB_YAML     = os.path.join(DEL_FILES_DIR, "db.yaml")
 
