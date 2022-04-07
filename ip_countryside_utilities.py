@@ -31,6 +31,7 @@ def get_record_by_ip(ip):
 
                 return COUNTRY_DICTIONARY[country], country, city
             
+
     return False
     
 
