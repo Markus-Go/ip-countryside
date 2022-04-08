@@ -441,23 +441,18 @@ def check_for_overlaping(file=IP2COUNTRY_DB):
         # since that the list is sorted, overlapping
         # may only occur in successive records (record[i] and record[i+1])
         nr_of_overlapps = 0
-        for i in range(1, len(records)):
-            
+        i = 1
+        for record in records:
+
             overlapp = ip_ranges_overlapp(records[i-1], records[i])
             
-            if records[i-1][3] == "XX":
-                print(records[i-1])
-            elif records[i][3] == "XX":
-                print(records[i])
+            if overlapp :
+                handle_ranges_overlapp(records[i-1], records[i], f)
+                nr_of_overlapps = nr_of_overlapps + 1
+            
             else:
-                if overlapp :
-                    f.write(str(records[i-1]))
-                    f.write("\n")
-                    f.write(str(records[i]))
-                    handle_ranges_overlapp(records[i-1], records[i], f)
-                    nr_of_overlapps = nr_of_overlapps + 1
-                    
-          
+                i = i + 1
+            
     print(f"{nr_of_overlapps} overlapps detected")
 
     try:
@@ -467,13 +462,10 @@ def check_for_overlaping(file=IP2COUNTRY_DB):
             for record in records:
                 
                 if record:
-                    
-                    # check if record's registry is valid 
-                    if record[3] != "XX":
 
-                        line = "|".join(map(str, record))
-                        line = line + '\n'
-                        f.write(line)
+                    line = "|".join(map(str, record))
+                    line = line + '\n'
+                    f.write(line)
 
     except IOError as e:
         
@@ -806,8 +798,8 @@ def run_parser():
 
 
 # # Needed if for multiprocessing not to crash
-if __name__ == "__main__":   
-    run_parser()
+# if __name__ == "__main__":   
+#     run_parser()
 
 
 # if date_1 > date_2 and len(date_2):
