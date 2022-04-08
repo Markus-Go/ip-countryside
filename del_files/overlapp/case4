@@ -1,0 +1,37 @@
+# case 4
+    if ip_from_1 < ip_from_2 and ip_to_1 > ip_to_2:
+
+        if country_1 != country_2:
+
+            if registry_1 == registry_2:
+
+                # DS NO CASES
+                #print("Case DS\n")
+                #print(record_1, '\n', record_2, '\n\n')
+                pass
+
+            else:
+                #DD (first always "Early registration addresses") Cases even after deleting all entries like that?
+                # Always prefer delegation files. is returning country from Delegation and split the upper in 2 entries
+                #
+
+
+                pass
+
+        else:
+
+            if registry_1 != registry_2:
+                pass
+                # SD NO CASES
+                #print("Case SD\n")
+                #print(record_1, '\n', record_2, '\n\n')
+
+            else:
+                #print("Case SS\n")
+                #print(record_1, '\n', record_2, '\n\n')
+
+                # Do both have descriptions?
+                # Same description? -> Delete smaller one
+                # No? -> Split the bigger apart and prefer the smaller part
+
+                pass
