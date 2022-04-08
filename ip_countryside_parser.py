@@ -490,21 +490,210 @@ def ip_ranges_overlapp(record_1, record_2):
 
 def handle_ranges_overlapp(idx_1, idx_2, records, f):
     
-    ip_from_1         = records[idx_1][0]
-    ip_to_1           = records[idx_1][1]
-    country_1         = records[idx_1][2].upper()
-    registry_1        = records[idx_1][3].upper()
-    date_1            = int(records[idx_1][4])
-    record_type_1     = records[idx_1][5]
-    desc_1            = records[idx_1][6]
+    ip_from_1  = record_1[0]
+    ip_to_1    = record_1[1]
+    country_1  = record_1[2].upper()
+    registry_1 = record_1[3].upper()
+    date_1     = int(record_1[4])
+    desc_1     = record_1[5]
     
-    ip_from_2         = records[idx_2][0]
-    ip_to_2           = records[idx_2][1]
-    country_2         = records[idx_2][2].upper()
-    registry_2        = records[idx_2][3].upper()
-    date_2            = int(records[idx_2][4])
-    record_type_2     = records[idx_2][5]
-    desc_2            = records[idx_2][6]
+    ip_from_2  = record_2[0]
+    ip_to_2    = record_2[1]
+    country_2  = record_2[2].upper()
+    registry_2 = record_2[3].upper()
+    date_2     = int(record_2[4])
+    desc_2     = record_2[5]
+
+    ## case 1
+    #if ip_from_1 == ip_from_2 and ip_to_1 == ip_to_2:
+        
+    #    # SS
+    #    # SD -> no cases !
+    #    # DS
+    #    # DD -> no cases !        
+    #    # - Take the record from the inetnum file.
+    #    # - Inetnum records have most of the cases description ->
+    #    #   take the one with description
+    #    # - If none has description take second one (date is newer) 
+    #    #   Note: that entries with newer date come from the inetnum
+    #    #         was tested for some entires   
+        
+    #    if len(desc_1) > len(desc_2):
+    #        record_2[3] = "XX"
+    #    elif len(desc_1) < len(desc_2):
+    #        record_1[3] = "XX"
+    #    elif date_1 > date_2:
+    #        record_2[3] = "XX"
+    #    else:
+    #        record_1[3] = "XX"
+          
+    ## case 2
+    #if ip_from_1 == ip_from_2 and ip_to_1 < ip_to_2:
+        
+    #    if country_1 != country_2:
+            
+    #        if registry_1 == registry_2:
+
+    #            # DS   
+
+    #            #print("Case DS\n")
+    #            #print(record_1, '\n', record_2, '\n\n')
+
+    #            # IS record1 or record2 'D'?
+    #                    #If record 1 == D? Prefer I, delete record1
+    #                    # else -> Prefer I, put start of record2 to (end+1) of record1
+    #            # ElSE -> Prefer first, put start of record2 to (end+1) of record1
+                 
+    #            pass
+
+    #        else: 
+                
+                 
+    #            #print("Case DD\n")
+                    
+    #            #print(record_1, '\n', record_2, '\n\n')
+    #            # Early registration addresses overlapps, check again after deletion
+    #            pass
+
+    #    else:
+            
+            
+    #        if registry_1 != registry_2:
+    #            #print("case sd\n")
+    #            #print(record_1, '\n', record_2, '\n\n')
+    #            # No cases only Ripe# once
+    #            pass
+            
+            
+    #        else:
+    #            #print("Case SS\n")
+    #            #print(record_1, '\n', record_2, '\n\n')
+    #            # IS record1 or record2 'D'?
+    #                    #If record 1 == D? -> Delete record1 
+    #                    # else -> Move start of record2 to (end +1) of record 1
+    #            # ELSE IS desc1 == desc2? -> Merge entries make them to one , delete one
+    #                # Else -> prefer first and put start of record2 to (end +1) of record1
+
+
+    #            pass
+        
+
+    ## case 3
+    #if ip_from_1 < ip_from_2 and ip_to_1 < ip_to_2 and ip_to_1 > ip_from_2:
+    #    if country_1 != country_2:
+            
+    #        if registry_1 == registry_2:
+    #            #print("Case DS\n")
+    #            #print(record_1, '\n', record_2, '\n\n')
+    #            # 3 Cases Delegation files are wrong
+    #            # Is entry I or D?
+    #            # If record 1 == I? -> Move start of record2 to (end + 1) of record1
+    #            # else -> Move end of record1 to (start - 1) of record2 
+    #            pass
+
+
+    #        else: 
+    #            ##DD no cases
+    #            #print("Case DD\n")
+    #            #print(record_1, '\n', record_2, '\n\n')
+    #            pass
+                
+    #    else:
+           
+            
+    #        if registry_1 != registry_2:
+    #            # SD
+    #            # no cases
+    #            #print("Case SD\n")
+    #            #print(record_1, '\n', record_2, '\n\n')
+    #            pass
+
+    #        else:
+    #                #print("Case SS\n")
+    #                #print(record_1, '\n', record_2, '\n\n')
+
+    #                # Both descriptions the same? Make them to one (merge), delete one
+    #                # If overlap is I AND D? ->
+    #                    #If record 1 == I? -> Move start of record2 to (end + 1) of record1
+    #                    # else -> Move end of record1 to (start - 1) of record2 
+    #                # Else -> Prefer first entry, Move start of record2 to (end + 1) of record1
+    #                pass
+             
+
+
+
+    ## case 4
+    #if ip_from_1 < ip_from_2 and ip_to_1 > ip_to_2:
+
+    #    if country_1 != country_2:
+
+    #        if registry_1 == registry_2:
+
+    #            # DS NO CASES
+    #            #print("Case DS\n")
+    #            #print(record_1, '\n', record_2, '\n\n')
+    #            pass
+
+    #        else:
+    #            #DD (first always "Early registration addresses") Cases even after deleting all entries like that?
+    #            # Always prefer delegation files. is returning country from Delegation and split the upper in 2 entries
+    #            #
+
+
+    #            pass
+
+    #    else:
+
+    #        if registry_1 != registry_2:
+    #            pass
+    #            # SD NO CASES
+    #            #print("Case SD\n")
+    #            #print(record_1, '\n', record_2, '\n\n')
+
+    #        else:
+    #            #print("Case SS\n")
+    #            #print(record_1, '\n', record_2, '\n\n')
+
+    #            # Do both have descriptions?
+    #            # Same description? -> Delete smaller one
+    #            # No? -> Split the bigger apart and prefer the smaller part
+
+    #            pass
+
+                
+    
+    
+    ## case 5
+    #if ip_from_1 < ip_from_2 and ip_to_1 == ip_to_2:
+        
+    #    if country_1 != country_2:
+            
+    #        if registry_1 == registry_2:
+
+    #            # DS 
+    #            # [3706253824, 3706254335, 'JP', 'APNIC']
+    #            # [3706254080, 3706254335, 'HK', 'APNIC']
+    #            pass 
+
+    #        else: 
+                
+    #            # DD
+    #            # [2193830912, 2193832959, 'EU', 'RIPE']
+    #            # [2193831936, 2193832959, 'NZ', 'APNIC']
+    #            pass
+                
+    #    else:
+            
+    #        # SD
+    #        # no cases
+    #        if registry_1 != registry_2:
+    #            pass
+                
+    #        # SS
+    #        # [1029832704, 1029963775, 'KR', 'APNIC', '', '']
+    #        # [1029898240, 1029963775, 'KR', 'APNIC', 'SKBroadbandCoLtd SKBroadbandCoLtd', '']
+    #        else:
+    #            pass
 
     # !!! remove when developing 
     records.pop(idx_1)  
