@@ -1,4 +1,0 @@
-Case SS
-
-[673, 704, 'CN', 'APNIC', 20210120, 'fujian chuangxinanfan longhai,zhangzhou city Fujian Province,CHINA']
-[689, 720, 'CN', 'APNIC', 20210120, 'fujian nanjin power factory nanjing,zhangzhou city Fujian Province,CHINA']

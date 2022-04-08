@@ -1,13 +1,13 @@
 Case SS
 
 [3734634496, 3734700031, 'NZ', 'APNIC', 20041201, 'D']
- [3734667264, 3734691839, 'NZ', 'APNIC', 20210110, 'Spark New Zealand Trading Ltd']
+[3734667264, 3734691839, 'NZ', 'APNIC', 20210110, 'Spark New Zealand Trading Ltd']
 
 
 Case SS
 
-[3734667264, 3734691839, 'NZ', 'APNIC', 20210110, 'Spark New Zealand Trading Ltd']
- [3734675456, 3734683647, 'NZ', 'APNIC', 20210110, 'Spark New Zealand Trading Ltd']
+[67264, 91839, 'NZ', 'APNIC', 20210110, 'Spark New Zealand Trading Ltd']
+[75456, 83647, 'NZ', 'APNIC', 20210110, 'Spark New Zealand Trading Ltd']
 
 
 Case SS
