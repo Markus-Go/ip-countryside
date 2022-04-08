@@ -377,7 +377,7 @@ def parse_inet_group(entry):
                 if key == "country":
                     record[key] = value.split("#")[0]
 
-                if key == "source" and value == "ripencc":
+                if key == "source" and value == "ripencc" or value == "RIPE#":
                     record[key] = "RIPE"
             
                 if key == "last-modified":
@@ -445,11 +445,18 @@ def check_for_overlaping(file=IP2COUNTRY_DB):
             
             overlapp = ip_ranges_overlapp(records[i-1], records[i])
             
-            if overlapp :
-
-                if handle_ranges_overlapp(records[i-1], records[i], f):
-                    pass
-                nr_of_overlapps = nr_of_overlapps + 1
+            if records[i-1][3] == "XX":
+                print(records[i-1])
+            elif records[i][3] == "XX":
+                print(records[i])
+            else:
+                if overlapp :
+                    f.write(str(records[i-1]))
+                    f.write("\n")
+                    f.write(str(records[i]))
+                    handle_ranges_overlapp(records[i-1], records[i], f)
+                    nr_of_overlapps = nr_of_overlapps + 1
+                    
           
     print(f"{nr_of_overlapps} overlapps detected")
 
@@ -532,27 +539,173 @@ def handle_ranges_overlapp(record_1, record_2, f):
                     
                 pass
 
-            else: 
+    # case 2
+    if ip_from_1 == ip_from_2 and ip_to_1 < ip_to_2:
+       
+        if country_1 != country_2:
+           
+            if registry_1 == registry_2:
+
+                # DS   
                 
+                pass
+
+            else: 
+               
                 # DD
                 pass
 
         else:
-            
+           
             # SD
             if registry_1 != registry_2:
+                #start r2 where r1 ends
+                record_2[0] = record_1[1] + 1
                 pass
             
             # SS
             else:
-                line = "|".join(map(str, record_1))
-                line = line + '\n'
-                f.write(line)
-                line = "|".join(map(str, record_2))
-                line = line + '\n\n'
-                f.write(line)
+                #start r2 where r1 ends
+                record_2[0] = record_1[1] + 1
                 pass
-         
+       
+
+    # case 3
+    if ip_from_1 < ip_from_2 and ip_to_1 < ip_to_2 and ip_to_1 > ip_from_2:
+        if country_1 != country_2:
+           
+            if registry_1 == registry_2:
+                print("Case DS\n")
+                print(record_1, '\n', record_2, '\n\n')
+                # DS
+                # delegation entries have an older date
+                if date_1 > date_2:
+                    # Decrease range of older entry to end of newer entry
+                    record_2[0] = record_1[1] + 1
+                else:
+                    # Otherwise do the opposite 
+                    record_1[1] = record_2[0] -1
+               
+
+
+            else: 
+                #DD no cases
+                print("Case DD\n")
+                print(record_1, '\n', record_2, '\n\n')
+                pass
+               
+        else:
+          
+           
+            if registry_1 != registry_2:
+                # SD
+                # no cases
+                #print("Case SD\n")
+                #print(record_1, '\n', record_2, '\n\n')
+                pass
+
+            else:
+                    print("Case SS\n")
+                    print(record_1, '\n', record_2, '\n\n')
+                    if date_1 == date_2:
+                        if desc_1 == desc_2:
+                            ip_from = min([record_1[0], record_2[0]])
+                            ip_to = max([record_1[1], record_2[1]])
+                            record_1[0] = ip_from
+                            record_1[1] = ip_to
+                            record_2[3] = "XX"
+                            return True
+                        elif len(desc_1) > len(desc_2):
+                            record_2[0] = record_1[1] + 1
+                        else:
+                            record_1[1] = record_2[0] -1
+                    elif date_1 > date_2:
+                        record_2[0] = record_1[1] + 1
+                    else: 
+                        record_1[1] = record_2[0] -1
+
+
+                          
+                       
+        return False
+
+
+    # case 4
+    if ip_from_1 < ip_from_2 and ip_to_1 > ip_to_2:
+       
+       if country_1 != country_2:
+           
+           if registry_1 == registry_2:
+
+               # DS 
+               #print("Case DS\n")
+               #print(record_1, '\n', record_2, '\n\n') 
+               pass
+
+           else: 
+               
+               # DD
+               # [3743118080, 4294967295, 'EU', 'RIPE']
+               # [3743118336, 3743119359, 'JP', 'APNIC']
+               #print("Case DD\n")
+               #print(record_1, '\n', record_2, '\n\n') 
+               pass
+               
+       else:
+           
+           # SD
+           # no cases
+           if registry_1 != registry_2:
+               pass
+               
+               # SS
+               # [3114714112, 3114715135, 'RU', 'RIPE']
+               # [3114714624, 3114714879, 'RU', 'RIPE']
+
+               #print("Case SD\n")
+               #print(record_1, '\n', record_2, '\n\n') 
+
+           else:
+               print("Case SS\n")
+               print(record_1, '\n', record_2, '\n\n') 
+               pass
+
+
+    # case 5
+    if ip_from_1 < ip_from_2 and ip_to_1 == ip_to_2:
+       
+        if country_1 != country_2:
+           
+            if registry_1 == registry_2:
+
+                # DS 
+                # [3706253824, 3706254335, 'JP', 'APNIC']
+                # [3706254080, 3706254335, 'HK', 'APNIC']
+                pass 
+
+            else: 
+               
+                # DD
+
+                # [2193830912, 2193832959, 'EU', 'RIPE']
+                # [2193831936, 2193832959, 'NZ', 'APNIC']
+                pass
+               
+        else:
+           
+            # SD
+            if registry_1 != registry_2:
+                record_1[1] = record_2[0] - 1
+                pass
+
+                
+            # SS
+            # [1029832704, 1029963775, 'KR', 'APNIC', '', '']
+            # [1029898240, 1029963775, 'KR', 'APNIC', 'SKBroadbandCoLtd SKBroadbandCoLtd', '']
+            else:
+                record_1[1] = record_2[0] - 1
+                pass
+
 
 # ==============================================================================
 # Help Methods used for all files ... 22225
@@ -622,23 +775,24 @@ def delete_temp_files():
 def run_parser():
 
     start_time = time.time()
-    print("parsing started\n")
+    #print("parsing started\n")
 
 
-    #print("parsing del files ...")
-    #merge_del_files()          
-    #parse_del_files()           
+    print("parsing del files ...")
+    merge_del_files()          
+    parse_del_files()           
+
     
 
     print("parsing inetnum files ...")
-    #merge_inet_files()
+    merge_inet_files()
     #parse_inet_files_single()
-    #parse_inet_files_multicore()
+    parse_inet_files_multicore()
 
-    #merge_stripped_files()
+    merge_stripped_files()
     
     print("resolving overlapps ...")
-    #sort_file()
+    sort_file()
     check_for_overlaping()
     
     print("finished\n")
@@ -654,10 +808,6 @@ def run_parser():
 # # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
     run_parser()
-
-
-    #handle_ranges_overlapp([673, 704, 'CN', 'APNIC', 20210120, 'fujian chuangxinanfan longhai,zhangzhou city Fujian Province,CHINA'], [689, 720, 'CN', 'APNIC', 20210120, 'fujian nanjin power factory nanjing,zhangzhou city Fujian Province,CHINA'], None)
-
 
 
 # if date_1 > date_2 and len(date_2):
