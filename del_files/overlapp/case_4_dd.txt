@@ -99,15 +99,23 @@ Case DD
 
 
 Case DD
+145.0.0.0       145.255.255.255
+
 
 [2432696320, 2449473535, 'AU', 'APNIC', 20080904, 'Early registration addresses']
  [2432696576, 2432696831, 'NL', 'RIPE', 20191204, 'SURFnet Network SURFnet BV P.O. Box 19035 Utrecht 3501 DA']
+145.0.1.0       145.0.1.255
+
 
 
 Case DD
+146.0.0.0   146.255.255.255
+
 
 [2449473536, 2466250751, 'AU', 'APNIC', 20150828, 'Early registration addresses']
  [2449473792, 2449474047, 'DE', 'RIPE', 20200207, 'Travian Games GmbH - Services']
+146.0.1.0   146.0.1.255
+
 
 
 Case DD
