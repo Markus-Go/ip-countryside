@@ -17,11 +17,9 @@ from ip_countryside_utilities import *;
 
 # Release 0.9.0 coming soon ... 
 
-
 # @TODO handle_ranges_overlapp() have now a structure to modify the data                    # Aufwand 5
 # base records. (The PDF can be helpful)           
 # Info: we need to know which entries should be removed. 
-# One can also take date into consideration.
 
 # @TODO Bugfix in parse_inet_group() -> see todo there ...                                  # Auufwand 5 
 
@@ -377,7 +375,7 @@ def parse_inet_group(entry):
                 if key == "country":
                     record[key] = value.split("#")[0]
 
-                if key == "source" and value == "ripencc" or value == "RIPE#":
+                if key == "source" and value == "ripencc":
                     record[key] = "RIPE"
             
                 if key == "last-modified":
@@ -436,21 +434,27 @@ def check_for_overlaping(file=IP2COUNTRY_DB):
 
         # get records from final db
         records = read_db(file)
+        #records = read_db(os.path.join(DEL_FILES_DIR, "test.inetnum"))
 
         # check if two records overlapps
         # since that the list is sorted, overlapping
         # may only occur in successive records (record[i] and record[i+1])
+        
         nr_of_overlapps = 0
+        
         i = 1
-        for record in records:
-
+        length = len(records)
+        
+        while i < length:
+           
             overlapp = ip_ranges_overlapp(records[i-1], records[i])
             
             if overlapp :
-                handle_ranges_overlapp(records[i-1], records[i], f)
+                handle_ranges_overlapp(i-1, i, records, f)
                 nr_of_overlapps = nr_of_overlapps + 1
-            
-            else:
+
+            else: 
+                
                 i = i + 1
             
     print(f"{nr_of_overlapps} overlapps detected")
@@ -462,10 +466,12 @@ def check_for_overlaping(file=IP2COUNTRY_DB):
             for record in records:
                 
                 if record:
+                    
+                    if record[3] != "XX":
 
-                    line = "|".join(map(str, record))
-                    line = line + '\n'
-                    f.write(line)
+                        line = "|".join(map(str, record))
+                        line = line + '\n'
+                        f.write(line)
 
     except IOError as e:
         
@@ -482,225 +488,30 @@ def ip_ranges_overlapp(record_1, record_2):
     return  range_end_1 >= range_start_2 
 
 
-def handle_ranges_overlapp(record_1, record_2, f):
+def handle_ranges_overlapp(idx_1, idx_2, records, f):
     
-    ip_from_1         = record_1[0]
-    ip_to_1           = record_1[1]
-    country_1         = record_1[2].upper()
-    registry_1        = record_1[3].upper()
-    date_1            = int(record_1[4])
-    record_type_1     = record_1[5]
-    desc_1            = record_1[6]
+    ip_from_1         = records[idx_1][0]
+    ip_to_1           = records[idx_1][1]
+    country_1         = records[idx_1][2].upper()
+    registry_1        = records[idx_1][3].upper()
+    date_1            = int(records[idx_1][4])
+    record_type_1     = records[idx_1][5]
+    desc_1            = records[idx_1][6]
     
-    ip_from_2         = record_2[0]
-    ip_to_2           = record_2[1]
-    country_2         = record_2[2].upper()
-    registry_2        = record_2[3].upper()
-    date_2            = int(record_2[4])
-    record_type_2     = record_1[5]
-    desc_2            = record_2[6]
+    ip_from_2         = records[idx_2][0]
+    ip_to_2           = records[idx_2][1]
+    country_2         = records[idx_2][2].upper()
+    registry_2        = records[idx_2][3].upper()
+    date_2            = int(records[idx_2][4])
+    record_type_2     = records[idx_2][5]
+    desc_2            = records[idx_2][6]
 
-    ## case 1
-    if ip_from_1 == ip_from_2 and ip_to_1 == ip_to_2:
-        
-       # SS
-       # SD -> no cases !
-       # DS
-       # DD -> no cases !        
-       # - Take the record from the inetnum file.
-       # - Inetnum records have most of the cases description ->
-       #   take the one with description
-       # - If none has description take second one (date is newer) 
-       #   Note: that entries with newer date come from the inetnum
-       #         was tested for some entires   
-        
-    #    if len(desc_1) > len(desc_2):
-    #        record_2[3] = "XX"
-    #    elif len(desc_1) < len(desc_2):
-    #        record_1[3] = "XX"
-    #    elif date_1 > date_2:
-    #        record_2[3] = "XX"
-    #    else:
-    #        record_1[3] = "XX"
-          
-        if country_1 != country_2:
-        
-            if registry_1 == registry_2:
-
-                # DS   
-                    
-                pass
-
-    # case 2
-    if ip_from_1 == ip_from_2 and ip_to_1 < ip_to_2:
-       
-        if country_1 != country_2:
-           
-            if registry_1 == registry_2:
-
-                # DS   
-                
-                pass
-
-            else: 
-               
-                # DD
-                pass
-
-        else:
-           
-            # SD
-            if registry_1 != registry_2:
-                #start r2 where r1 ends
-                record_2[0] = record_1[1] + 1
-                pass
-            
-            # SS
-            else:
-                #start r2 where r1 ends
-                record_2[0] = record_1[1] + 1
-                pass
-       
-
-    # case 3
-    if ip_from_1 < ip_from_2 and ip_to_1 < ip_to_2 and ip_to_1 > ip_from_2:
-        if country_1 != country_2:
-           
-            if registry_1 == registry_2:
-                print("Case DS\n")
-                print(record_1, '\n', record_2, '\n\n')
-                # DS
-                # delegation entries have an older date
-                if date_1 > date_2:
-                    # Decrease range of older entry to end of newer entry
-                    record_2[0] = record_1[1] + 1
-                else:
-                    # Otherwise do the opposite 
-                    record_1[1] = record_2[0] -1
-               
-
-
-            else: 
-                #DD no cases
-                print("Case DD\n")
-                print(record_1, '\n', record_2, '\n\n')
-                pass
-               
-        else:
-          
-           
-            if registry_1 != registry_2:
-                # SD
-                # no cases
-                #print("Case SD\n")
-                #print(record_1, '\n', record_2, '\n\n')
-                pass
-
-            else:
-                    print("Case SS\n")
-                    print(record_1, '\n', record_2, '\n\n')
-                    if date_1 == date_2:
-                        if desc_1 == desc_2:
-                            ip_from = min([record_1[0], record_2[0]])
-                            ip_to = max([record_1[1], record_2[1]])
-                            record_1[0] = ip_from
-                            record_1[1] = ip_to
-                            record_2[3] = "XX"
-                            return True
-                        elif len(desc_1) > len(desc_2):
-                            record_2[0] = record_1[1] + 1
-                        else:
-                            record_1[1] = record_2[0] -1
-                    elif date_1 > date_2:
-                        record_2[0] = record_1[1] + 1
-                    else: 
-                        record_1[1] = record_2[0] -1
-
-
-                          
-                       
-        return False
-
-
-    # case 4
-    if ip_from_1 < ip_from_2 and ip_to_1 > ip_to_2:
-       
-       if country_1 != country_2:
-           
-           if registry_1 == registry_2:
-
-               # DS 
-               #print("Case DS\n")
-               #print(record_1, '\n', record_2, '\n\n') 
-               pass
-
-           else: 
-               
-               # DD
-               # [3743118080, 4294967295, 'EU', 'RIPE']
-               # [3743118336, 3743119359, 'JP', 'APNIC']
-               #print("Case DD\n")
-               #print(record_1, '\n', record_2, '\n\n') 
-               pass
-               
-       else:
-           
-           # SD
-           # no cases
-           if registry_1 != registry_2:
-               pass
-               
-               # SS
-               # [3114714112, 3114715135, 'RU', 'RIPE']
-               # [3114714624, 3114714879, 'RU', 'RIPE']
-
-               #print("Case SD\n")
-               #print(record_1, '\n', record_2, '\n\n') 
-
-           else:
-               print("Case SS\n")
-               print(record_1, '\n', record_2, '\n\n') 
-               pass
-
-
-    # case 5
-    if ip_from_1 < ip_from_2 and ip_to_1 == ip_to_2:
-       
-        if country_1 != country_2:
-           
-            if registry_1 == registry_2:
-
-                # DS 
-                # [3706253824, 3706254335, 'JP', 'APNIC']
-                # [3706254080, 3706254335, 'HK', 'APNIC']
-                pass 
-
-            else: 
-               
-                # DD
-
-                # [2193830912, 2193832959, 'EU', 'RIPE']
-                # [2193831936, 2193832959, 'NZ', 'APNIC']
-                pass
-               
-        else:
-           
-            # SD
-            if registry_1 != registry_2:
-                record_1[1] = record_2[0] - 1
-                pass
-
-                
-            # SS
-            # [1029832704, 1029963775, 'KR', 'APNIC', '', '']
-            # [1029898240, 1029963775, 'KR', 'APNIC', 'SKBroadbandCoLtd SKBroadbandCoLtd', '']
-            else:
-                record_1[1] = record_2[0] - 1
-                pass
+    # !!! remove when developing 
+    records.pop(idx_1)  
 
 
 # ==============================================================================
-# Help Methods used for all files ... 22225
+# Help Methods used for all files ... 
 
 
 def merge_stripped_files():
@@ -764,28 +575,28 @@ def delete_temp_files():
 ## ==============================================================================
 ## Parser Entry Method 
 
+
 def run_parser():
 
     start_time = time.time()
-    #print("parsing started\n")
+    # print("parsing started\n")
 
 
-    print("parsing del files ...")
-    merge_del_files()          
-    parse_del_files()           
+    # print("parsing del files ...")
+    # merge_del_files()          
+    # parse_del_files()           
 
     
+    # print("parsing inetnum files ...")
+    # merge_inet_files()
+    # #parse_inet_files_single()
+    # parse_inet_files_multicore()
 
-    print("parsing inetnum files ...")
-    merge_inet_files()
-    #parse_inet_files_single()
-    parse_inet_files_multicore()
-
-    merge_stripped_files()
+    #merge_stripped_files()
     
     print("resolving overlapps ...")
     sort_file()
-    check_for_overlaping()
+    #check_for_overlaping()
     
     print("finished\n")
 
@@ -798,18 +609,5 @@ def run_parser():
 
 
 # # Needed if for multiprocessing not to crash
-# if __name__ == "__main__":   
-#     run_parser()
-
-
-# if date_1 > date_2 and len(date_2):
-                    
-#     line = "|".join(map(str, record_1))
-#     line = line + '\n'
-#     f.write(line)
-#     line = "|".join(map(str, record_2))
-#     line = line + '\n\n'
-#     f.write(line)  
-
-# elif date_1 < date_2 and len(desc_1):
-#     pass
+if __name__ == "__main__":   
+    run_parser()
