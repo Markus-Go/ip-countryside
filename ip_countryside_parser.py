@@ -114,6 +114,7 @@ def parse_del_line(line):
     date        = record[5]
     mask        = record[4]
     status      = record[6]
+    record_type = "D"
 
     # calculate int value of network ip
     range_start = int(ipaddress.ip_address(network_ip))
@@ -150,7 +151,7 @@ def parse_del_line(line):
     if not date:
         date = "19700101"
 
-    return [range_start, range_end, country, registry, date, 'D']
+    return [range_start, range_end, country, registry, date, record_type]
 
 
 # ==============================================================================
@@ -405,7 +406,8 @@ def parse_inet_group(entry):
     registry      = record['source']
     last_modified = ""
     descr         = "" 
-     
+    record_type   = "I"
+
     if "last-modified" in record and record["last-modified"]:
         last_modified = str(datetime.strptime(record['last-modified'], "%Y-%m-%dT%H:%M:%S%fZ")) # returns YY-MM-DD HH:MM:SS
         last_modified = last_modified.split(" ")[0]     # returns YY-MM-DD 
@@ -416,8 +418,7 @@ def parse_inet_group(entry):
     if "descr" in record:
         descr = record["descr"]
 
-    #print([range_start, range_end, country, registry, last_modified, descr, 'I'])
-    return [range_start, range_end, country, registry, last_modified, descr, 'I']
+    return [range_start, range_end, country, registry, last_modified, descr, record_type]
 
 
 # ==============================================================================
@@ -753,20 +754,20 @@ def run_parser():
 
 
     #print("parsing del files ...")
-    #merge_del_files()          
-    #parse_del_files()           
+    # merge_del_files()          
+    # parse_del_files()           
     
 
     #print("parsing inetnum files ...")
-    #merge_inet_files()
+    merge_inet_files()
     ##parse_inet_files_single()
-    #parse_inet_files_multicore()
+    parse_inet_files_multicore()
 
     #merge_stripped_files()
     
     print("resolving overlapps ...")
-    sort_file()
-    check_for_overlaping()
+    #sort_file()
+    #check_for_overlaping()
     
     print("finished\n")
 
