@@ -78,7 +78,7 @@ def extract_as_json(file=IP2COUNTRY_DB):
                     'CountryCode':   record[2],
                     'Registry':      record[3],
                     'LastModified':  record[4],
-                    'Record Type':   record[5],
+                    'RecordType':    record[5],
                     'Description':   record[6],
                 }
 

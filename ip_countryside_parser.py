@@ -363,7 +363,7 @@ def parse_inet_group(entry):
                 # don't need to be parsed at all.
                 # -> otherwise 5430 conflicts 
                 if key == "descr":
-                    if ("THIS NETWORK RANGE IS NOT ALLOCATED TO APNIC."  in value.strip().upper() or
+                    if ("THIS NETWORK RANGE IS NOT ALLOCATED TO APNIC"   in value.strip().upper() or
                         "NOT ALLOCATED BY APNIC"                         in value.strip().upper() or
                         "IPV4 ADDRESS BLOCK NOT MANAGED BY THE RIPE NCC" in value.strip().upper() or
                         "TRANSFERRED TO THE ARIN REGION"                 in value.strip().upper() or
@@ -434,44 +434,79 @@ def check_for_overlaping(file=IP2COUNTRY_DB):
 
         # get records from final db
         records = read_db(file)
-        #records = read_db(os.path.join(DEL_FILES_DIR, "test.inetnum"))
-
-        # check if two records overlapps
-        # since that the list is sorted, overlapping
-        # may only occur in successive records (record[i] and record[i+1])
         
+        my_dict = dict() 
+        
+        # creates dictionary with ip start range as key 
+        # if there is a sequence of overlapping these will be 
+        # added to the value of corresponding key as a list
+        j = 0
         nr_of_overlapps = 0
-        
-        i = 1
-        length = len(records)
-        
-        while i < length:
-           
-            overlapp = ip_ranges_overlapp(records[i-1], records[i])
+
+        for i in range(len(records)-1):
             
-            if overlapp :
-                handle_ranges_overlapp(i-1, i, records, f)
+            overlapp = ip_ranges_overlapp(records[i], records[i+1])
+
+            if overlapp:
                 nr_of_overlapps = nr_of_overlapps + 1
 
-            else: 
-                
-                i = i + 1
+                if not j in my_dict: 
+                    my_dict[j] = [records[i]]
+                    my_dict[j].append(records[i+1])
+                    nr_of_overlapps = nr_of_overlapps + 1
+
+                else:
+                    my_dict[j].append(records[i+1])
             
+            else:
+                if not len(my_dict):
+                    my_dict[i] = [records[i]]
+                else:
+                    my_dict[i+1] = [records[i+1]]
+                j = i + 1
+
+        print(f"{nr_of_overlapps} overlapps detected")
+
+        # each dict entry with more than one item in its value (list)
+        # has records with conflicts which need to be resolved
+        nr_of_overlapps = 0
+        j = 0
+        for key, value in my_dict.items():
+
+            
+            if len(value) > 1:
+
+                nr_of_overlapps = nr_of_overlapps + len(value)
+                
+                i = 0
+                length = len(value)
+                while i < length-1:
+                    
+                    overlapp = ip_ranges_overlapp(value[i], value[i+1])
+
+                    if overlapp:
+
+                        handle_ranges_overlapp(i, i+1, value, f)
+                        length = len(value)
+                        
+                    else:
+                        i = i + 1
+
+            j = j + 1
+   
     print(f"{nr_of_overlapps} overlapps detected")
 
     try:
-    
+        
         with open(file, "w", encoding='utf-8', errors='ignore') as f:
-            
-            for record in records:
-                
-                if record:
-                    
-                    if record[3] != "XX":
 
-                        line = "|".join(map(str, record))
-                        line = line + '\n'
-                        f.write(line)
+            # write the dictionary entries back into the file
+            for key, value in my_dict.items():
+            
+                for r in value:
+                    line = "|".join(map(str, r))
+                    line = line + '\n'
+                    f.write(line)
 
     except IOError as e:
         
@@ -507,7 +542,7 @@ def handle_ranges_overlapp(idx_1, idx_2, records, f):
     desc_2            = records[idx_2][6]
 
     # !!! remove when developing 
-    records.pop(idx_1)  
+    records.pop(idx_2)
 
 
 # ==============================================================================
@@ -594,10 +629,11 @@ def run_parser():
 
     #merge_stripped_files()
     
+    #sort_file()
     print("resolving overlapps ...")
-    sort_file()
-    #check_for_overlaping()
-    
+    #check_for_overlaping(os.path.join(DEL_FILES_DIR, "test.inetnum"))
+    check_for_overlaping()
+
     print("finished\n")
 
     # delete_temp_files()
