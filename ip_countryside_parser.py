@@ -1,15 +1,12 @@
-from dataclasses import replace
 import re
 import os
 import shutil
 import fileinput
 import ipaddress
-from subprocess import call
 import time
 from datetime import datetime
 #import locationtagger
 import multiprocessing as mp
-
 
 from config import *;
 from ip_countryside_db import *;
@@ -231,6 +228,7 @@ def get_inet_group(seq, group_by):
             data = []
 
 
+
 def parse_inet_files_multicore(kb = 5):
 
     # Fetch number of cpu cores
@@ -421,109 +419,129 @@ def parse_inet_group(entry):
 
 
 # ==============================================================================
-# Methods used for resolving conflicts ... 
+# Methods used for resolving conflicts/overlaps ... 
 
 
-def check_for_overlaping(file=IP2COUNTRY_DB):
+def resolve_overlaps():
+
+    # get db records
+    records = read_db()
+
+    # get all overlaps
+    overlaps = extract_overlaps(records)
+
+    # @TODO -> temporary (only for debugging) write overlap sequences into a file 
+    with open(os.path.join(DEL_FILES_DIR, "overlaping"), "w", encoding='utf-8', errors='ignore') as f:
     
+        for overlap_seq in overlaps:
+            f.write("[\n")
+            for record in overlap_seq:
+                f.write(str(record[1]))
+                f.write("\n")
+
+            f.write("]\n")
+
+    # need to remove overlapps from the db
+    # @TODO
+    return
+
+    # @TODO 
+    # need to solve overlaps here .... 
+    # call the method handle_overlapp
+    for overlap_seq in overlaps:
+        while(records_overlaps(overlap_seq)):
+            # do something here ...
+            pass
+
+
+def extract_overlaps(records):
+    """
+    Search for all overlaps in a list of RIA records and returns list 
+    (overlaps) of lists (overlap_seq) of these overlaps. The Algorithm 
+    has a complexity of O(n log(n)) known as Sweep-Line Algorithm.
+    More Info: https://www.baeldung.com/cs/finding-all-overlapping-intervals    
+
+    Arguments
+    ----------
+    records: list 
+        List of RIA entries with the follwoing format:
+        [ 
+          ...
+          [ip_from, ip_to, cc, registry, last-modified, record_type, description],
+          ...
+        ]
+
+    Returns
+    ----------
+    overlaps: list
+        List of lists. Represents all found overlaps
+        Each entry of overlap_seq have the following format: 
+            [ 
+              ...
+              [ index, [ip_from, ip_to, cc, ....] ]
+              ...
+            ]
+            where index refers to index of the record in the list
+
+    """
+
+    # if list is empty return 
+    if not records:
+        return 
+      
+    P = [] 
+    currentOpen = -1
+    added = False
+    overlap_seq = []
+    overlaps = []
+    overlaps_nr = 0
+
+    for i in range(len(records)):
+        P.append([records[i][0], "L", i, records[i]])
+        P.append([records[i][1], "R", i, records[i]])
+
+    P.sort()
+
+
+    for i in range(len(P)):
     
-    # temp file to store overlapped records
-    with open(os.path.join(DEL_FILES_DIR, "overlapping"), "w", encoding='utf-8', errors='ignore') as f:
-
-        records = []
-
-        # get records from final db
-        records = read_db(file)
-        
-        my_dict = dict() 
-        
-        # creates dictionary with ip start range as key 
-        # if there is a sequence of overlapping these will be 
-        # added to the value of corresponding key as a list
-        j = 0
-        nr_of_overlapps = 0
-
-        for i in range(len(records)-1):
-            
-            overlapp = ip_ranges_overlapp(records[i], records[i+1])
-
-            if overlapp:
-                nr_of_overlapps = nr_of_overlapps + 1
-
-                if not j in my_dict: 
-                    my_dict[j] = [records[i]]
-                    my_dict[j].append(records[i+1])
-                    nr_of_overlapps = nr_of_overlapps + 1
-
-                else:
-                    my_dict[j].append(records[i+1])
-            
+        if P[i][1] == "L":
+            if currentOpen == -1:
+                currentOpen = P[i][2]
+                added = False
             else:
-                if not len(my_dict):
-                    my_dict[i] = [records[i]]
-                else:
-                    my_dict[i+1] = [records[i+1]]
-                j = i + 1
+                index = P[i][2]
+                overlap_seq.append([index, records[index]])
+                overlaps_nr = overlaps_nr + 1
+                if not added:
+                    overlap_seq.append([currentOpen, records[currentOpen]])
+                    added = True
+                    overlaps_nr = overlaps_nr + 1
+                if records[index][1] > records[currentOpen][1]:
+                    currentOpen = index
+                    added = True
+        else:
+            if P[i][2] == currentOpen:
+                currentOpen = -1
+                added = False
+                overlaps.append(overlap_seq)
+                overlap_seq = []
 
-        print(f"{nr_of_overlapps} overlapps detected")
-
-        # each dict entry with more than one item in its value (list)
-        # has records with conflicts which need to be resolved
-        nr_of_overlapps = 0
-        j = 0
-        for key, value in my_dict.items():
-
-            
-            if len(value) > 1:
-
-                nr_of_overlapps = nr_of_overlapps + len(value)
-                
-                i = 0
-                length = len(value)
-                while i < length-1:
-                    
-                    overlapp = ip_ranges_overlapp(value[i], value[i+1])
-
-                    if overlapp:
-
-                        handle_ranges_overlapp(i, i+1, value, f)
-                        length = len(value)
-                        
-                    else:
-                        i = i + 1
-
-            j = j + 1
-   
-    print(f"{nr_of_overlapps} overlapps detected")
-
-    try:
-        
-        with open(file, "w", encoding='utf-8', errors='ignore') as f:
-
-            # write the dictionary entries back into the file
-            for key, value in my_dict.items():
-            
-                for r in value:
-                    line = "|".join(map(str, r))
-                    line = line + '\n'
-                    f.write(line)
-
-    except IOError as e:
-        
-        print(e)
-
-
-def ip_ranges_overlapp(record_1, record_2):
+    # remove empty sequences
+    overlaps = [overlap_seq for overlap_seq in overlaps if overlap_seq] 
     
-    range_end_1     = record_1[1]
-    range_start_2   = record_2[0]
+    overlaps.sort(key=lambda seq: len(seq))
 
-    # case 1: [1, 3] [2, 4] -> 2 < 3 overlapping
-    # case 2: [1, 3] [3, 4] -> 3 = 3 overlapping
-    return  range_end_1 >= range_start_2 
+    print(f"overlaps found {overlaps_nr}\n")
+
+    return overlaps
 
 
-def handle_ranges_overlapp(idx_1, idx_2, records, f):
+def remove_overlaps(records, overlaps):
+    pass
+
+
+def handle_overlapp(idx_1, idx_2, records, f):
     
     ip_from_1         = records[idx_1][0]
     ip_to_1           = records[idx_1][1]
@@ -543,6 +561,47 @@ def handle_ranges_overlapp(idx_1, idx_2, records, f):
 
     # !!! remove when developing 
     records.pop(idx_2)
+
+
+def records_overlaps(records):
+    """
+    checks if any two records overlaps in the given list of RIA records 
+
+    Arguments
+    ----------
+    records: list 
+        List of RIA entries with the follwoing format:
+        [ 
+          ...
+          [ip_from, ip_to, cc, registry, last-modified, record_type, description],
+          ...
+        ]
+
+    Returns
+    ----------
+    boolean value
+        if there is any overlap in the given list
+
+    """
+
+    # if list is empty return
+    if not records:
+        return 
+      
+    P = [] 
+
+    for i in range(len(records)):
+        P.append([records[i][0], "L", i])
+        P.append([records[i][1], "R", i])
+        
+    P.sort()
+
+    for i in range(len(P)-1):
+    
+        if P[i][1] == "L" and P[i+1][1] != "R":
+            return True
+        
+    return False
 
 
 # ==============================================================================
@@ -614,30 +673,25 @@ def delete_temp_files():
 def run_parser():
 
     start_time = time.time()
-    # print("parsing started\n")
-
+    print("parsing started\n")
 
     # print("parsing del files ...")
-    # merge_del_files()          
-    # parse_del_files()           
-
+    merge_del_files()          
+    parse_del_files()           
     
     # print("parsing inetnum files ...")
-    # merge_inet_files()
+    merge_inet_files()
     # #parse_inet_files_single()
-    # parse_inet_files_multicore()
+    parse_inet_files_multicore()
 
-    #merge_stripped_files()
+    merge_stripped_files()
     
-    #sort_file()
-    print("resolving overlapps ...")
-    #check_for_overlaping(os.path.join(DEL_FILES_DIR, "test.inetnum"))
-    check_for_overlaping()
-
-    print("finished\n")
+    #print("resolving overlaps ...")
+    #resolve_overlaps()
 
     # delete_temp_files()
-    
+    print("finished\n")
+
     end_time = time.time()
     print("total time needed was:", f'{end_time - start_time:.3f}', "s\n") 
     
@@ -645,5 +699,8 @@ def run_parser():
 
 
 # # Needed if for multiprocessing not to crash
-if __name__ == "__main__":   
-    run_parser()
+# if __name__ == "__main__":   
+#     run_parser()
+
+
+resolve_overlaps()
