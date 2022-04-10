@@ -422,36 +422,38 @@ def parse_inet_group(entry):
 # Methods used for resolving conflicts/overlaps ... 
 
 
-def resolve_overlaps():
+def handle_overlaps():
 
     # get db records
     records = read_db()
 
     # get all overlaps
-    overlaps = extract_overlaps(records)
+    [overlaps, indicies] = extract_overlaps(records)
 
-    # @TODO -> temporary (only for debugging) write overlap sequences into a file 
+    # @TODO -> (delete); temporary (only for debugging) write overlap sequences into a file 
     with open(os.path.join(DEL_FILES_DIR, "overlaping"), "w", encoding='utf-8', errors='ignore') as f:
     
         for overlap_seq in overlaps:
             f.write("[\n")
             for record in overlap_seq:
-                f.write(str(record[1]))
+                f.write(str(record))
                 f.write("\n")
 
             f.write("]\n")
 
     # need to remove overlapps from the db
-    # @TODO
-    return
+    delete_by_idx_from_list(records, indicies)
+
+    # write back the cleaned list into db file
+    write_db(records)
 
     # @TODO 
-    # need to solve overlaps here .... 
-    # call the method handle_overlapp
-    for overlap_seq in overlaps:
-        while(records_overlaps(overlap_seq)):
-            # do something here ...
-            pass
+    # see method resolve_overlaps()
+    resolve_overlaps(overlaps)
+
+    # @TODO
+    # write the clean version of records into the 
+    # data base file again ...
 
 
 def extract_overlaps(records):
@@ -488,11 +490,12 @@ def extract_overlaps(records):
     # if list is empty return 
     if not records:
         return 
-      
+
     P = [] 
     currentOpen = -1
     added = False
     overlap_seq = []
+    overlap_indicies = []
     overlaps = []
     overlaps_nr = 0
 
@@ -511,10 +514,12 @@ def extract_overlaps(records):
                 added = False
             else:
                 index = P[i][2]
-                overlap_seq.append([index, records[index]])
+                overlap_seq.append(records[index])
+                overlap_indicies.append(index)
                 overlaps_nr = overlaps_nr + 1
                 if not added:
-                    overlap_seq.append([currentOpen, records[currentOpen]])
+                    overlap_seq.append(records[currentOpen])
+                    overlap_indicies.append(currentOpen)
                     added = True
                     overlaps_nr = overlaps_nr + 1
                 if records[index][1] > records[currentOpen][1]:
@@ -534,38 +539,27 @@ def extract_overlaps(records):
 
     print(f"overlaps found {overlaps_nr}\n")
 
-    return overlaps
+    return [overlaps, overlap_indicies]
 
 
-def remove_overlaps(records, overlaps):
+def resolve_overlaps(overlaps):
+
+    # need to solve overlaps here .... 
+    for overlap_seq in overlaps:
+
+        while(records_overlaps(overlap_seq)):
+            overlap_seq = resolve_overlaps_helper(overlap_seq)
+            
+
+def resolve_overlaps_helper(overlap_seq):
+    
     pass
-
-
-def handle_overlapp(idx_1, idx_2, records, f):
-    
-    ip_from_1         = records[idx_1][0]
-    ip_to_1           = records[idx_1][1]
-    country_1         = records[idx_1][2].upper()
-    registry_1        = records[idx_1][3].upper()
-    date_1            = int(records[idx_1][4])
-    record_type_1     = records[idx_1][5]
-    desc_1            = records[idx_1][6]
-    
-    ip_from_2         = records[idx_2][0]
-    ip_to_2           = records[idx_2][1]
-    country_2         = records[idx_2][2].upper()
-    registry_2        = records[idx_2][3].upper()
-    date_2            = int(records[idx_2][4])
-    record_type_2     = records[idx_2][5]
-    desc_2            = records[idx_2][6]
-
-    # !!! remove when developing 
-    records.pop(idx_2)
 
 
 def records_overlaps(records):
     """
-    checks if any two records overlaps in the given list of RIA records 
+    Checks if any two records overlaps in the given list of RIA records 
+    Note that complexity  O(n log(n))
 
     Arguments
     ----------
@@ -676,18 +670,18 @@ def run_parser():
     print("parsing started\n")
 
     # print("parsing del files ...")
-    merge_del_files()          
-    parse_del_files()           
+    #merge_del_files()          
+    #parse_del_files()           
     
     # print("parsing inetnum files ...")
-    merge_inet_files()
+    #merge_inet_files()
     # #parse_inet_files_single()
-    parse_inet_files_multicore()
+    #parse_inet_files_multicore()
 
     merge_stripped_files()
     
-    #print("resolving overlaps ...")
-    #resolve_overlaps()
+    print("resolving overlaps ...")
+    handle_overlaps()
 
     # delete_temp_files()
     print("finished\n")
@@ -698,9 +692,8 @@ def run_parser():
     return 0
 
 
-# # Needed if for multiprocessing not to crash
-# if __name__ == "__main__":   
-#     run_parser()
+# Needed if for multiprocessing not to crash
+if __name__ == "__main__":   
+     run_parser()
 
 
-resolve_overlaps()

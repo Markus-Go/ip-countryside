@@ -11,18 +11,42 @@ def read_db(file=IP2COUNTRY_DB):
 
     records = []
     try:
-
         # save all records into a list
         with open(file, "r", encoding='utf-8', errors='ignore') as f:
             
-            for line in f:
+            for line in f :
                 
                 record = read_db_record(line)
                 
                 if record:
                     
                     records.append(record)
+               
+    except IOError as e:
+        
+        print(e)
 
+    return records
+
+
+def write_db(records, file=IP2COUNTRY_DB):
+    
+    if not records:
+        return
+
+    try:
+
+        # save all records into a list
+        with open(file, "w", encoding='utf-8', errors='ignore') as f:
+            
+            for record in records:
+                
+                if record:
+                    
+                    line = "|".join(map(str, record))
+                    line = line + '\n'
+                    f.write(line)
+                    
     except IOError as e:
         
         print(e)
