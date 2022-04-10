@@ -427,7 +427,7 @@ def handle_overlaps():
     # get db records
     records = read_db()
 
-    # get all overlaps
+    # get all records which overlap and their corresponding indicies
     [overlaps, indicies] = extract_overlaps(records)
 
     # @TODO -> (delete); temporary (only for debugging) write overlap sequences into a file 
@@ -544,10 +544,11 @@ def extract_overlaps(records):
 
 def resolve_overlaps(overlaps):
 
-    # need to solve overlaps here .... 
+    # need to solve overlaps for each overalp sequence .... 
     for overlap_seq in overlaps:
 
         while(records_overlaps(overlap_seq)):
+            
             overlap_seq = resolve_overlaps_helper(overlap_seq)
             
 
