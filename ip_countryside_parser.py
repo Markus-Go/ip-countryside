@@ -592,20 +592,239 @@ def resolve_overlaps_helper(overlap_seq):
 
     for i in range(len(overlap_seq)-1):
 
+        # case 1 start and end same
         if (overlap_seq[i][0] == overlap_seq[i+1][0] and
            overlap_seq[i][1] == overlap_seq[i+1][1]):
-
-            if(overlap_seq[i][3] == overlap_seq[i+1][3]):
-
-                # @TODO take inetnum. Current approach take first one 
+               
+            # check for inetnum
+            if(overlap_seq[i][5] == 'I'):       
                 records.append(overlap_seq[i])
 
             else :
-                # @TODO ...
                 records.append(overlap_seq[i+1])
+
+        # case 2 start same, second end is greater
+        elif (overlap_seq[i][0] == overlap_seq[i+1][0] and
+             overlap_seq[i][1] < overlap_seq[i+1][1]):
+
+            # check for same country
+            if overlap_seq[i][2] == overlap_seq[i+1][2]:
+
+                # check for inetnum
+                if(overlap_seq[i][5] == 'I'):       
+                    records.append(overlap_seq[i])
+
+                else :
+                    records.append(overlap_seq[i+1])
+
+            else:
+
+                # set start from secont to end of first
+                overlap_seq[i+1][0] = overlap_seq[i][1] + 1
+
+                records.append(overlap_seq[i])
+                records.append(overlap_seq[i+1])
+
+        # case 3 second start is greater, second end is greater
+        elif (overlap_seq[i][0] < overlap_seq[i+1][0] and
+             overlap_seq[i][1] < overlap_seq[i+1][1]):
+
+             # check for same country
+            if overlap_seq[i][2] == overlap_seq[i+1][2]:
+
+                if overlap_seq[i][6] == overlap_seq[i+1][6]:
+
+                    overlap_seq[i][1] = overlap_seq[i+1][1]
+
+                    records.append(overlap_seq[i])
+
+                # check for inetnum
+                elif(overlap_seq[i+1][5] == 'I'):
+
+                    overlap_seq[i][1] = overlap_seq[i+1][0] - 1
+
+                    records.append(overlap_seq[i])
+                    records.append(overlap_seq[i+1])
+
+                else :
+
+                    overlap_seq[i+1][0] = overlap_seq[i][1] + 1
+
+                    records.append(overlap_seq[i])
+                    records.append(overlap_seq[i+1])
+
+            else:
+
+                if(overlap_seq[i][5] == 'I'):
+
+                    overlap_seq[i+1][0] = overlap_seq[i][1] + 1
+
+                    records.append(overlap_seq[i])
+                    records.append(overlap_seq[i+1])
+
+                else: 
+
+                    overlap_seq[i][1] = overlap_seq[i+1][0] - 1
+
+                    records.append(overlap_seq[i])
+                    records.append(overlap_seq[i+1])
+            
+
+        # case 4 second start is greater, second end is smaler
+        elif (overlap_seq[i][0] < overlap_seq[i+1][0] and
+             overlap_seq[i][1] > overlap_seq[i+1][1]):
+
+            #check country same
+            if overlap_seq[i][2] == overlap_seq[i+1][2]:
+
+                if overlap_seq[i][6] == overlap_seq[i+1][6]:
+
+                    records.append(overlap_seq[i])
+                
+                else:
+
+                    temp = overlap_seq[i]
+                    temp[0] = overlap_seq[i+1][1] + 1
+                    temp[1] = overlap_seq[i][1]
+                    overlap_seq[i][1] = overlap_seq[i+1][0] - 1
+
+                    records.append(overlap_seq[i])
+                    records.append(overlap_seq[i+1])
+                    records.append(temp)
+
+            else:
+                print("NO CASES")
+
+        # case 5 second start is greater, end same
+        elif (overlap_seq[i][0] < overlap_seq[i+1][0] and
+             overlap_seq[i][1] == overlap_seq[i+1][1]):
+
+            #check country same
+            if overlap_seq[i][2] == overlap_seq[i+1][2]:
+
+                if overlap_seq[i][6] == overlap_seq[i+1][6]:
+
+                    records.append(overlap_seq[i])
+
+            else:
+
+                overlap_seq[i][1] = overlap_seq[i+1][0] - 1
+
+                records.append(overlap_seq[i])
+                records.append(overlap_seq[i+1])
+
+        # case 6 start same, first end is greater
+        elif (overlap_seq[i][0] == overlap_seq[i+1][0] and
+             overlap_seq[i][1] > overlap_seq[i+1][1]):
+
+            # check for same country
+            if overlap_seq[i][2] == overlap_seq[i+1][2]:
+
+                # check for inetnum
+                if(overlap_seq[i+1][5] == 'I'):       
+                    records.append(overlap_seq[i+1])
+
+                else :
+                    records.append(overlap_seq[i])
+
+            else:
+
+                # set start from secont to end of first
+                overlap_seq[i][0] = overlap_seq[i+1][1] + 1
+
+                records.append(overlap_seq[i])
+                records.append(overlap_seq[i+1])
+
+        # case 7 first start is greater, end same
+        elif (overlap_seq[i][0] > overlap_seq[i+1][0] and
+             overlap_seq[i][1] == overlap_seq[i+1][1]):
+
+            #check country same
+            if overlap_seq[i][2] == overlap_seq[i+1][2]:
+
+                if overlap_seq[i][6] == overlap_seq[i+1][6]:
+
+                    records.append(overlap_seq[i+1])
+
+            else:
+
+                overlap_seq[i+1][1] = overlap_seq[i][0] - 1
+
+                records.append(overlap_seq[i])
+                records.append(overlap_seq[i+1])
+
+        # case 8 second start is smaler, second end is greater
+        elif (overlap_seq[i][0] > overlap_seq[i+1][0] and
+             overlap_seq[i][1] < overlap_seq[i+1][1]):
+
+            #check country same
+            if overlap_seq[i][2] == overlap_seq[i+1][2]:
+
+                if overlap_seq[i][6] == overlap_seq[i+1][6]:
+
+                    records.append(overlap_seq[i+1])
+                
+                else:
+
+                    temp = overlap_seq[i+1]
+                    temp[0] = overlap_seq[i][1] + 1
+                    temp[1] = overlap_seq[i+1][1]
+                    overlap_seq[i+1][1] = overlap_seq[i][0] - 1
+
+                    records.append(overlap_seq[i])
+                    records.append(overlap_seq[i+1])
+                    records.append(temp)
+
+            else:
+                print("NO CASES")
+        
+        # case 9 first start is greater, first end is greater
+        elif (overlap_seq[i][0] > overlap_seq[i+1][0] and
+             overlap_seq[i][1] > overlap_seq[i+1][1]):
+
+             # check for same country
+            if overlap_seq[i][2] == overlap_seq[i+1][2]:
+
+                if overlap_seq[i][6] == overlap_seq[i+1][6]:
+
+                    overlap_seq[i+1][1] = overlap_seq[i][1]
+
+                    records.append(overlap_seq[i+1])
+
+                # check for inetnum
+                elif(overlap_seq[i][5] == 'I'):
+
+                    overlap_seq[i+1][1] = overlap_seq[i][0] - 1
+
+                    records.append(overlap_seq[i])
+                    records.append(overlap_seq[i+1])
+
+                else :
+
+                    overlap_seq[i][0] = overlap_seq[i+1][1] + 1
+
+                    records.append(overlap_seq[i])
+                    records.append(overlap_seq[i+1])
+
+            else:
+
+                if(overlap_seq[i+1][5] == 'I'):
+
+                    overlap_seq[i][0] = overlap_seq[i+1][1] + 1
+
+                    records.append(overlap_seq[i])
+                    records.append(overlap_seq[i+1])
+
+                else: 
+
+                    overlap_seq[i+1][1] = overlap_seq[i][0] - 1
+
+                    records.append(overlap_seq[i])
+                    records.append(overlap_seq[i+1])
 
         else:
             # @TODO ...
+            print("ELSE")
             records.append(overlap_seq[i])
 
     return records
@@ -712,15 +931,15 @@ def run_parser():
     start_time = time.time()
     print("parsing started\n")
 
-    # print("parsing del files ...")
-    #merge_del_files()          
-    #parse_del_files()           
-    
-    # print("parsing inetnum files ...")
-    #merge_inet_files()
-    #parse_inet_files_single()
-    #parse_inet_files_multicore()
+    print("parsing del files ...")
+    merge_del_files()          
+    parse_del_files()           
 
+    print("parsing inetnum files ...")
+    merge_inet_files()
+    #parse_inet_files_single()
+    parse_inet_files_multicore()
+    
     merge_stripped_files()
     
     print("resolving overlaps ...")
