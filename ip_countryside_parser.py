@@ -549,7 +549,7 @@ def resolve_overlaps(overlaps):
     # as long as ther are overlaps in the sequence ->  complexity O(n²)
     for overlap_seq in overlaps:
 
-        # while(records_overlaps(overlap_seq)):
+        #while(records_overlaps(overlap_seq)):
 
             overlap_seq = [resolve_overlaps_helper(overlap_seq)]
 
