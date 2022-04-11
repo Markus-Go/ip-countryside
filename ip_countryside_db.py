@@ -36,7 +36,6 @@ def write_db(records, file=IP2COUNTRY_DB):
 
     try:
 
-        # save all records into a list
         with open(file, "w", encoding='utf-8', errors='ignore') as f:
             
             for record in records:

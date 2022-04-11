@@ -20,8 +20,6 @@ from ip_countryside_utilities import *;
 
 # @TODO Bugfix in parse_inet_group() -> see todo there ...                                  # Auufwand 5 
 
-# @TODO vergleichen der Ergebnisse mit den von dem alten Tool                               # Aufwand 5
-
 # @TODO comment and write description for each method & clean code                          # Aufwand 5 
 
 # @TODO later add parameters for the command line interpreter (cli)                         # Aufwand 5
@@ -32,8 +30,7 @@ from ip_countryside_utilities import *;
 # wie sie die Objekte einer Datenbank aufbauen ....
 
 # @TODO Speed up parsing process of inetnum files                                           # Aufwand 13/20
-    # 01. External Sorting Method (Merge Sort) 
-    # 02. Parsing should be done by multiple threads
+# Parsing should be done by multiple threads
 
 # @TODO add city information (when available) to the method parse_inet parse_inet_group     # Aufwand 21
 
@@ -444,7 +441,7 @@ def handle_overlaps():
     # need to remove overlapps from the db
     delete_by_idx_from_list(records, indicies)
 
-    # write back the cleaned list into db file
+    # write back the clean list into db file
     write_db(records)
 
     # @TODO 
@@ -480,10 +477,12 @@ def extract_overlaps(records):
         Each entry of overlap_seq have the following format: 
             [ 
               ...
-              [ index, [ip_from, ip_to, cc, ....] ]
+              [ip_from, ip_to, cc, ....]
               ...
             ]
-            where index refers to index of the record in the list
+        
+        indicies: list
+            contains indicies of overlapped records
 
     """
 
@@ -544,17 +543,72 @@ def extract_overlaps(records):
 
 def resolve_overlaps(overlaps):
 
+    overlaps_tmp = [] 
+    
     # need to solve overlaps for each overalp sequence .... 
+    # as long as ther are overlaps in the sequence ->  complexity O(n²)
     for overlap_seq in overlaps:
 
-        while(records_overlaps(overlap_seq)):
+        # while(records_overlaps(overlap_seq)):
+
+            overlap_seq = [resolve_overlaps_helper(overlap_seq)]
+
+            overlaps_tmp.extend(overlap_seq)    
+
+
+    # @TODO -> (delete); temporary (only for debugging) write overlap sequences after removing overlapps 
+    with open(os.path.join(DEL_FILES_DIR, "overlaping_left"), "w", encoding='utf-8', errors='ignore') as left, open(os.path.join(DEL_FILES_DIR, "overlaping_solved"), "w", encoding='utf-8', errors='ignore') as solved:
+        
+        nr_overlaps = 0
+        for overlap_seq in overlaps_tmp:
             
-            overlap_seq = resolve_overlaps_helper(overlap_seq)
+            if(records_overlaps(overlap_seq)):
+
+                left.write("[\n")
+                
+                for record in overlap_seq:
+                    nr_overlaps = nr_overlaps + 1 
+                    left.write(str(record))
+                    left.write("\n")
+
+                left.write("]\n")
             
+            else:
+
+                solved.write("[\n")
+                
+                for record in overlap_seq:
+                    solved.write(str(record))
+                    solved.write("\n")
+
+                solved.write("]\n")
+            
+        print(f"overlaps left {nr_overlaps}")
+        
 
 def resolve_overlaps_helper(overlap_seq):
     
-    pass
+    records = []
+
+    for i in range(len(overlap_seq)-1):
+
+        if (overlap_seq[i][0] == overlap_seq[i+1][0] and
+           overlap_seq[i][1] == overlap_seq[i+1][1]):
+
+            if(overlap_seq[i][3] == overlap_seq[i+1][3]):
+
+                # @TODO take inetnum. Current approach take first one 
+                records.append(overlap_seq[i])
+
+            else :
+                # @TODO ...
+                records.append(overlap_seq[i+1])
+
+        else:
+            # @TODO ...
+            records.append(overlap_seq[i])
+
+    return records
 
 
 def records_overlaps(records):
@@ -636,22 +690,8 @@ def sort_file(file=IP2COUNTRY_DB):
     # sort this list
     records.sort()
 
-    try:
-
-        # write it back 
-        with open(file, "w", encoding='utf-8', errors='ignore') as f:
-            
-            for record in records:
-               
-               line = "|".join(map(str, record))
-               line = line + "\n"
-               f.write(line)
-
-    except IOError as e:
-        
-        print(e)
-
-    return records
+    # write sorted list back into final db
+    write_db(records)
 
 
 def delete_temp_files():
@@ -676,7 +716,7 @@ def run_parser():
     
     # print("parsing inetnum files ...")
     #merge_inet_files()
-    # #parse_inet_files_single()
+    #parse_inet_files_single()
     #parse_inet_files_multicore()
 
     merge_stripped_files()
