@@ -1,15 +1,97 @@
 Case DS
-[2160, 3183, 'TR', 'RIPE', 20191106, '']
-[2672, 3695, 'NL', 'RIPE', 20100331, 'D']
+
+
+inetnum:        178.170.182.0 - 178.170.185.255
+netname:        Goknet-NET
+org:            ORG-GBTV2-RIPE
+country:        TR
+
+inetnum:        178.170.182.0 - 178.170.185.255
+netname:        Goknet-NET
+org:            ORG-GBTV2-RIPE
+country:        TR
+
+178.170.182.0	178.170.185.255		TR
+
+[2997532160, 2997533183, 'TR', 'RIPE', 20191106, '']
+ [2997532672, 2997533695, 'NL', 'RIPE', 20100331, 'D']
+
+ 178.170.184.0	178.170.187.255
+
+ inetnum:        178.170.182.0 - 178.170.185.255
+netname:        Goknet-NET
+org:            ORG-GBTV2-RIPE
+country:        TR
+
+inetnum:        178.170.187.0 - 178.170.187.255
+netname:        MCS-net
+org:            ORG-OMCS1-RIPE
+country:        RU
+
+
+-----------------------------------------------------------
+
 
 
 Case DS
 
-[288, 799, 'NL', 'RIPE', 20090709, 'D']
-[544, 1055, 'KZ', 'RIPE', 20220121, '']
+inetnum:        188.72.98.0 - 188.72.98.255
+netname:        PureVPN-NET
+org:            ORG-GSL32-RIPE
+country:        NL
+
+inetnum:        188.72.99.0 - 188.72.100.255
+netname:        Aitu-net
+country:        KZ
+
+188.72.98.0	188.72.99.255
+
+[3158860288, 3158860799, 'NL', 'RIPE', 20090709, 'D']
+ [3158860544, 3158861055, 'KZ', 'RIPE', 20220121, '']
+ 
+188.72.99.0	188.72.100.255
+
+inetnum:        188.72.99.0 - 188.72.100.255
+netname:        Aitu-net
+country:        KZ
+
+inetnum:        188.72.99.0 - 188.72.100.255
+netname:        Aitu-net
+country:        KZ
+
+-------------------------------------------------------------
+
 
 
 Case DS
 
-[544, 1055, 'KZ', 'RIPE', 20220121, '']
-[800, 1311, 'NL', 'RIPE', 20090709, 'D']
+
+inetnum:        188.72.99.0 - 188.72.100.255
+netname:        Aitu-net
+country:        KZ
+
+
+inetnum:        188.72.99.0 - 188.72.100.255
+netname:        Aitu-net
+country:        KZ
+
+
+
+
+188.72.99.0	188.72.100.255
+
+
+[3158860544, 3158861055, 'KZ', 'RIPE', 20220121, '']
+ [3158860800, 3158861311, 'NL', 'RIPE', 20090709, 'D']
+
+ 188.72.100.0	188.72.101.255
+
+ inetnum:        188.72.99.0 - 188.72.100.255
+netname:        Aitu-net
+country:        KZ
+
+
+inetnum:        188.72.101.0 - 188.72.101.255
+netname:        PureVPN-NET
+org:            ORG-GSL32-RIPE
+country:        UA
