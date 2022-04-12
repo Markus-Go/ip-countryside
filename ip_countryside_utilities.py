@@ -50,7 +50,7 @@ def delete_by_idx_from_list(list, indices):
     void
 
     """
-
+    
     indices = sorted(indices, reverse=True)
     for idx in indices:
         if idx < len(list):

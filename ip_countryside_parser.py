@@ -225,7 +225,6 @@ def get_inet_group(seq, group_by):
             data = []
 
 
-
 def parse_inet_files_multicore(kb = 5):
 
     # Fetch number of cpu cores
@@ -423,34 +422,43 @@ def handle_overlaps():
 
     # get db records
     records = read_db()
+    #records = read_db(os.path.join(DEL_FILES_DIR, "overlaping"))
+
+    # get  all duplicates (simply take one from inetnum if 
+    # exists else take any one)
+    print(len(records))
+    records = remove_duplicates(records, False)
+    print(len(records))
 
     # get all records which overlap and their corresponding indicies
     [overlaps, indicies] = extract_overlaps(records)
+    # remove overlapps from the db
+    delete_by_idx_from_list(records, indicies)
+
 
     # @TODO -> (delete); temporary (only for debugging) write overlap sequences into a file 
     with open(os.path.join(DEL_FILES_DIR, "overlaping"), "w", encoding='utf-8', errors='ignore') as f:
-    
+
         for overlap_seq in overlaps:
+            
             f.write("[\n")
+
             for record in overlap_seq:
                 f.write(str(record))
                 f.write("\n")
 
             f.write("]\n")
-
-    # need to remove overlapps from the db
-    delete_by_idx_from_list(records, indicies)
-
-    # write back the clean list into db file
-    write_db(records)
-
+    
     # @TODO 
     # see method resolve_overlaps()
-    resolve_overlaps(overlaps)
+    # resolve_overlaps(overlaps)
+
 
     # @TODO
     # write the clean version of records into the 
     # data base file again ...
+    # write back the clean list into db file
+    # write_db(records)
 
 
 def extract_overlaps(records):
@@ -473,16 +481,20 @@ def extract_overlaps(records):
     Returns
     ----------
     overlaps: list
-        List of lists. Represents all found overlaps
+        List of lists. Each child list contains a list of RIA records
+        which are involed in an overlap case 
         Each entry of overlap_seq have the following format: 
-            [ 
+            [ ...
+            ,[ 
               ...
               [ip_from, ip_to, cc, ....]
               ...
+            ],
+            ...
             ]
-        
+
         indicies: list
-            contains indicies of overlapped records
+            contains all indicies of records involved in overlap cases
 
     """
 
@@ -541,17 +553,19 @@ def extract_overlaps(records):
     return [overlaps, overlap_indicies]
 
 
+
 def resolve_overlaps(overlaps):
 
     overlaps_tmp = [] 
     
+
     # need to solve overlaps for each overalp sequence .... 
     # as long as ther are overlaps in the sequence ->  complexity O(n²)
     for overlap_seq in overlaps:
 
         #while(records_overlaps(overlap_seq)):
 
-            overlap_seq = [resolve_overlaps_helper(overlap_seq)]
+            overlap_seq = [ resolve_overlaps_helper(overlap_seq) ]
 
             overlaps_tmp.extend(overlap_seq)    
 
@@ -559,275 +573,73 @@ def resolve_overlaps(overlaps):
     # @TODO -> (delete); temporary (only for debugging) write overlap sequences after removing overlapps 
     with open(os.path.join(DEL_FILES_DIR, "overlaping_left"), "w", encoding='utf-8', errors='ignore') as left, open(os.path.join(DEL_FILES_DIR, "overlaping_solved"), "w", encoding='utf-8', errors='ignore') as solved:
         
-        nr_overlaps = 0
         for overlap_seq in overlaps_tmp:
             
             if(records_overlaps(overlap_seq)):
 
-                left.write("[\n")
-                
                 for record in overlap_seq:
-                    nr_overlaps = nr_overlaps + 1 
-                    left.write(str(record))
-                    left.write("\n")
+               
+                    if record:
+                            
+                        line = "|".join(map(str, record))
+                        line = line + '\n'
+                        left.write(line)
 
-                left.write("]\n")
-            
             else:
 
-                solved.write("[\n")
-                
                 for record in overlap_seq:
-                    solved.write(str(record))
-                    solved.write("\n")
 
-                solved.write("]\n")
-            
-        print(f"overlaps left {nr_overlaps}")
+                    if record:
+
+                        line = "|".join(map(str, record))
+                        line = line + '\n'
+                        solved.write(line)
         
+
 
 def resolve_overlaps_helper(overlap_seq):
     
     records = []
 
-    for i in range(len(overlap_seq)-1):
+
+#    for i in range(len(overlap_seq)-1):
+
+        # ip_from_1     = overlap_seq[i][0]
+        # ip_to_1       = overlap_seq[i][1]
+        # country_1     = overlap_seq[i][2].upper()
+        # registry_1    = overlap_seq[i][3].upper()
+        # date_1        = int(overlap_seq[i][4])
+        # record_type_1 = overlap_seq[i][5]
+
+        # ip_from_2     = overlap_seq[i+1][0]
+        # ip_to_2       = overlap_seq[i+1][1]
+        # country_2     = overlap_seq[i+1][2].upper()
+        # registry_2    = overlap_seq[i+1][3].upper()
+        # date_2        = int(overlap_seq[i+1][4])
+        # record_type_2 = overlap_seq[i+1][5]
 
         # case 1 start and end same
-        if (overlap_seq[i][0] == overlap_seq[i+1][0] and
-           overlap_seq[i][1] == overlap_seq[i+1][1]):
+        # valid = True
+        # if (ip_from_1 == ip_from_2 and
+        #     ip_to_1 == ip_to_2):
                
-            # check for inetnum
-            if(overlap_seq[i][5] == 'I'):       
-                records.append(overlap_seq[i])
+        #     # check for inetnum
+        #     if(record_type_1 == 'I'):       
+        #         records.append(overlap_seq[i])
+        #     else:
+        #         records.append(overlap_seq[i+1])
 
-            else :
-                records.append(overlap_seq[i+1])
-
-        # case 2 start same, second end is greater
-        elif (overlap_seq[i][0] == overlap_seq[i+1][0] and
-             overlap_seq[i][1] < overlap_seq[i+1][1]):
-
-            # check for same country
-            if overlap_seq[i][2] == overlap_seq[i+1][2]:
-
-                # check for inetnum
-                if(overlap_seq[i][5] == 'I'):       
-                    records.append(overlap_seq[i])
-
-                else :
-                    records.append(overlap_seq[i+1])
-
-            else:
-
-                # set start from secont to end of first
-                overlap_seq[i+1][0] = overlap_seq[i][1] + 1
-
-                records.append(overlap_seq[i])
-                records.append(overlap_seq[i+1])
-
-        # case 3 second start is greater, second end is greater
-        elif (overlap_seq[i][0] < overlap_seq[i+1][0] and
-             overlap_seq[i][1] < overlap_seq[i+1][1]):
-
-             # check for same country
-            if overlap_seq[i][2] == overlap_seq[i+1][2]:
-
-                if overlap_seq[i][6] == overlap_seq[i+1][6]:
-
-                    overlap_seq[i][1] = overlap_seq[i+1][1]
-
-                    records.append(overlap_seq[i])
-
-                # check for inetnum
-                elif(overlap_seq[i+1][5] == 'I'):
-
-                    overlap_seq[i][1] = overlap_seq[i+1][0] - 1
-
-                    records.append(overlap_seq[i])
-                    records.append(overlap_seq[i+1])
-
-                else :
-
-                    overlap_seq[i+1][0] = overlap_seq[i][1] + 1
-
-                    records.append(overlap_seq[i])
-                    records.append(overlap_seq[i+1])
-
-            else:
-
-                if(overlap_seq[i][5] == 'I'):
-
-                    overlap_seq[i+1][0] = overlap_seq[i][1] + 1
-
-                    records.append(overlap_seq[i])
-                    records.append(overlap_seq[i+1])
-
-                else: 
-
-                    overlap_seq[i][1] = overlap_seq[i+1][0] - 1
-
-                    records.append(overlap_seq[i])
-                    records.append(overlap_seq[i+1])
+        #     valid = False
+        
+        # else:
+            
+        #     if valid:
+        #         records.append(overlap_seq[i])
+        #     records.append(overlap_seq[i+1])
             
 
-        # case 4 second start is greater, second end is smaler
-        elif (overlap_seq[i][0] < overlap_seq[i+1][0] and
-             overlap_seq[i][1] > overlap_seq[i+1][1]):
-
-            #check country same
-            if overlap_seq[i][2] == overlap_seq[i+1][2]:
-
-                if overlap_seq[i][6] == overlap_seq[i+1][6]:
-
-                    records.append(overlap_seq[i])
-                
-                else:
-
-                    temp = overlap_seq[i]
-                    temp[0] = overlap_seq[i+1][1] + 1
-                    temp[1] = overlap_seq[i][1]
-                    overlap_seq[i][1] = overlap_seq[i+1][0] - 1
-
-                    records.append(overlap_seq[i])
-                    records.append(overlap_seq[i+1])
-                    records.append(temp)
-
-            else:
-                print("NO CASES")
-
-        # case 5 second start is greater, end same
-        elif (overlap_seq[i][0] < overlap_seq[i+1][0] and
-             overlap_seq[i][1] == overlap_seq[i+1][1]):
-
-            #check country same
-            if overlap_seq[i][2] == overlap_seq[i+1][2]:
-
-                if overlap_seq[i][6] == overlap_seq[i+1][6]:
-
-                    records.append(overlap_seq[i])
-
-            else:
-
-                overlap_seq[i][1] = overlap_seq[i+1][0] - 1
-
-                records.append(overlap_seq[i])
-                records.append(overlap_seq[i+1])
-
-        # case 6 start same, first end is greater
-        elif (overlap_seq[i][0] == overlap_seq[i+1][0] and
-             overlap_seq[i][1] > overlap_seq[i+1][1]):
-
-            # check for same country
-            if overlap_seq[i][2] == overlap_seq[i+1][2]:
-
-                # check for inetnum
-                if(overlap_seq[i+1][5] == 'I'):       
-                    records.append(overlap_seq[i+1])
-
-                else :
-                    records.append(overlap_seq[i])
-
-            else:
-
-                # set start from secont to end of first
-                overlap_seq[i][0] = overlap_seq[i+1][1] + 1
-
-                records.append(overlap_seq[i])
-                records.append(overlap_seq[i+1])
-
-        # case 7 first start is greater, end same
-        elif (overlap_seq[i][0] > overlap_seq[i+1][0] and
-             overlap_seq[i][1] == overlap_seq[i+1][1]):
-
-            #check country same
-            if overlap_seq[i][2] == overlap_seq[i+1][2]:
-
-                if overlap_seq[i][6] == overlap_seq[i+1][6]:
-
-                    records.append(overlap_seq[i+1])
-
-            else:
-
-                overlap_seq[i+1][1] = overlap_seq[i][0] - 1
-
-                records.append(overlap_seq[i])
-                records.append(overlap_seq[i+1])
-
-        # case 8 second start is smaler, second end is greater
-        elif (overlap_seq[i][0] > overlap_seq[i+1][0] and
-             overlap_seq[i][1] < overlap_seq[i+1][1]):
-
-            #check country same
-            if overlap_seq[i][2] == overlap_seq[i+1][2]:
-
-                if overlap_seq[i][6] == overlap_seq[i+1][6]:
-
-                    records.append(overlap_seq[i+1])
-                
-                else:
-
-                    temp = overlap_seq[i+1]
-                    temp[0] = overlap_seq[i][1] + 1
-                    temp[1] = overlap_seq[i+1][1]
-                    overlap_seq[i+1][1] = overlap_seq[i][0] - 1
-
-                    records.append(overlap_seq[i])
-                    records.append(overlap_seq[i+1])
-                    records.append(temp)
-
-            else:
-                print("NO CASES")
-        
-        # case 9 first start is greater, first end is greater
-        elif (overlap_seq[i][0] > overlap_seq[i+1][0] and
-             overlap_seq[i][1] > overlap_seq[i+1][1]):
-
-             # check for same country
-            if overlap_seq[i][2] == overlap_seq[i+1][2]:
-
-                if overlap_seq[i][6] == overlap_seq[i+1][6]:
-
-                    overlap_seq[i+1][1] = overlap_seq[i][1]
-
-                    records.append(overlap_seq[i+1])
-
-                # check for inetnum
-                elif(overlap_seq[i][5] == 'I'):
-
-                    overlap_seq[i+1][1] = overlap_seq[i][0] - 1
-
-                    records.append(overlap_seq[i])
-                    records.append(overlap_seq[i+1])
-
-                else :
-
-                    overlap_seq[i][0] = overlap_seq[i+1][1] + 1
-
-                    records.append(overlap_seq[i])
-                    records.append(overlap_seq[i+1])
-
-            else:
-
-                if(overlap_seq[i+1][5] == 'I'):
-
-                    overlap_seq[i][0] = overlap_seq[i+1][1] + 1
-
-                    records.append(overlap_seq[i])
-                    records.append(overlap_seq[i+1])
-
-                else: 
-
-                    overlap_seq[i+1][1] = overlap_seq[i][0] - 1
-
-                    records.append(overlap_seq[i])
-                    records.append(overlap_seq[i+1])
-
-        else:
-            # @TODO ...
-            print("ELSE")
-            records.append(overlap_seq[i])
-
     return records
+
 
 
 def records_overlaps(records):
@@ -841,7 +653,7 @@ def records_overlaps(records):
         List of RIA entries with the follwoing format:
         [ 
           ...
-          [ip_from, ip_to, cc, registry, last-modified, record_type, description],
+          [ip_from, ip_to, ...],
           ...
         ]
 
@@ -866,12 +678,102 @@ def records_overlaps(records):
 
     for i in range(len(P)-1):
     
-
         if P[i][1] == "L" and P[i+1][1] != "R":
             return True
         
     return False
 
+
+
+def remove_duplicates(records, strict=False):
+    
+    # if list is empty return
+    if not records:
+        return 
+      
+    duplicate_indicies = extract_duplicate_indicies(records, strict)
+
+    # if strict modues is on. Prefere inetnum records rather than 
+    # delegation. This costs more time ... 
+    if strict:
+
+        # select one record to keep in each duplicate sequence
+        for duplicate_sequence in duplicate_indicies:
+
+            one_keeped = False 
+
+            for i in range(len(duplicate_sequence)):
+
+                    # check if inetnum
+                    if records[duplicate_sequence[i]][5] == "I":
+                        duplicate_sequence.pop(i)
+                        one_keeped = True
+                        break
+                    
+                    # if we reach out last element and haven't save any entry 
+                    # yet then simply choose last one to keep 
+                    elif not one_keeped and i == len(duplicate_sequence) - 1:
+                        duplicate_sequence.pop(i)
+                            
+
+    duplicate_indicies = [item for sublist in duplicate_indicies for item in sublist]
+    
+    delete_by_idx_from_list(records, duplicate_indicies)
+
+    print(f"Number of duplicates removed: {len(duplicate_indicies)}")
+
+    return records
+
+
+
+def extract_duplicate_indicies(records, strict):
+
+    # if list is empty return
+    if not records:
+        return 
+      
+    P = [] 
+
+    for i in range(len(records)):
+        P.append([records[i][0], i])
+        
+    P.sort()
+
+    
+    duplicate_indicies = []
+    added = False
+
+    for i in range(len(P)-1):
+        
+        # if both have same ip start, same ip end and same country
+        # then save their indicies
+        if (P[i][0] == P[i+1][0] and 
+            records[P[i][1]][1] == records[P[i+1][1]][1] and 
+            records[P[i][1]][2] == records[P[i+1][1]][2]):
+    
+            if strict:
+
+                if not added:
+                    duplicate_indicies.append([P[i][1]])
+                    added = True
+
+                duplicate_indicies[-1].append(P[i+1][1])
+            
+            else:
+
+                if added:
+                    duplicate_indicies[-1].append(P[i+1][1])
+                
+                else:
+                    duplicate_indicies.append([P[i+1][1]])
+                    added = True
+            
+        else:
+            
+            added = False
+
+
+    return duplicate_indicies
 
 
 # ==============================================================================
@@ -931,14 +833,14 @@ def run_parser():
     start_time = time.time()
     print("parsing started\n")
 
-    print("parsing del files ...")
-    merge_del_files()          
-    parse_del_files()           
+    #print("parsing del files ...")
+    #merge_del_files()          
+    #parse_del_files()           
 
-    print("parsing inetnum files ...")
-    merge_inet_files()
+    #print("parsing inetnum files ...")
+    #merge_inet_files()
     #parse_inet_files_single()
-    parse_inet_files_multicore()
+    #parse_inet_files_multicore()
     
     merge_stripped_files()
     
@@ -955,7 +857,20 @@ def run_parser():
 
 
 # Needed if for multiprocessing not to crash
-if __name__ == "__main__":   
-     run_parser()
+# if __name__ == "__main__":   
+#     run_parser()
+
+r = [
+[3274358784, 3274366975, 'SE', 'RIPE', '19970416', 'D', ''],
+[3274358784, 3274359039, 'SE', 'RIPE', '20130703', 'I', 'TDC SE Webhosting network 1'],
+[3274358784, 3274366975, 'SE', 'RIPE', '20181121', 'I', ''],
+# [3274359040, 3274359295, 'SE', 'RIPE', '20200929', 'I', 'Tele2 Sverige AB TDC Hosting'],
+# [3274359040, 3274359295, 'SE', 'RIPE', '20200929', 'I', 'Tele2 Sverige AB TDC Hosting'],
+# [3274359040, 3274359295, 'SE', 'RIPE', '20200929', 'I', 'Tele2 Sverige AB TDC Hosting'],
+# [3274359040, 3274359295, 'SE', 'RIPE', '20200929', 'I', 'Tele2 Sverige AB TDC Hosting']
+
+]
 
 
+remove_duplicates(r)
+print(r)
