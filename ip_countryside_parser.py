@@ -633,6 +633,44 @@ def get_duplicate_indicies(records):
     return duplicate_indicies
 
 
+def merge_successive(records=[]):
+     # if list is empty return
+    if not records:
+        return 
+
+    P = [] 
+    
+    successive_indicies = []
+    merged_records = []
+
+    for i in range(len(records)):
+        P.append([records[i][0], "L", i, i])
+        P.append([records[i][1], "R", i,i])
+
+    P.sort()
+
+    i = 0 
+    while i < len(P)-1:
+
+        # Check if R is followed by L
+        if (P[i][1] == 'R' and P[i+1][1] == 'L'):
+
+            # Check if distance is 1  
+            if P[i][0] + 1 == P[i+1][0]:
+                
+                records[P[i]][1] = records[P[i+1]][0] # ip_end_1 =  
+                successive_indicies.append(P[i+1][2])
+
+            else: 
+                i += 1
+
+        else: 
+            i += 1
+
+    return P
+
+
+
 def records_overlaps(records):
     """
     Checks if any two records overlaps in the given list of RIA records 
@@ -759,7 +797,20 @@ def run_parser():
     return 0
 
 
+  
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
-    run_parser()
+    # run_parser()
 
+    l = [
+
+        [1354508976, 1354508983, 'CZ', 'RIPE', '20040712', 'I', 'Loucna'],
+        [1354508984, 1354508991, 'CZ', 'RIPE', '20031009', 'I', 'Liberec'],
+        [1354508992, 1354508999, 'CZ', 'RIPE', '20050208', 'I', 'Decinska 1611/45 Usti nad labem'],
+        [1354509000, 1354509007, 'CZ', 'RIPE', '20031020', 'I', 'Nove Mesto pod Smrkem'],
+
+    ]
+
+
+    print(merge_successive(l))
+    
