@@ -963,8 +963,8 @@ def merge_following(records):
     P = [] 
 
     for i in range(len(records)):
-        P.append([records[i][0], "L", i])
-        P.append([records[i][1], "R", i])
+        P.append([records[i][0], "L", i, i])
+        P.append([records[i][1], "R", i,i])
 
     P.sort()
 
@@ -976,7 +976,7 @@ def merge_following(records):
             # Check if distance is 1  
             if P[i][0] + 1 == P[i+1][0]:
 
-                P[i] = [P[i+2][0],'R', P[i][2]]
+                P[i] = [P[i+2][0],'R', P[i][2], P[i+1][2]]
                 index = P[i+1][2]
                 j = i + 1
                 P.pop(j)
@@ -987,14 +987,49 @@ def merge_following(records):
                 i+= 1
         else: 
             i += 1
-    return P
+    
+    #merged_record = []
+    #for i in range(len(records)):
+    #    curr_index = P[i][2]
+
+    #    j = i + 1
+    #    while curr_index != P[j][2]:
+    #        j += 1
+    #    if P[j][3] == P[j][2]:
+    #        merged_record.append([P[curr_index][0], P[j][0], records[curr_index][2], records[curr_index][3], records[curr_index][4],
+    #                              records[curr_index][5], records[curr_index][6]])
+    #    else:
+    #        merged_record.append([P[curr_index][0], records[P[j][3]][1], records[curr_index][2], records[curr_index][3], records[curr_index][4],
+    #                              records[curr_index][5], ""])
+
+
+
+
+    
+def bigrange(records):
+
+    # if list is empty return
+    if not records:
+        return 
+
+    P = [] 
+
+    for i in range(len(records)):
+        P.append([records[i][0], "L", i])
+        P.append([records[i][1], "R", i])
+
+    P.sort()
+
+    if P[0][2] == P[len(P)-1][2]:
+        return [P[0], P[len(P)-1]]
+    else:
+        # Return what in case biger range doesnt exist
+        return "X"
+        
 
     
 
 
-
-
-            
 
     
 
@@ -1089,8 +1124,16 @@ if __name__ == "__main__":
         [1509682688, 1509682751, 'ES', 'RIPE', '20170207', 'I', 'Backbone'],
         [1509682688, 1509682751, 'ES', 'RIPE', '20170207', 'I', 'Backbone'],
         [1509682720, 1509682759, 'ES', 'RIPE', '20170207', 'I', 'Backbone']]
+
+     o = [[1509679104, 1509683199, 'ES', 'RIPE', '20210413', 'I', ''],
+        [1509679376,   1509679359, 'ES', 'RIPE', '20060920', 'D', ''],
+        [1509679360, 1509679407, 'ES', 'RIPE', '20170206', 'I', 'Shared Firewall Service'],
+        [1509679376, 1509679359, 'ES', 'RIPE', '20060920', 'D', ''],
+        [1509679360, 1509679407, 'ES', 'RIPE', '20170206', 'I', 'Shared Firewall Service'],
+        [1509679392, 1509679415, 'ES', 'RIPE', '20170207', 'I', 'Shared Firewall Service']]
             
      merge_following(l)
+    
         
 
  
