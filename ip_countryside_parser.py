@@ -547,9 +547,10 @@ def extract_overlaps(records):
     return [overlaps, overlap_indicies]
 
 
-def remove_duplicates():
+def remove_duplicates(records=[]):
 
-    records = read_db()
+    if not records:
+        records = read_db()
 
     print(f"Nr. of records before duplicate deletion {len(records)}")
 
@@ -567,7 +568,6 @@ def remove_duplicates():
 
 def get_duplicate_indicies(records):
 
-    
     # if list is empty return
     if not records:
         return 
@@ -582,6 +582,7 @@ def get_duplicate_indicies(records):
 
     
     duplicate_dict = {}
+    duplicate_indicies = []
     added = False
 
     dict_L = {}
@@ -601,9 +602,10 @@ def get_duplicate_indicies(records):
 
             dict_L[current].append(P[i+1][3])
 
-        # L: if both have same ip end and same country 
+        # R: if both have same ip end and same country
+        # correct keys in dict_R
         elif (P[i][0] == P[i+1][0] and P[i][1] == P[i+1][1] == "R" and
-              P[i][2] == P[i+1][2]  ):
+              P[i][2] == P[i+1][2] and P[i][3] in dict_L):
 
             if not added:
                 dict_R[P[i][3]] = [P[i][3]]
@@ -616,15 +618,13 @@ def get_duplicate_indicies(records):
             current = -1
             added = False
     
-    # take only the intersection of both dictionaries
+    # iterate over only the intersection of both dictionaries
     # Since that two records may have same start but not necessarily
     # the same end
-    duplicate_dict = {**dict_L, **dict_R}
-    duplicate_indicies = []
-
-    for key in duplicate_dict:
+    for key in dict_L.keys() & dict_R.keys():
 
         # keep last record always
+        duplicate_dict[key] = dict_L[key] 
         duplicate_dict[key].pop(-1)
 
         # join indexes of current duplicate sequence
@@ -748,7 +748,7 @@ def run_parser():
     remove_duplicates()
 
     print("resolving overlaps ...")
-    #handle_overlaps()
+    handle_overlaps()
 
     # delete_temp_files()
     print("finished\n")
@@ -760,6 +760,6 @@ def run_parser():
 
 
 # Needed if for multiprocessing not to crash
-# if __name__ == "__main__":   
-#     run_parser()
+if __name__ == "__main__":   
+    run_parser()
 
