@@ -32,10 +32,10 @@ def ip_in_range(ip, start, end):
     return start <= ip_int <= end 
 
 
-def delete_by_idx_from_list(list, indices):
+def empty_entry_by_idx(list, indices):
     """
-    Removes for each index in indices the corresponding entry in 
-    the given list 
+    Set for each index in indices the corresponding entry in 
+    the given list to empty  []
 
     Arguments
     ----------
@@ -50,8 +50,7 @@ def delete_by_idx_from_list(list, indices):
     void
 
     """
-    
-    indices = sorted(indices, reverse=True)
+
     for idx in indices:
 
         if idx < len(list):

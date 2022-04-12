@@ -422,17 +422,32 @@ def handle_overlaps():
 
     # get db records
     records = read_db()
-    #records = read_db(os.path.join(DEL_FILES_DIR, "overlaping"))
+
+    records = [record for record in records if record] 
 
     # get  all duplicates (simply take one from inetnum if 
     # other is delegation otherwise the one with longer description)
-    remove_duplicates(records)
+    print(f"number of records before duplicate deletion {len(records)}")
     
+    remove_duplicates(records)
+    write_db(records)
+    
+    records = [record for record in records if record] 
+    
+    print(f"number of records after duplicate deletion {len(records)}")
+
     # get all records which overlap and their corresponding indicies
     [overlaps, indicies] = extract_overlaps(records)
     
-    # remove overlapps from the db
-    #delete_by_idx_from_list(records, indicies)
+    print("Deleting overlaps from db ... ")
+
+    empty_entry_by_idx(records, indicies)
+
+    records = [record for record in records if record] 
+    
+    print(f"number of records after overlaps deletion {len(records)}")
+ 
+    write_db(records)
 
     print("writing overlaps left ... ")
 
@@ -453,7 +468,6 @@ def handle_overlaps():
     # write the clean version of records into the 
     # data base file again ...
     # write back the clean list into db file
-    # write_db(records)
 
 
 def extract_overlaps(records):
@@ -505,9 +519,18 @@ def extract_overlaps(records):
     overlaps = []
     overlaps_nr = 0
 
-    for i in range(len(records)):
-        P.append([records[i][0], "L", i, records[i]])
-        P.append([records[i][1], "R", i, records[i]])
+    try:
+
+        for i in range(len(records)):
+            P.append([records[i][0], "L", i, records[i]])
+            P.append([records[i][1], "R", i, records[i]])
+
+    except IndexError:
+        print(records[i-2])
+        print(records[i-1])
+        print(records[i])
+        print(records[i+1])
+        print(records[i+2])
 
     P.sort()
 
@@ -550,11 +573,11 @@ def extract_overlaps(records):
 
 def remove_duplicates(records):
 
-    print("Removing duplicates... This can take several minutes, go get yourself a coffee ;)")
+    print("Removing duplicates ... (This can take several minutes)")
 
     duplicate_indicies = get_duplicate_indicies(records)
 
-    delete_by_idx_from_list(records, duplicate_indicies)
+    empty_entry_by_idx(records, duplicate_indicies)
 
     print(f"Number of duplicates removed: {len(duplicate_indicies)}")
 
@@ -620,6 +643,7 @@ def get_duplicate_indicies(records):
 
         # keep last record always
         duplicate_dict[key].pop(-1)
+
         # join indexes of current duplicate sequence
         duplicate_indicies = duplicate_indicies + duplicate_dict[key]  
 
@@ -751,19 +775,3 @@ def run_parser():
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
     run_parser()
-
-
-# r = [
-    
-#     [3118044160, 3118045183, 'DE', 'RIPE', '20170815', 'D', ''],
-#     [3118044160, 3118044671, 'DE', 'RIPE', '20211005', 'I', 'TF Ltd'],
-#     [3118044161, 3118044672, 'DE', 'RIPE', '20211005', 'I', 'TF Ltd'],
-#     [3118044160, 3118045183, 'DE', 'RIPE', '20191125', 'I', ''],            # removed
-#     [37319680, 37320703, 'RU', 'RIPE', '20210429', 'I', ''],
-#     [37319680, 37320703, 'DE', 'RIPE', '20210429', 'I', ''],
-#     [37319680, 37320703, 'RU', 'RIPE', '20190319', 'D', '']                 # removed
-
-# ]
-
-# remove_duplicates(r)
-# print(r)
