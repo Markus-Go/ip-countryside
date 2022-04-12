@@ -16,12 +16,14 @@ def read_db(file=IP2COUNTRY_DB):
             
             for line in f :
                 
-                record = read_db_record(line)
-                
-                if record:
+                if not line in ['\n', '\r\n']:
+
+                    record = read_db_record(line)
                     
-                    records.append(record)
-               
+                    if record:
+                        
+                        records.append(record)
+                
     except IOError as e:
         
         print(e)

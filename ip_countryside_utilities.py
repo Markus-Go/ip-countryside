@@ -32,14 +32,14 @@ def ip_in_range(ip, start, end):
     return start <= ip_int <= end 
 
 
-def empty_entry_by_idx(list, indices):
+def empty_entry_by_idx(records, indices):
     """
     Set for each index in indices the corresponding entry in 
     the given list to empty  []
 
     Arguments
     ----------
-    list: list
+    records: list
         List from which entries must be removed
 
     indices: list
@@ -53,6 +53,10 @@ def empty_entry_by_idx(list, indices):
 
     for idx in indices:
 
-        if idx < len(list):
+        if idx < len(records):
 
-            list[idx] = []
+            records[idx] = []
+
+    records = [x for x in records if x != []]
+
+    return records

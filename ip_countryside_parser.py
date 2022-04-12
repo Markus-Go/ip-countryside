@@ -423,33 +423,19 @@ def handle_overlaps():
     # get db records
     records = read_db()
 
-    records = [record for record in records if record] 
-
-    # get  all duplicates (simply take one from inetnum if 
-    # other is delegation otherwise the one with longer description)
-    print(f"number of records before duplicate deletion {len(records)}")
-    
-    remove_duplicates(records)
-    write_db(records)
-    
-    records = [record for record in records if record] 
-    
-    print(f"number of records after duplicate deletion {len(records)}")
+    print(f"Nr. of records before overlaps deletion {len(records)}")
 
     # get all records which overlap and their corresponding indicies
     [overlaps, indicies] = extract_overlaps(records)
     
     print("Deleting overlaps from db ... ")
 
-    empty_entry_by_idx(records, indicies)
+    records = empty_entry_by_idx(records, indicies)
 
-    records = [record for record in records if record] 
-    
-    print(f"number of records after overlaps deletion {len(records)}")
- 
     write_db(records)
 
-    print("writing overlaps left ... ")
+    print(f"number of records after overlaps deletion {len(records)}")
+ 
 
     # @TODO -> (delete); temporary (only for debugging) write overlap sequences into a file 
     with open(os.path.join(DEL_FILES_DIR, "overlaping"), "w", encoding='utf-8', errors='ignore') as f:
@@ -519,21 +505,11 @@ def extract_overlaps(records):
     overlaps = []
     overlaps_nr = 0
 
-    try:
-
-        for i in range(len(records)):
-            P.append([records[i][0], "L", i, records[i]])
-            P.append([records[i][1], "R", i, records[i]])
-
-    except IndexError:
-        print(records[i-2])
-        print(records[i-1])
-        print(records[i])
-        print(records[i+1])
-        print(records[i+2])
+    for i in range(len(records)):
+        P.append([records[i][0], "L", i, records[i]])
+        P.append([records[i][1], "R", i, records[i]])
 
     P.sort()
-
 
     for i in range(len(P)):
     
@@ -571,15 +547,22 @@ def extract_overlaps(records):
     return [overlaps, overlap_indicies]
 
 
-def remove_duplicates(records):
+def remove_duplicates():
 
-    print("Removing duplicates ... (This can take several minutes)")
+    records = read_db()
+
+    print(f"Nr. of records before duplicate deletion {len(records)}")
 
     duplicate_indicies = get_duplicate_indicies(records)
 
-    empty_entry_by_idx(records, duplicate_indicies)
+    print(f"Nr. of duplicates being removed {len(duplicate_indicies)}")
+    
+    records = empty_entry_by_idx(records, duplicate_indicies)
 
-    print(f"Number of duplicates removed: {len(duplicate_indicies)}")
+    write_db(records)
+
+
+    print(f"Nr. of records after duplicate deletion {len(records)}")
 
 
 def get_duplicate_indicies(records):
@@ -760,8 +743,12 @@ def run_parser():
     
     merge_stripped_files()
     
+    # get  all duplicates (simply take one from inetnum if 
+    # other is delegation otherwise the one with longer description)
+    remove_duplicates()
+
     print("resolving overlaps ...")
-    handle_overlaps()
+    #handle_overlaps()
 
     # delete_temp_files()
     print("finished\n")
@@ -773,5 +760,6 @@ def run_parser():
 
 
 # Needed if for multiprocessing not to crash
-if __name__ == "__main__":   
-    run_parser()
+# if __name__ == "__main__":   
+#     run_parser()
+
