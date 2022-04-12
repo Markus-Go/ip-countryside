@@ -425,16 +425,16 @@ def handle_overlaps():
     #records = read_db(os.path.join(DEL_FILES_DIR, "overlaping"))
 
     # get  all duplicates (simply take one from inetnum if 
-    # exists else take any one)
-    print(len(records))
-    records = remove_duplicates(records, False)
-    print(len(records))
-
+    # other is delegation otherwise the one with longer description)
+    remove_duplicates(records)
+    
     # get all records which overlap and their corresponding indicies
     [overlaps, indicies] = extract_overlaps(records)
+    
     # remove overlapps from the db
-    delete_by_idx_from_list(records, indicies)
+    #delete_by_idx_from_list(records, indicies)
 
+    print("writing overlaps left ... ")
 
     # @TODO -> (delete); temporary (only for debugging) write overlap sequences into a file 
     with open(os.path.join(DEL_FILES_DIR, "overlaping"), "w", encoding='utf-8', errors='ignore') as f:
@@ -449,11 +449,6 @@ def handle_overlaps():
 
             f.write("]\n")
     
-    # @TODO 
-    # see method resolve_overlaps()
-    # resolve_overlaps(overlaps)
-
-
     # @TODO
     # write the clean version of records into the 
     # data base file again ...
@@ -553,93 +548,82 @@ def extract_overlaps(records):
     return [overlaps, overlap_indicies]
 
 
+def remove_duplicates(records):
 
-def resolve_overlaps(overlaps):
+    print("Removing duplicates... This can take several minutes, go get yourself a coffee ;)")
 
-    overlaps_tmp = [] 
+    duplicate_indicies = get_duplicate_indicies(records)
+
+    delete_by_idx_from_list(records, duplicate_indicies)
+
+    print(f"Number of duplicates removed: {len(duplicate_indicies)}")
+
+
+def get_duplicate_indicies(records):
+
     
+    # if list is empty return
+    if not records:
+        return 
+      
+    P = [] 
 
-    # need to solve overlaps for each overalp sequence .... 
-    # as long as ther are overlaps in the sequence ->  complexity O(n²)
-    for overlap_seq in overlaps:
-
-        #while(records_overlaps(overlap_seq)):
-
-            overlap_seq = [ resolve_overlaps_helper(overlap_seq) ]
-
-            overlaps_tmp.extend(overlap_seq)    
-
-
-    # @TODO -> (delete); temporary (only for debugging) write overlap sequences after removing overlapps 
-    with open(os.path.join(DEL_FILES_DIR, "overlaping_left"), "w", encoding='utf-8', errors='ignore') as left, open(os.path.join(DEL_FILES_DIR, "overlaping_solved"), "w", encoding='utf-8', errors='ignore') as solved:
+    for i in range(len(records)):
+        P.append([ records[i][0], "L", records[i][2], i ])
+        P.append([ records[i][1], "R", records[i][2], i ])
         
-        for overlap_seq in overlaps_tmp:
-            
-            if(records_overlaps(overlap_seq)):
+    P.sort()
 
-                for record in overlap_seq:
-               
-                    if record:
-                            
-                        line = "|".join(map(str, record))
-                        line = line + '\n'
-                        left.write(line)
-
-            else:
-
-                for record in overlap_seq:
-
-                    if record:
-
-                        line = "|".join(map(str, record))
-                        line = line + '\n'
-                        solved.write(line)
-        
-
-
-def resolve_overlaps_helper(overlap_seq):
     
-    records = []
+    duplicate_dict = {}
+    added = False
 
+    dict_L = {}
+    dict_R = {}
+    current = -1
 
-#    for i in range(len(overlap_seq)-1):
-
-        # ip_from_1     = overlap_seq[i][0]
-        # ip_to_1       = overlap_seq[i][1]
-        # country_1     = overlap_seq[i][2].upper()
-        # registry_1    = overlap_seq[i][3].upper()
-        # date_1        = int(overlap_seq[i][4])
-        # record_type_1 = overlap_seq[i][5]
-
-        # ip_from_2     = overlap_seq[i+1][0]
-        # ip_to_2       = overlap_seq[i+1][1]
-        # country_2     = overlap_seq[i+1][2].upper()
-        # registry_2    = overlap_seq[i+1][3].upper()
-        # date_2        = int(overlap_seq[i+1][4])
-        # record_type_2 = overlap_seq[i+1][5]
-
-        # case 1 start and end same
-        # valid = True
-        # if (ip_from_1 == ip_from_2 and
-        #     ip_to_1 == ip_to_2):
-               
-        #     # check for inetnum
-        #     if(record_type_1 == 'I'):       
-        #         records.append(overlap_seq[i])
-        #     else:
-        #         records.append(overlap_seq[i+1])
-
-        #     valid = False
+    for i in range(len(P)-1):
         
-        # else:
-            
-        #     if valid:
-        #         records.append(overlap_seq[i])
-        #     records.append(overlap_seq[i+1])
-            
+        # L: if both have same ip start and same country 
+        if (P[i][0] == P[i+1][0] and P[i][1] == P[i+1][1] == "L" and 
+            P[i][2] == P[i+1][2] ):
 
-    return records
+            if not added:
+                dict_L[P[i][3]] = [P[i][3]]
+                added = True
+                current = P[i][3]
 
+            dict_L[current].append(P[i+1][3])
+
+        # L: if both have same ip end and same country 
+        elif (P[i][0] == P[i+1][0] and P[i][1] == P[i+1][1] == "R" and
+              P[i][2] == P[i+1][2]  ):
+
+            if not added:
+                dict_R[P[i][3]] = [P[i][3]]
+                added = True
+                current = P[i][3]
+
+            dict_R[current].append(P[i+1][3])
+
+        else:
+            current = -1
+            added = False
+    
+    # take only the intersection of both dictionaries
+    # Since that two records may have same start but not necessarily
+    # the same end
+    duplicate_dict = {**dict_L, **dict_R}
+    duplicate_indicies = []
+
+    for key in duplicate_dict:
+
+        # keep last record always
+        duplicate_dict[key].pop(-1)
+        # join indexes of current duplicate sequence
+        duplicate_indicies = duplicate_indicies + duplicate_dict[key]  
+
+    return duplicate_indicies
 
 
 def records_overlaps(records):
@@ -682,98 +666,6 @@ def records_overlaps(records):
             return True
         
     return False
-
-
-
-def remove_duplicates(records, strict=False):
-    
-    # if list is empty return
-    if not records:
-        return 
-      
-    duplicate_indicies = extract_duplicate_indicies(records, strict)
-
-    # if strict modues is on. Prefere inetnum records rather than 
-    # delegation. This costs more time ... 
-    if strict:
-
-        # select one record to keep in each duplicate sequence
-        for duplicate_sequence in duplicate_indicies:
-
-            one_keeped = False 
-
-            for i in range(len(duplicate_sequence)):
-
-                    # check if inetnum
-                    if records[duplicate_sequence[i]][5] == "I":
-                        duplicate_sequence.pop(i)
-                        one_keeped = True
-                        break
-                    
-                    # if we reach out last element and haven't save any entry 
-                    # yet then simply choose last one to keep 
-                    elif not one_keeped and i == len(duplicate_sequence) - 1:
-                        duplicate_sequence.pop(i)
-                            
-
-    duplicate_indicies = [item for sublist in duplicate_indicies for item in sublist]
-    
-    delete_by_idx_from_list(records, duplicate_indicies)
-
-    print(f"Number of duplicates removed: {len(duplicate_indicies)}")
-
-    return records
-
-
-
-def extract_duplicate_indicies(records, strict):
-
-    # if list is empty return
-    if not records:
-        return 
-      
-    P = [] 
-
-    for i in range(len(records)):
-        P.append([records[i][0], i])
-        
-    P.sort()
-
-    
-    duplicate_indicies = []
-    added = False
-
-    for i in range(len(P)-1):
-        
-        # if both have same ip start, same ip end and same country
-        # then save their indicies
-        if (P[i][0] == P[i+1][0] and 
-            records[P[i][1]][1] == records[P[i+1][1]][1] and 
-            records[P[i][1]][2] == records[P[i+1][1]][2]):
-    
-            if strict:
-
-                if not added:
-                    duplicate_indicies.append([P[i][1]])
-                    added = True
-
-                duplicate_indicies[-1].append(P[i+1][1])
-            
-            else:
-
-                if added:
-                    duplicate_indicies[-1].append(P[i+1][1])
-                
-                else:
-                    duplicate_indicies.append([P[i+1][1]])
-                    added = True
-            
-        else:
-            
-            added = False
-
-
-    return duplicate_indicies
 
 
 # ==============================================================================
@@ -857,20 +749,21 @@ def run_parser():
 
 
 # Needed if for multiprocessing not to crash
-# if __name__ == "__main__":   
-#     run_parser()
-
-r = [
-[3274358784, 3274366975, 'SE', 'RIPE', '19970416', 'D', ''],
-[3274358784, 3274359039, 'SE', 'RIPE', '20130703', 'I', 'TDC SE Webhosting network 1'],
-[3274358784, 3274366975, 'SE', 'RIPE', '20181121', 'I', ''],
-# [3274359040, 3274359295, 'SE', 'RIPE', '20200929', 'I', 'Tele2 Sverige AB TDC Hosting'],
-# [3274359040, 3274359295, 'SE', 'RIPE', '20200929', 'I', 'Tele2 Sverige AB TDC Hosting'],
-# [3274359040, 3274359295, 'SE', 'RIPE', '20200929', 'I', 'Tele2 Sverige AB TDC Hosting'],
-# [3274359040, 3274359295, 'SE', 'RIPE', '20200929', 'I', 'Tele2 Sverige AB TDC Hosting']
-
-]
+if __name__ == "__main__":   
+    run_parser()
 
 
-remove_duplicates(r)
-print(r)
+# r = [
+    
+#     [3118044160, 3118045183, 'DE', 'RIPE', '20170815', 'D', ''],
+#     [3118044160, 3118044671, 'DE', 'RIPE', '20211005', 'I', 'TF Ltd'],
+#     [3118044161, 3118044672, 'DE', 'RIPE', '20211005', 'I', 'TF Ltd'],
+#     [3118044160, 3118045183, 'DE', 'RIPE', '20191125', 'I', ''],            # removed
+#     [37319680, 37320703, 'RU', 'RIPE', '20210429', 'I', ''],
+#     [37319680, 37320703, 'DE', 'RIPE', '20210429', 'I', ''],
+#     [37319680, 37320703, 'RU', 'RIPE', '20190319', 'D', '']                 # removed
+
+# ]
+
+# remove_duplicates(r)
+# print(r)

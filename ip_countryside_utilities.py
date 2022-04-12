@@ -53,5 +53,7 @@ def delete_by_idx_from_list(list, indices):
     
     indices = sorted(indices, reverse=True)
     for idx in indices:
+
         if idx < len(list):
-            list.pop(idx)
+
+            list[idx] = []
