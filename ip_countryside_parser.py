@@ -873,11 +873,7 @@ def run_parser():
     return 0
 
 
-<<<<<<< HEAD
-  
-# Needed if for multiprocessing not to crash
-if __name__ == "__main__":   
-=======
+
 def merge_following(records):
 
     # if list is empty return
@@ -929,8 +925,6 @@ def merge_following(records):
                                       records[curr_index][5], ""])
 
     return merged_record
-
-
     
 def bigrange(records):
 
@@ -953,20 +947,13 @@ def bigrange(records):
         return [P[0][0], P[len(P)-1][0], records[index][2], records[index][3], records[index][4], records[index][5], ""]
     else:
         return records
-        
-
-    
-
-
-
-    
 
 
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
      #run_parser()
         
-     l = [
+    l = [
             [771751936, 771817471, 'RU', 'RIPE', '20100810', 'D', ''],
             [771751936, 771817471, 'RU', 'RIPE', '20100810', 'D', ''],
             [771751936, 771760127, 'RU', 'RIPE', '20110119', 'I', 'CJSC "ER-Telecom" Company" Samara Samara, Russia PPPoE individual customers network'],
@@ -994,7 +981,7 @@ if __name__ == "__main__":
             [771817480, 771817490, 'RU', 'RIPE', '20110119', 'I', 'CJSC "ER-Telecom Holding" Samara branch Samara, Russia PPPoE individual customers network'],
             [771817491, 771817494, 'RU', 'RIPE', '20110119', 'I', 'CJSC "ER-Telecom Holding" Samara branch Samara, Russia PPPoE individual customers network']]
      
-     f = [
+    f = [
           [2002610792, 2002610799, 'PH', 'APNIC', '20210115', 'I', '2-4412228_RICHWELL PHILS This space has been assigned as STATIC'],
         [2002610800, 2002610807, 'PH', 'APNIC', '20210115', 'I', '18-4085229_MEDIAPOOL INC This space has been assigned as STATIC'],
         [2002610808, 2002610850, 'PH', 'APNIC', '20210115', 'I', '2-4412228_RICHWELL PHILS This space has been assigned as STATIC'],
@@ -1005,7 +992,7 @@ if __name__ == "__main__":
         
         ]
 
-     c = [[1509679104, 1509683199, 'ES', 'RIPE', '20210413', 'I', ''],
+    c = [[1509679104, 1509683199, 'ES', 'RIPE', '20210413', 'I', ''],
         [1509679376, 1509679359, 'ES', 'RIPE', '20060920', 'D', ''],
         [1509679360, 1509679407, 'ES', 'RIPE', '20170206', 'I', 'Shared Firewall Service'],
         [1509679376, 1509679359, 'ES', 'RIPE', '20060920', 'D', ''],
@@ -1053,7 +1040,7 @@ if __name__ == "__main__":
         [1509682688, 1509682751, 'ES', 'RIPE', '20170207', 'I', 'Backbone'],
         [1509682720, 1509682759, 'ES', 'RIPE', '20170207', 'I', 'Backbone']]
 
-     o = [[1509679104, 1509683199, 'ES', 'RIPE', '20210413', 'I', 'Hallo'],
+    o = [[1509679104, 1509683199, 'ES', 'RIPE', '20210413', 'I', 'Hallo'],
         [1509679359,   1509679376, 'ES', 'RIPE', '20060920', 'D', 'Hdasdasdasd'],
         [1509679360, 1509679407, 'ES', 'RIPE', '20170206', 'I', 'Shared Firewall Service'],
         [1509679376, 1509679359, 'ES', 'RIPE', '20060920', 'D', 'adssssssssssxxxx'],
@@ -1069,11 +1056,6 @@ if __name__ == "__main__":
      #    print(*item)
 
      #print(bigrange(o))
-    
-        
-
- 
->>>>>>> 281df1904e9ecd689d705f045a915d4d21fce48c
 
     run_parser()
 
