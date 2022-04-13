@@ -873,9 +873,207 @@ def run_parser():
     return 0
 
 
+<<<<<<< HEAD
   
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
+=======
+def merge_following(records):
+
+    # if list is empty return
+    if not records:
+        return 
+
+    P = [] 
+
+    for i in range(len(records)):
+        P.append([records[i][0], "L", i, i])
+        P.append([records[i][1], "R", i,i])
+
+    P.sort()
+
+    i = 0 
+    while i < len(P)-1:
+
+        # Check if R is followed by L
+        if (P[i][1] == 'R' and P[i+1][1] == 'L'):
+            # Check if distance is 1  
+            if P[i][0] + 1 == P[i+1][0]:
+
+                P[i] = [P[i+2][0],'R', P[i][2], P[i+1][2]]
+                index = P[i+1][2]
+                j = i + 1
+                P.pop(j)
+                while P[j][2] != index:
+                    j += 1
+                P.pop(j)
+            else: 
+                i+= 1
+        else: 
+            i += 1
+    
+    merged_record = []
+    index_list = []
+    for i in range(len(P)-1):
+        curr_index = P[i][2]
+        if curr_index not in index_list:
+            index_list.append(curr_index)
+            j = i + 1
+            while curr_index != P[j][2]:
+                j += 1
+            if P[j][3] == P[j][2]:
+                merged_record.append([P[i][0], P[j][0], records[curr_index][2], records[curr_index][3], records[curr_index][4],
+                                      records[curr_index][5], records[curr_index][6]])
+            else:
+                merged_record.append([P[i][0], P[j][0], records[curr_index][2], records[curr_index][3], records[curr_index][4],
+                                      records[curr_index][5], ""])
+
+    return merged_record
+
+
+    
+def bigrange(records):
+
+    # if list is empty return
+    if not records:
+        return 
+
+    P = [] 
+
+    for i in range(len(records)):
+        P.append([records[i][0], "L", i])
+        P.append([records[i][1], "R", i])
+
+    P.sort()
+
+
+
+    if P[0][2] == P[len(P)-1][2]:
+        index = P[0][2]
+        return [P[0][0], P[len(P)-1][0], records[index][2], records[index][3], records[index][4], records[index][5], ""]
+    else:
+        return records
+        
+
+    
+
+
+
+    
+
+
+# Needed if for multiprocessing not to crash
+if __name__ == "__main__":   
+     #run_parser()
+        
+     l = [
+            [771751936, 771817471, 'RU', 'RIPE', '20100810', 'D', ''],
+            [771751936, 771817471, 'RU', 'RIPE', '20100810', 'D', ''],
+            [771751936, 771760127, 'RU', 'RIPE', '20110119', 'I', 'CJSC "ER-Telecom" Company" Samara Samara, Russia PPPoE individual customers network'],
+            [771760128, 771762175, 'RU', 'RIPE', '20110119', 'I', 'CJSC "ER-Telecom" Company" Samara Samara, Russia PPPoE individual customers network'],
+            [771762176, 771764223, 'RU', 'RIPE', '20110119', 'I', 'CJSC "ER-Telecom" Company" Samara Samara, Russia PPPoE individual customers network'],
+            [771764224, 771768319, 'RU', 'RIPE', '20110119', 'I', 'CJSC "Company "ER-Telecom" Samara Samara, Russia PPPoE individual customers network'],
+            [771768320, 771784703, 'RU', 'RIPE', '20110119', 'I', 'CJSC "ER-Telecom" Company" Samara Samara, Russia PPPoE individual customers network'],
+            [771784704, 771786751, 'RU', 'RIPE', '20110119', 'I', 'CJSC "ER-Telecom" Company" Samara Samara, Russia PPPoE individual customers network'],
+            [771786752, 771788799, 'RU', 'RIPE', '20110119', 'I', 'CJSC "ER-Telecom" Company" Samara Samara, Russia PPPoE individual customers network'],
+            [771788800, 771790847, 'RU', 'RIPE', '20110119', 'I', 'CJSC "ER-Telecom" Company" Samara Samara, Russia PPPoE individual customers network'],
+            [771790848, 771792895, 'RU', 'RIPE', '20110119', 'I', 'CJSC "ER-Telecom" Company" Samara Samara, Russia PPPoE individual customers network'],
+            [771792896, 771794943, 'RU', 'RIPE', '20110119', 'I', 'CJSC "ER-Telecom" Company" Samara Samara, Russia PPPoE individual customers network'],
+            [771794944, 771796991, 'RU', 'RIPE', '20110119', 'I', 'CJSC "ER-Telecom" Company" Samara Samara, Russia PPPoE individual customers network'],
+            [771796992, 771799039, 'RU', 'RIPE', '20110119', 'I', 'CJSC "ER-Telecom" Company" Samara Samara, Russia PPPoE individual customers network'],
+            [771799040, 771801087, 'RU', 'RIPE', '20110119', 'I', 'CJSC "ER-Telecom" Company" Samara Samara, Russia PPPoE individual customers network'],
+            [771801088, 771803135, 'RU', 'RIPE', '20110119', 'I', 'CJSC "ER-Telecom" Company" Samara Samara, Russia PPPoE individual customers network'],
+            [771803136, 771805183, 'RU', 'RIPE', '20110119', 'I', 'CJSC "ER-Telecom" Company" Samara Samara, Russia PPPoE individual customers network'],
+            [771805184, 771807231, 'RU', 'RIPE', '20110119', 'I', 'CJSC "ER-Telecom Holding" Samara branch Samara, Russia PPPoE individual customers network'],
+            [771807232, 771809279, 'RU', 'RIPE', '20110119', 'I', 'CJSC "ER-Telecom Holding" Samara branch Samara, Russia PPPoE individual customers network'],
+            [771809280, 771811327, 'RU', 'RIPE', '20110119', 'I', 'CJSC "ER-Telecom Holding" Samara branch Samara, Russia PPPoE individual customers network'],
+            [771811328, 771813375, 'RU', 'RIPE', '20110119', 'I', 'CJSC "ER-Telecom Holding" Samara branch Samara, Russia PPPoE individual customers network'],
+            [771813376, 771815423, 'RU', 'RIPE', '20110119', 'I', 'CJSC "ER-Telecom Holding" Samara branch Samara, Russia PPPoE individual customers network'],
+            [771815424, 771817471, 'RU', 'RIPE', '20110119', 'I', 'CJSC "ER-Telecom Holding" Samara branch Samara, Russia PPPoE individual customers network'],
+
+            [771817480, 771817490, 'RU', 'RIPE', '20110119', 'I', 'CJSC "ER-Telecom Holding" Samara branch Samara, Russia PPPoE individual customers network'],
+            [771817491, 771817494, 'RU', 'RIPE', '20110119', 'I', 'CJSC "ER-Telecom Holding" Samara branch Samara, Russia PPPoE individual customers network']]
+     
+     f = [
+          [2002610792, 2002610799, 'PH', 'APNIC', '20210115', 'I', '2-4412228_RICHWELL PHILS This space has been assigned as STATIC'],
+        [2002610800, 2002610807, 'PH', 'APNIC', '20210115', 'I', '18-4085229_MEDIAPOOL INC This space has been assigned as STATIC'],
+        [2002610808, 2002610850, 'PH', 'APNIC', '20210115', 'I', '2-4412228_RICHWELL PHILS This space has been assigned as STATIC'],
+        [2002610851, 2002610900, 'PH', 'APNIC', '20210115', 'I', '2-4412228_RICHWELL PHILS This space has been assigned as STATIC'],
+        [2002610901, 2002610930, 'PH', 'APNIC', '20210115', 'I', '2-4412228_RICHWELL PHILS This space has been assigned as STATIC'],
+        [2002610931, 2002610950, 'PH', 'APNIC', '20210115', 'I', '2-4412228_RICHWELL PHILS This space has been assigned as STATIC'],
+        [2002610951, 2002610980, 'PH', 'APNIC', '20210115', 'I', '2-4412228_RICHWELL PHILS This space has been assigned as STATIC'],
+        
+        ]
+
+     c = [[1509679104, 1509683199, 'ES', 'RIPE', '20210413', 'I', ''],
+        [1509679376, 1509679359, 'ES', 'RIPE', '20060920', 'D', ''],
+        [1509679360, 1509679407, 'ES', 'RIPE', '20170206', 'I', 'Shared Firewall Service'],
+        [1509679376, 1509679359, 'ES', 'RIPE', '20060920', 'D', ''],
+        [1509679360, 1509679407, 'ES', 'RIPE', '20170206', 'I', 'Shared Firewall Service'],
+        [1509679392, 1509679415, 'ES', 'RIPE', '20170207', 'I', 'Shared Firewall Service'],
+        [1509679408, 1509679423, 'ES', 'RIPE', '20170207', 'I', 'Shared Firewall Service'],
+        [1509679416, 1509679439, 'ES', 'RIPE', '20170207', 'I', 'Shared Firewall Service'],
+        [1509679424, 1509679447, 'ES', 'RIPE', '20170207', 'I', 'Shared Firewall Service'],
+        [1509679440, 1509679455, 'ES', 'RIPE', '20170207', 'I', 'Shared Firewall Service'],
+        [1509679448, 1509679463, 'ES', 'RIPE', '20170207', 'I', 'Shared Firewall Service'],
+        [1509679456, 1509679471, 'ES', 'RIPE', '20170207', 'I', 'Shared Firewall Service'],
+        [1509679464, 1509679479, 'ES', 'RIPE', '20170206', 'I', 'Shared Firewall Service'],
+        [1509679472, 1509679487, 'ES', 'RIPE', '20170207', 'I', 'Shared Firewall Service'],
+        [1509679480, 1509679495, 'ES', 'RIPE', '20170207', 'I', 'Shared Firewall Service'],
+        [1509679488, 1509679511, 'ES', 'RIPE', '20170207', 'I', 'Shared Firewall Service'],
+        [1509679504, 1509679519, 'ES', 'RIPE', '20170207', 'I', 'Shared Firewall Service'],
+        [1509679512, 1509679523, 'ES', 'RIPE', '20170207', 'I', 'Shared Firewall Service'],
+        [1509679520, 1509679535, 'ES', 'RIPE', '20170207', 'I', 'Shared Firewall Service'],
+        [1509679528, 1509679975, 'ES', 'RIPE', '20170207', 'I', 'Shared Firewall Service'],
+        [1509679968, 1509679983, 'ES', 'RIPE', '20170207', 'I', 'Shared Firewall Service'],
+        [1509679976, 1509679991, 'ES', 'RIPE', '20170207', 'I', 'Shared Firewall Service'],
+        [1509679984, 1509680063, 'ES', 'RIPE', '20170207', 'I', 'Shared Firewall Service'],
+        [1509680056, 1509680383, 'ES', 'RIPE', '20170207', 'I', 'Shared Firewall Service'],
+        [1509680384, 1509680511, 'ES', 'RIPE', '20170207', 'I', 'Cloud Service'],
+        [1509680384, 1509680511, 'ES', 'RIPE', '20170207', 'I', 'Cloud Service'],
+        [1509680448, 1509680575, 'ES', 'RIPE', '20170207', 'I', 'Cloud Service'],
+        [1509680512, 1509680591, 'ES', 'RIPE', '20170207', 'I', 'Cloud Service'],
+        [1509680576, 1509680607, 'ES', 'RIPE', '20170207', 'I', 'Cloud Service'],
+        [1509680592, 1509680639, 'ES', 'RIPE', '20170207', 'I', 'Cloud Service'],
+        [1509680608, 1509681151, 'ES', 'RIPE', '20170207', 'I', 'Cloud Service'],
+        [1509681152, 1509681191, 'ES', 'RIPE', '20170207', 'I', 'VAESA DEALERS POOL'],
+        [1509681152, 1509681191, 'ES', 'RIPE', '20170207', 'I', 'VAESA DEALERS POOL'],
+        [1509681184, 1509681407, 'ES', 'RIPE', '20170207', 'I', 'VAESA DEALERS POOL'],
+        [1509681408, 1509681503, 'ES', 'RIPE', '20170207', 'I', 'Shared Firewall Service'],
+        [1509681408, 1509681503, 'ES', 'RIPE', '20170207', 'I', 'Shared Firewall Service'],
+        [1509681472, 1509681535, 'ES', 'RIPE', '20170207', 'I', 'Shared Firewall Service'],
+        [1509681504, 1509681599, 'ES', 'RIPE', '20170207', 'I', 'Shared Firewall Service'],
+        [1509681536, 1509681663, 'ES', 'RIPE', '20170207', 'I', 'Shared Firewall Service'],
+        [1509681600, 1509681791, 'ES', 'RIPE', '20170207', 'I', 'Shared Firewall Service'],
+        [1509681664, 1509681919, 'ES', 'RIPE', '20170207', 'I', 'Shared Firewall Service'],
+        [1509681792, 1509681919, 'ES', 'RIPE', '20170207', 'I', 'Shared Firewall Service'],
+        [1509681920, 1509682687, 'ES', 'RIPE', '20170207', 'I', 'Cloud Service'],
+        [1509681920, 1509682687, 'ES', 'RIPE', '20170207', 'I', 'Cloud Service'],
+        [1509682688, 1509682751, 'ES', 'RIPE', '20170207', 'I', 'Backbone'],
+        [1509682688, 1509682751, 'ES', 'RIPE', '20170207', 'I', 'Backbone'],
+        [1509682720, 1509682759, 'ES', 'RIPE', '20170207', 'I', 'Backbone']]
+
+     o = [[1509679104, 1509683199, 'ES', 'RIPE', '20210413', 'I', 'Hallo'],
+        [1509679359,   1509679376, 'ES', 'RIPE', '20060920', 'D', 'Hdasdasdasd'],
+        [1509679360, 1509679407, 'ES', 'RIPE', '20170206', 'I', 'Shared Firewall Service'],
+        [1509679376, 1509679359, 'ES', 'RIPE', '20060920', 'D', 'adssssssssssxxxx'],
+        [1509679360, 1509679407, 'ES', 'RIPE', '20170206', 'I', 'Shared Firewall Service'],
+        [1509679392, 1509679415, 'ES', 'RIPE', '20170207', 'I', 'Shared Firewall Service']]
+            
+     #merge_following(l)
+
+     #result = merge_following(f)
+    
+
+     #for item in result:
+     #    print(*item)
+
+     #print(bigrange(o))
+    
+        
+
+ 
+>>>>>>> 281df1904e9ecd689d705f045a915d4d21fce48c
 
     run_parser()
 
