@@ -8,6 +8,7 @@ from datetime import datetime
 #import locationtagger
 import multiprocessing as mp
 
+
 from config import *;
 from ip_countryside_db import *;
 from ip_countryside_utilities import *;
@@ -547,6 +548,7 @@ def extract_overlaps(records):
     return [overlaps, overlap_indicies]
 
 
+
 def remove_duplicates(records=[]):
 
     if not records:
@@ -564,6 +566,7 @@ def remove_duplicates(records=[]):
 
 
     print(f"Nr. of records after duplicate deletion {len(records)}")
+
 
 
 def get_duplicate_indicies(records):
@@ -633,41 +636,98 @@ def get_duplicate_indicies(records):
     return duplicate_indicies
 
 
+
 def merge_successive(records=[]):
-     # if list is empty return
+    
+    if not records:
+        records = read_db()
+
+    print(f"Nr. of records before successive merging {len(records)}")
+
+    successive_indicies = get_successive_indicies(records)
+    
+    print(f"Nr. of redundant records being removed {len(successive_indicies)}")
+    
+    records = empty_entry_by_idx(records, successive_indicies)
+
+    write_db(records)
+
+    print(f"Nr. of records after successive merging {len(records)}")
+
+
+
+def get_successive_indicies(records):
+   
+    # if list is empty return
     if not records:
         return 
 
     P = [] 
     
     successive_indicies = []
-    merged_records = []
+    successive_dict = {}
 
     for i in range(len(records)):
-        P.append([records[i][0], "L", i, i])
-        P.append([records[i][1], "R", i,i])
+        P.append([records[i][0], "L", records[i][2], i])
+        P.append([records[i][1], "R", records[i][2], i])
 
     P.sort()
 
-    i = 0 
+    i =  0
     while i < len(P)-1:
+        
+        item_p = P[i]
 
-        # Check if R is followed by L
-        if (P[i][1] == 'R' and P[i+1][1] == 'L'):
+        if item_p[1] == "L":
+            
+            record_idx = item_p[3]
+            record = records[record_idx]
+            ip_from = record[0]
+            ip_to = record[1]
+            country = record[2]
+            dict_key_from = f"{ip_from }_{country}"
+            dict_key_to = f"{ip_to + 1}_{country}"
 
-            # Check if distance is 1  
-            if P[i][0] + 1 == P[i+1][0]:
+            if  dict_key_from in successive_dict:
+
+                # assign old key to new key
+                successive_dict[dict_key_to] = successive_dict[dict_key_from]
+                successive_dict[dict_key_to].append(record_idx)
                 
-                records[P[i]][1] = records[P[i+1]][0] # ip_end_1 =  
-                successive_indicies.append(P[i+1][2])
+                successive_dict[dict_key_from] = []
+                
+                #successive_dict[dict_key_to] = successive_dict.pop(dict_key_from)
 
-            else: 
-                i += 1
+            elif not dict_key_to in successive_dict:
+                
+                successive_dict[dict_key_to] = [ record_idx ]
+         
+        i = i + 1 
 
-        else: 
-            i += 1
+    # remove unrelevant records
+    successive_dict = {k: v for k, v in successive_dict.items() if len(v) > 1}
 
-    return P
+    # iterate over dictionary
+    # update record start ip to largest ip in the sequence
+    for k, v in  successive_dict.items():
+        
+        # get first record in sequence
+        # no need to sort the list v; P is already sorted!
+        record_idx = v[len(v)-1]
+        record = records[record_idx]
+         
+        # set first record start ip to the last record end ip
+        # meging successive records ...
+        record[0] = records[v[0]][0]
+
+        # remove this record index from the dictionary since that we 
+        # don't want to delete it
+        v.pop(-1)
+
+        # save this indicies to our list
+        successive_indicies = successive_indicies + v  
+
+    return successive_indicies
 
 
 
@@ -783,10 +843,18 @@ def run_parser():
     
     # get  all duplicates (simply take one from inetnum if 
     # other is delegation otherwise the one with longer description)
-    remove_duplicates()
+    #remove_duplicates()
+
+    # merges all successive records and removes redundants 
+    merge_successive()
+
 
     print("resolving overlaps ...")
-    handle_overlaps()
+    #handle_overlaps()
+
+    
+    print("checking if final database file have any ouverlapps ...")
+    print(records_overlaps(read_db()))
 
     # delete_temp_files()
     print("finished\n")
@@ -800,17 +868,22 @@ def run_parser():
   
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
-    # run_parser()
+    #run_parser()
 
-    l = [
+    #merge_successive()
 
-        [1354508976, 1354508983, 'CZ', 'RIPE', '20040712', 'I', 'Loucna'],
-        [1354508984, 1354508991, 'CZ', 'RIPE', '20031009', 'I', 'Liberec'],
-        [1354508992, 1354508999, 'CZ', 'RIPE', '20050208', 'I', 'Decinska 1611/45 Usti nad labem'],
-        [1354509000, 1354509007, 'CZ', 'RIPE', '20031020', 'I', 'Nove Mesto pod Smrkem'],
-
+    t = [
+        [3277865728, 3277865983, 'RU', 'RIPE', '20190624', 'I', 'MTS Spb network Russia'], 
+        [3277865984, 3277866239, 'RU', 'RIPE', '20200903', 'I', 'Astelit Ltd.'], 
+        [3277866240, 3277866751, 'RU', 'RIPE', '20190624', 'I', 'MTS Spb network Russia'], 
+        [3277866752, 3277867775, 'DE', 'RIPE', '20200903', 'I', 'Global Russian Information Network'], 
+        [3277866752, 3277867775, 'RU', 'RIPE', '20200903', 'I', 'Astelit network Russia'], 
     ]
 
+    print(len(t))
+    idx = get_successive_indicies(t)
+    empty_entry_by_idx(t,idx)
+    t = [x for x in t if x]
+    print(len(t))
+    print(t)
 
-    print(merge_successive(l))
-    
