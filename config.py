@@ -4,10 +4,18 @@ import os
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 DEL_FILES_DIR = os.path.join(ROOT_DIR, "del_files")
 
-MERGED_DEL_FILE        = os.path.join(DEL_FILES_DIR, "merged_del_file.csv")
-STRIPPED_DEL_FILE      = os.path.join(DEL_FILES_DIR, "stipped_del_file.csv")
-MERGED_INET_FILE       = os.path.join(DEL_FILES_DIR, "merged_inet_file.csv")
-STRIPPED_INET_FILE     = os.path.join(DEL_FILES_DIR, "stipped_inet_file.csv")
+MERGED_DEL_FILE        = os.path.join(DEL_FILES_DIR, "merged_del_file")
+STRIPPED_DEL_FILE      = os.path.join(DEL_FILES_DIR, "stipped_del_file")
+MERGED_INET_FILE       = os.path.join(DEL_FILES_DIR, "merged_inet_file")
+STRIPPED_INET_FILE     = os.path.join(DEL_FILES_DIR, "stipped_inet_file")
+IP2COUNTRY_DB          = os.path.join(DEL_FILES_DIR, "ip2country_2")
+IP2COUNTRY_DB_JSON     = os.path.join(DEL_FILES_DIR, "db.json")
+IP2COUNTRY_DB_YAML     = os.path.join(DEL_FILES_DIR, "db.yaml")
+IP2COUNTRY_DB_YAML     = os.path.join(DEL_FILES_DIR, "db.yaml")
+APNIC_DB_IRT           = os.path.join(DEL_FILES_DIR, "apnic.db.irt")
+APNIC_IRT              = os.path.join(DEL_FILES_DIR, "apnic.irt")
+IRTTOADDRESS           = os.path.join(DEL_FILES_DIR, "irtToAddress.py")
+MNT_BYTOADDRESS        = os.path.join(DEL_FILES_DIR, "mnt_byToAddress.py")
 
 # Regex for matching ip versions
 IPV4_PATTERN = "[0-9]+(?:\.[0-9]+){3}"
@@ -15,42 +23,58 @@ IPV6_PATTERN = "(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,
 
 # RIAS information
 
-PARSE_ITEMS = ["inetnum", "netname", "descr", "country", "status", "created", "last-modified", "source"]
+RECORD = ["inetnum", "netname", "descr", "country", "status", "created", "last-modified", "source"]
 
 AFRINIC = {
     'host':           "ftp.afrinic.net",
     'del_cwd':        "pub/stats/afrinic/",
-    'del_fname':      "delegated-afrinic-latest"
+    'del_fname':      "delegated-afrinic-latest",
+    'del_md5':        "delegated-afrinic-latest.md5",
+    'del_timestamp':  "delegated-afrinic-latest.timestamp"
 }
 
 LACNIC = {
     'host':           "ftp.lacnic.net",
     'del_cwd':        "pub/stats/lacnic/",
-    'del_fname':      "delegated-lacnic-latest"
+    'del_fname':      "delegated-lacnic-latest",
+    'del_md5':        "delegated-lacnic-latest.md5",
+    'del_timestamp':  "delegated-lacnic-latest.timestamp"
 }
 
 ARIN = {
     'host':           "ftp.arin.net",
     'del_cwd':        "pub/stats/arin/",
-    'del_fname':      "delegated-arin-extended-latest"
+    'del_fname':      "delegated-arin-extended-latest",
+    'del_md5':        "delegated-arin-extended-latest.md5",
+    'del_timestamp':  "delegated-arin-extended-latest.timestamp"
 }
 
 APNIC = {
     'host':           "ftp.apnic.net",
     'del_cwd':        "pub/stats/apnic/",
     'del_fname':      "delegated-apnic-latest",
+    'del_md5':        "delegated-apnic-latest.md5",
+    'del_timestamp':  "delegated-apnic-latest.timestamp",
     'inet_cwd':       "/apnic/whois/",
     'inet_fname_gz':  "apnic.db.inetnum.gz",
-    'inet_fname':     "apnic.db.inetnum"
+    'inet_fname':     "apnic.db.inetnum",
+    'inet_timestamp': "apnic.db.inetnum.timestamp",
+    'irt_fname_gz':   "apnic.db.irt.gz",
+    'irt_timestamp':  "apnic.db.irt.timestamp"
 }
 
 RIPE = {
     'host':           "ftp.ripe.net",
     'del_cwd':        "ripe/stats/",
     'del_fname':      "delegated-ripencc-latest",
+    'del_md5':        "delegated-ripencc-latest.md5",
+    'del_timestamp':  "delegated-ripencc-latest.timestamp",
     'inet_cwd':       "/ripe/dbase/split/",
     'inet_fname_gz':  "ripe.db.inetnum.gz",
-    'inet_fname':     "ripe.db.inetnum"
+    'inet_fname':     "ripe.db.inetnum",
+    'inet_timestamp': "ripe.db.inetnum.timestamp",
+    'irt_fname_gz':   "ripe.db.irt.gz",
+    'irt_timestamp':  "ripe.db.irt.timestamp"
 }
 
 
@@ -107,7 +131,7 @@ COUNTRY_DICTIONARY = {
     'CO':"COLOMBIA",
     'KM':"COMOROS",
     'CG':"CONGO",
-    'CD':"CONGO, THE DEMOCRATIC REPUBLIC OF THE",
+    'CD':"THE DEMOCRATIC REPUBLIC OF THE CONGO, ",
     'CK':"COOK ISLANDS",
     'CR':"COSTA RICA",
     'CI':"CÔTE D'IVOIRE",
@@ -161,7 +185,7 @@ COUNTRY_DICTIONARY = {
     'IS':"ICELAND",
     'IN':"INDIA",
     'ID':"INDONESIA",
-    'IR':"IRAN, ISLAMIC REPUBLIC OF",
+    'IR':"ISLAMIC REPUBLIC OF IRAN",
     'IQ':"IRAQ",
     'IE':"IRELAND",
     'IM':"ISLE OF MAN",
@@ -174,8 +198,8 @@ COUNTRY_DICTIONARY = {
     'KZ':"KAZAKHSTAN",
     'KE':"KENYA",
     'KI':"KIRIBATI",
-    'KP':"KOREA, DEMOCRATIC PEOPLE'S REPUBLIC OF",
-    'KR':"KOREA, REPUBLIC OF",
+    'KP':"DEMOCRATIC PEOPLE'S REPUBLIC OF KOREA",
+    'KR':"REPUBLIC OF KOREA",
     'KW':"KUWAIT",
     'KG':"KYRGYZSTAN",
     'LA':"LAO PEOPLE'S DEMOCRATIC REPUBLIC",
@@ -188,7 +212,7 @@ COUNTRY_DICTIONARY = {
     'LT':"LITHUANIA",
     'LU':"LUXEMBOURG",
     'MO':"MACAO",
-    'MK':"MACEDONIA, THE FORMER YUGOSLAV REPUBLIC OF",
+    'MK':"THE FORMER YUGOSLAV REPUBLIC OF MACEDONIA",
     'MG':"MADAGASCAR",
     'MW':"MALAWI",
     'MY':"MALAYSIA",
@@ -201,8 +225,8 @@ COUNTRY_DICTIONARY = {
     'MU':"MAURITIUS",
     'YT':"MAYOTTE",
     'MX':"MEXICO",
-    'FM':"MICRONESIA, FEDERATED STATES OF",
-    'MD':"MOLDOVA, REPUBLIC OF",
+    'FM':"FEDERATED STATES OF MICRONESIA",
+    'MD':"REPUBLIC OF MOLDOVA",
     'MC':"MONACO",
     'MN':"MONGOLIA",
     'ME':"MONTENEGRO",
@@ -227,7 +251,7 @@ COUNTRY_DICTIONARY = {
     'OM':"OMAN",
     'PK':"PAKISTAN",
     'PW':"PALAU",
-    'PS':"PALESTINIAN TERRITORY, OCCUPIED",
+    'PS':"OCCUPIED PALESTINIAN TERRITORY",
     'PA':"PANAMA",
     'PG':"PAPUA NEW GUINEA",
     'PY':"PARAGUAY",

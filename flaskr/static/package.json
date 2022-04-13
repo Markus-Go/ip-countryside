@@ -1,0 +1,15 @@
+{
+  "name": "ip-countryside",
+  "version": "0.9.0",
+  "description": "",
+  "main": "./src/main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Mohammad Jarkas",
+  "license": "MIT",
+  "dependencies": {
+    "bootstrap": "^4.6.1"
+  }
+}

@@ -1,0 +1,60 @@
+<!doctype html>
+<html>
+
+    <head>
+
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <title>IP Countryside</title>
+        
+        <!-- Favicon -->
+        <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='src/img/favicon.ico') }}">
+
+        <!-- Library for interactive maps -->
+        <link rel="stylesheet" type=text/css href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+            integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+            crossorigin="" />
+        <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+            integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+            crossorigin=""></script>
+
+        <!-- Bootstrap CSS and JS and Custom SCSS -->
+        {% assets "scss_all" %}
+            <link rel=stylesheet type=text/css href="{{ ASSET_URL }}">
+        {% endassets %}
+
+        {% assets "js_all" %}
+            <script type="module" src="{{ ASSET_URL }}"></script>
+        {% endassets %}
+
+        <script src="{{ url_for('static', filename='src/js/main.js') }}"></script>
+
+    </head>
+
+    {% include 'components/navbar.html' %}
+
+    <body>
+
+		<div class="wrapper">
+
+			<div class="container">
+				
+				<div class="main">
+
+                    {% block content %}
+
+                    {% endblock %}
+
+				</div>
+
+			</div>
+
+			
+		</div>
+
+	</body>
+
+    {% include 'components/footer.html' %}
+
+</html>
