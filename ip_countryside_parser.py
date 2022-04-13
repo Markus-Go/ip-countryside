@@ -5,7 +5,6 @@ import fileinput
 import ipaddress
 import time
 from datetime import datetime
-#import locationtagger
 import multiprocessing as mp
 
 
@@ -648,6 +647,15 @@ def merge_successive(records=[]):
     
     print(f"Nr. of redundant records being removed {len(successive_indicies)}")
     
+    with open(os.path.join(DEL_FILES_DIR, "overlaping"), "w", encoding='utf-8', errors='ignore') as f:
+
+        for idx in successive_indicies:
+
+                f.write(str(records[idx]))
+                f.write("\n")
+
+
+
     records = empty_entry_by_idx(records, successive_indicies)
 
     write_db(records)
@@ -695,8 +703,6 @@ def get_successive_indicies(records):
                 successive_dict[dict_key_to].append(record_idx)
                 
                 successive_dict[dict_key_from] = []
-                
-                #successive_dict[dict_key_to] = successive_dict.pop(dict_key_from)
 
             elif not dict_key_to in successive_dict:
                 
@@ -724,8 +730,10 @@ def get_successive_indicies(records):
         # don't want to delete it
         v.pop(-1)
 
-        # save this indicies to our list
-        successive_indicies = successive_indicies + v  
+        # save this indicies to our list 
+        # note that contacting two lists -> O(n)
+        # and extending a list -> O(k) where k is len(v-1)
+        successive_indicies.extend(v)  
 
     return successive_indicies
 
@@ -843,14 +851,14 @@ def run_parser():
     
     # get  all duplicates (simply take one from inetnum if 
     # other is delegation otherwise the one with longer description)
-    #remove_duplicates()
+    remove_duplicates()
 
     # merges all successive records and removes redundants 
     merge_successive()
 
 
     print("resolving overlaps ...")
-    #handle_overlaps()
+    handle_overlaps()
 
     
     print("checking if final database file have any ouverlapps ...")
@@ -868,22 +876,6 @@ def run_parser():
   
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
-    #run_parser()
 
-    #merge_successive()
-
-    t = [
-        [3277865728, 3277865983, 'RU', 'RIPE', '20190624', 'I', 'MTS Spb network Russia'], 
-        [3277865984, 3277866239, 'RU', 'RIPE', '20200903', 'I', 'Astelit Ltd.'], 
-        [3277866240, 3277866751, 'RU', 'RIPE', '20190624', 'I', 'MTS Spb network Russia'], 
-        [3277866752, 3277867775, 'DE', 'RIPE', '20200903', 'I', 'Global Russian Information Network'], 
-        [3277866752, 3277867775, 'RU', 'RIPE', '20200903', 'I', 'Astelit network Russia'], 
-    ]
-
-    print(len(t))
-    idx = get_successive_indicies(t)
-    empty_entry_by_idx(t,idx)
-    t = [x for x in t if x]
-    print(len(t))
-    print(t)
+    run_parser()
 
