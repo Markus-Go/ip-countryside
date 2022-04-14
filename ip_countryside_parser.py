@@ -636,108 +636,6 @@ def get_duplicate_indicies(records):
 
 
 
-def merge_successive(records=[]):
-    
-    if not records:
-        records = read_db()
-
-    print(f"Nr. of records before successive merging {len(records)}")
-
-    successive_indicies = get_successive_indicies(records)
-    
-    print(f"Nr. of redundant records being removed {len(successive_indicies)}")
-    
-    with open(os.path.join(DEL_FILES_DIR, "overlaping"), "w", encoding='utf-8', errors='ignore') as f:
-
-        for idx in successive_indicies:
-
-            f.write(str(records[idx]))
-            f.write("\n")
-
-
-    records = empty_entry_by_idx(records, successive_indicies)
-
-    write_db(records)
-
-    print(f"Nr. of records after successive merging {len(records)}")
-
-
-
-def get_successive_indicies(records):
-   
-    # if list is empty return
-    if not records:
-        return 
-
-    P = [] 
-    
-    successive_indicies = []
-    successive_dict = {}
-
-    for i in range(len(records)):
-        P.append([records[i][0], "L", records[i][2], i])
-        P.append([records[i][1], "R", records[i][2], i])
-
-    P.sort()
-
-    i =  0
-    while i < len(P)-1:
-        
-        item_p = P[i]
-
-        if item_p[1] == "L":
-            
-            record_idx = item_p[3]
-            record = records[record_idx]
-            ip_from = record[0]
-            ip_to = record[1]
-            country = record[2]
-            dict_key_from = f"{ip_from }_{country}"
-            dict_key_to = f"{ip_to + 1}_{country}"
-
-            if  dict_key_from in successive_dict:
-
-                # assign old key to new key
-                successive_dict[dict_key_to] = successive_dict[dict_key_from]
-                successive_dict[dict_key_to].append(record_idx)
-                
-                successive_dict[dict_key_from] = []
-
-            elif not dict_key_to in successive_dict:
-                
-                successive_dict[dict_key_to] = [ record_idx ]
-         
-        i = i + 1 
-
-    # remove unrelevant records
-    successive_dict = {k: v for k, v in successive_dict.items() if len(v) > 1}
-
-    # iterate over dictionary
-    # update record start ip to largest ip in the sequence
-    for k, v in  successive_dict.items():
-        
-        # get first record in sequence
-        # no need to sort the list v; P is already sorted!
-        record_idx = v[-1]
-        record = records[record_idx]
-         
-        # set first record start ip to the last record end ip
-        # meging successive records ...
-        record[0] = records[v[0]][0]
-
-        # remove this record index from the dictionary since that we 
-        # don't want to delete it
-        v.pop(-1)
-
-        # save this indicies to our list 
-        # note that contacting two lists -> O(n)
-        # and extending a list -> O(k) where k is len(v-1)
-        successive_indicies.extend(v)  
-
-    return successive_indicies
-
-
-
 def records_overlaps(records):
     """
     Checks if any two records overlaps in the given list of RIA records 
@@ -850,14 +748,11 @@ def run_parser():
     
     # get  all duplicates (simply take one from inetnum if 
     # other is delegation otherwise the one with longer description)
-    # remove_duplicates()
+    remove_duplicates()
 
-    # merges all successive records and removes redundants 
-    merge_successive()
-
-
+   
     print("resolving overlaps ...")
-    #handle_overlaps()
+    handle_overlaps()
 
     
     print("checking if final database file have any ouverlapps ...")
@@ -872,95 +767,7 @@ def run_parser():
     return 0
 
 
-
-def merge_following(records):
-
-    # if list is empty return
-    if not records:
-        return 
-
-    P = [] 
-
-    for i in range(len(records)):
-        P.append([records[i][0], "L", i, i])
-        P.append([records[i][1], "R", i,i])
-
-    P.sort()
-
-    i = 0 
-    while i < len(P)-1:
-
-        # Check if R is followed by L
-        if (P[i][1] == 'R' and P[i+1][1] == 'L'):
-            # Check if distance is 1  
-            if P[i][0] + 1 == P[i+1][0]:
-
-                P[i] = [P[i+2][0],'R', P[i][2], P[i+1][2]]
-                index = P[i+1][2]
-                j = i + 1
-                P.pop(j)
-                while P[j][2] != index:
-                    j += 1
-                P.pop(j)
-            else: 
-                i+= 1
-        else: 
-            i += 1
-    
-    merged_record = []
-    index_list = []
-    for i in range(len(P)-1):
-        curr_index = P[i][2]
-        if curr_index not in index_list:
-            index_list.append(curr_index)
-            j = i + 1
-            while curr_index != P[j][2]:
-                j += 1
-            if P[j][3] == P[j][2]:
-                merged_record.append([P[i][0], P[j][0], records[curr_index][2], records[curr_index][3], records[curr_index][4],
-                                      records[curr_index][5], records[curr_index][6]])
-            else:
-                merged_record.append([P[i][0], P[j][0], records[curr_index][2], records[curr_index][3], records[curr_index][4],
-                                      records[curr_index][5], ""])
-
-    return merged_record
-    
-def bigrange(records):
-
-    # if list is empty return
-    if not records:
-        return 
-
-    P = [] 
-
-    for i in range(len(records)):
-        P.append([records[i][0], "L", i])
-        P.append([records[i][1], "R", i])
-
-    P.sort()
-
-
-
-    if P[0][2] == P[len(P)-1][2]:
-        index = P[0][2]
-        return [P[0][0], P[len(P)-1][0], records[index][2], records[index][3], records[index][4], records[index][5], ""]
-    else:
-        return records
-
-
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
     
-    #run_parser()
-
-    t = [
-        
-        [1, 3, "MY", "APNIC", "20210210", "I", "proton edar-klj"],
-        [2, 3, "MY", "APNIC", "20210210", "I", "proton edar-klj"],
-        
-
-    ]
-
-    print(merge_successive(t))
-
-    print(t)
+    run_parser()
