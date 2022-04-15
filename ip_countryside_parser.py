@@ -121,7 +121,6 @@ def parse_del_line(line):
 
         range_end = range_start + int(mask) - 1
         
-
     # parse ipv6 
     if  type == "ipv6":
 
@@ -362,7 +361,9 @@ def parse_inet_group(entry):
                         "IPV4 ADDRESS BLOCK NOT MANAGED BY THE RIPE NCC" in value.strip().upper() or
                         "TRANSFERRED TO THE ARIN REGION"                 in value.strip().upper() or
                         "TRANSFERRED TO THE RIPE REGION"                 in value.strip().upper() or
-                        "EARLY REGISTRATION ADDRESSES"                   in value.strip().upper()):
+                        "EARLY REGISTRATION ADDRESSES"                   in value.strip().upper() or
+                        "ASIA PACIFIC NETWORK INFORMATION CENTRE"        in value.strip().upper() ):
+                        
                         return []
                     
                 # if a country line has comment, remove the comment
@@ -418,136 +419,6 @@ def parse_inet_group(entry):
 # Methods used for resolving conflicts/overlaps ... 
 
 
-def handle_overlaps():
-
-    # get db records
-    records = read_db()
-
-    print(f"Nr. of records before overlaps deletion {len(records)}")
-
-    # get all records which overlap and their corresponding indicies
-    [overlaps, indicies] = extract_overlaps(records)
-    
-    print("Deleting overlaps from db ... ")
-
-    records = empty_entry_by_idx(records, indicies)
-
-    write_db(records)
-
-    print(f"number of records after overlaps deletion {len(records)}")
- 
-
-    # @TODO -> (delete); temporary (only for debugging) write overlap sequences into a file 
-    with open(os.path.join(DEL_FILES_DIR, "overlaping"), "w", encoding='utf-8', errors='ignore') as f:
-
-        for overlap_seq in overlaps:
-            
-            f.write("[\n")
-
-            for record in overlap_seq:
-                f.write(str(record))
-                f.write("\n")
-
-            f.write("]\n")
-    
-    # @TODO
-    # write the clean version of records into the 
-    # data base file again ...
-    # write back the clean list into db file
-
-
-def extract_overlaps(records):
-    """
-    Search for all overlaps in a list of RIA records and returns list 
-    (overlaps) of lists (overlap_seq) of these overlaps. The Algorithm 
-    has a complexity of O(n log(n)) known as Sweep-Line Algorithm.
-    More Info: https://www.baeldung.com/cs/finding-all-overlapping-intervals    
-
-    Arguments
-    ----------
-    records: list 
-        List of RIA entries with the follwoing format:
-        [ 
-          ...
-          [ip_from, ip_to, cc, registry, last-modified, record_type, description],
-          ...
-        ]
-
-    Returns
-    ----------
-    overlaps: list
-        List of lists. Each child list contains a list of RIA records
-        which are involed in an overlap case 
-        Each entry of overlap_seq have the following format: 
-            [ ...
-            ,[ 
-              ...
-              [ip_from, ip_to, cc, ....]
-              ...
-            ],
-            ...
-            ]
-
-        indicies: list
-            contains all indicies of records involved in overlap cases
-
-    """
-
-    # if list is empty return 
-    if not records:
-        return 
-
-    P = [] 
-    currentOpen = -1
-    added = False
-    overlap_seq = []
-    overlap_indicies = []
-    overlaps = []
-    overlaps_nr = 0
-
-    for i in range(len(records)):
-        P.append([records[i][0], "L", i, records[i]])
-        P.append([records[i][1], "R", i, records[i]])
-
-    P.sort()
-
-    for i in range(len(P)):
-    
-        if P[i][1] == "L":
-            if currentOpen == -1:
-                currentOpen = P[i][2]
-                added = False
-            else:
-                index = P[i][2]
-                overlap_seq.append(records[index])
-                overlap_indicies.append(index)
-                overlaps_nr = overlaps_nr + 1
-                if not added:
-                    overlap_seq.append(records[currentOpen])
-                    overlap_indicies.append(currentOpen)
-                    added = True
-                    overlaps_nr = overlaps_nr + 1
-                if records[index][1] > records[currentOpen][1]:
-                    currentOpen = index
-                    added = True
-        else:
-            if P[i][2] == currentOpen:
-                currentOpen = -1
-                added = False
-                overlaps.append(overlap_seq)
-                overlap_seq = []
-
-    # remove empty sequences
-    overlaps = [overlap_seq for overlap_seq in overlaps if overlap_seq] 
-    
-    overlaps.sort(key=lambda seq: len(seq))
-
-    print(f"overlaps found {overlaps_nr}\n")
-
-    return [overlaps, overlap_indicies]
-
-
-
 def remove_duplicates(records=[]):
 
     if not records:
@@ -562,7 +433,6 @@ def remove_duplicates(records=[]):
     records = empty_entry_by_idx(records, duplicate_indicies)
 
     write_db(records)
-
 
     print(f"Nr. of records after duplicate deletion {len(records)}")
 
@@ -582,7 +452,6 @@ def get_duplicate_indicies(records):
         
     P.sort()
 
-    
     duplicate_dict = {}
     duplicate_indicies = []
     added = False
@@ -636,6 +505,159 @@ def get_duplicate_indicies(records):
 
 
 
+def handle_overlaps():
+
+    # get db records
+    records = read_db()
+
+    print(f"Nr. of records before overlaps deletion {len(records)}")
+
+    # get all records which overlap and their corresponding indicies
+    [overlaps, indicies] = extract_overlaps(records)
+    
+    resolve_overlaps_length_2(overlaps)
+
+    print("Deleting overlaps from db ... ")
+
+    records = empty_entry_by_idx(records, indicies)
+
+    write_db(records)
+
+    print(f"number of records after overlaps deletion {len(records)}")
+ 
+
+    # @TODO -> (delete); temporary (only for debugging) write overlap sequences into a file 
+    with open(os.path.join(DEL_FILES_DIR, "overlaping"), "w", encoding='utf-8', errors='ignore') as f:
+
+        for overlap_seq in overlaps:
+            
+            f.write("[\n")
+
+            for record in overlap_seq:
+                f.write(str(record))
+                f.write("\n")
+
+            f.write("]\n")
+    
+    # @TODO
+    # write the clean version of records into the 
+    # data base file again ...
+    # write back the clean list into db file
+
+
+def extract_overlaps(records):
+    """
+    Search for all overlaps in a list of RIA records and returns list 
+    (overlaps) of overlap lists (overlap_seq). The Algorithm has a 
+    complexity of O(n log(n)) known as Sweep-Line Algorithm.
+    More Info: https://www.baeldung.com/cs/finding-all-overlapping-intervals    
+
+    Arguments
+    ----------
+    records: list 
+        List of RIA entries with the follwoing format:
+        [ 
+          ...
+          [ip_from, ip_to, cc, registry, last-modified, record_type, description],
+          ...
+        ]
+
+    Returns
+    ----------
+    overlaps: list
+        List of lists. Each child list contains a list of RIA records
+        which are involed in an overlap case 
+        Each entry of overlap_seq have the following format: 
+            [ ...
+            ,[ 
+              ...
+              [ip_from, ip_to, cc, ....]
+              ...
+            ],
+            ...
+            ]
+
+        indicies: list
+            contains all indicies of records involved in overlap cases
+
+    """
+
+    # if list is empty return 
+    if not records:
+        return 
+
+    P = [] 
+    currentOpen = -1
+    added = False
+    overlap_seq = []
+    overlap_indicies = []
+    overlaps = []
+    overlaps_nr = 0
+
+    for i in range(len(records)):
+        P.append([records[i][0], "L", i])
+        P.append([records[i][1], "R", i])
+
+    P.sort()
+
+    for i in range(len(P)):
+    
+        if P[i][1] == "L":
+            if currentOpen == -1:
+                currentOpen = P[i][2]
+                added = False
+            else:
+                index = P[i][2]
+                overlap_seq.append(records[index])
+                overlap_indicies.append(index)
+                overlaps_nr = overlaps_nr + 1
+                if not added:
+                    overlap_seq.append(records[currentOpen])
+                    overlap_indicies.append(currentOpen)
+                    added = True
+                    overlaps_nr = overlaps_nr + 1
+                if records[index][1] > records[currentOpen][1]:
+                    currentOpen = index
+                    added = True
+        else:
+            if P[i][2] == currentOpen:
+                currentOpen = -1
+                added = False
+                overlaps.append(overlap_seq)
+                overlap_seq = []
+
+    # remove empty sequences
+    overlaps = [overlap_seq for overlap_seq in overlaps if overlap_seq] 
+    
+    # sort sublists
+    overlaps.sort(key=lambda seq: len(seq))
+
+    print(f"overlaps found {overlaps_nr}\n")
+
+    return [overlaps, overlap_indicies]
+
+
+def resolve_overlaps_length_2(records):
+
+    # get overlaps with length of 2 only 
+    overlaps = [overlap_seq for overlap_seq in records if len(overlap_seq) <= 2] 
+
+    # handling two records with same country
+    for overlap_seq in overlaps:
+        
+        # lets solve records with same country first
+        if overlap_seq[0][2] == overlap_seq[1][2]:
+
+            # merge these two intervals and save the result into the first record  
+            overlap_seq[0][0] = min(overlap_seq[0][0], overlap_seq[1][0])
+            overlap_seq[0][1] = max(overlap_seq[0][1], overlap_seq[1][1])
+
+            # delete the second one
+            del overlap_seq[1]
+
+        # here resolve these records with different countries
+
+
 def records_overlaps(records):
     """
     Checks if any two records overlaps in the given list of RIA records 
@@ -664,6 +686,7 @@ def records_overlaps(records):
       
     P = [] 
 
+    # @TODO why not len -1 ?
     for i in range(len(records)):
         P.append([records[i][0], "L", i])
         P.append([records[i][1], "R", i])
@@ -770,4 +793,4 @@ def run_parser():
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
     
-    run_parser()
+   run_parser()  
