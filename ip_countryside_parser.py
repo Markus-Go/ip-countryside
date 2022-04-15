@@ -6,6 +6,7 @@ import ipaddress
 import time
 from datetime import datetime
 import multiprocessing as mp
+import math
 
 
 from config import *;
@@ -758,14 +759,14 @@ def run_parser():
     start_time = time.time()
     print("parsing started\n")
 
-    #print("parsing del files ...")
-    #merge_del_files()          
-    #parse_del_files()           
+    print("parsing del files ...")
+    merge_del_files()          
+    parse_del_files()           
 
-    #print("parsing inetnum files ...")
-    #merge_inet_files()
+    print("parsing inetnum files ...")
+    merge_inet_files()
     #parse_inet_files_single()
-    #parse_inet_files_multicore()
+    parse_inet_files_multicore()
     
     merge_stripped_files()
     
@@ -790,7 +791,162 @@ def run_parser():
     return 0
 
 
+
+def merge_following(records):
+
+    # if list is empty return
+    if not records:
+        return 
+
+    P = [] 
+
+    for i in range(len(records)):
+        P.append([records[i][0], "L", i, i])
+        P.append([records[i][1], "R", i,i])
+
+    P.sort()
+
+    i = 0 
+    while i < len(P)-1:
+
+        # Check if R is followed by L
+        if (P[i][1] == 'R' and P[i+1][1] == 'L'):
+            # Check if distance is 1  
+            if P[i][0] + 1 == P[i+1][0]:
+
+                P[i] = [P[i+2][0],'R', P[i][2], P[i+1][2]]
+                index = P[i+1][2]
+                j = i + 1
+                P.pop(j)
+                while P[j][2] != index:
+                    j += 1
+                P.pop(j)
+            else: 
+                i+= 1
+        else: 
+            i += 1
+    
+    merged_record = []
+    index_list = []
+    for i in range(len(P)-1):
+        curr_index = P[i][2]
+        if curr_index not in index_list:
+            index_list.append(curr_index)
+            j = i + 1
+            while curr_index != P[j][2]:
+                j += 1
+            if P[j][3] == P[j][2]:
+                merged_record.append([P[i][0], P[j][0], records[curr_index][2], records[curr_index][3], records[curr_index][4],
+                                      records[curr_index][5], records[curr_index][6]])
+            else:
+                merged_record.append([P[i][0], P[j][0], records[curr_index][2], records[curr_index][3], records[curr_index][4],
+                                      records[curr_index][5], ""])
+
+    return merged_record
+    
+
+def bigrange(records):
+
+    # if list is empty return
+    if not records:
+        return 
+
+    P = [] 
+
+    for i in range(len(records)):
+        P.append([records[i][0], "L", i])
+        P.append([records[i][1], "R", i])
+
+    P.sort()
+
+    min_value = P[0][0]
+    max_value = P[len(P)-1][0]
+
+    min_in = [P[0][2]]
+    max_in = [P[len(P)-1][2]]
+
+    notchanged = True
+    i = 1
+    while notchanged:
+        if P[i][0] != min_value: 
+            notchanged = False
+            break
+        else:
+            min_in.append(P[i][2])
+            i += 1
+
+    notchanged = True
+    i = len(P) - 2
+    while notchanged:
+        if P[i][0] != max_value: 
+            notchanged = False
+            break
+        else:
+            max_in.append(P[i][2])
+            i -= 1
+
+    for number in min_in:
+
+        if number in max_in:
+            index = number
+            return [records[index][0], records[index][1], records[index][2], records[index][3], records[index][4], records[index][5], ""]
+
+
+    return records
+    
+
+def getNetwork(ip_from, ip_to):
+    hosts = ip_to + 1 - ip_from 
+    res = math.log2(hosts)
+    subnetmask = 32 - int(res)
+  
+    if not res.is_integer():
+        print("No valid subnetmask", ip_from, " ", ip_to, "with subnetmask: ", res)
+        return
+    
+        
+    return str(ipaddress.ip_address(ip_from)) + "/" + str(subnetmask)
+
+   
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
+     run_parser()
+        
     
-   run_parser()  
+     #merge_following(l)
+
+     #result = merge_following(f)
+    
+
+     #for item in result:
+     #    print(*item)
+
+     #print(bigrange(o))
+
+     #run_parser()
+
+    # 3278210188   3278210207
+    #2152576164   2152576175
+    #3279724520   3279724543
+    #1548710752   1548710847
+
+     #db = read_db()
+
+     #for record in db:
+     #    getNetwork(record[0], record[1])
+
+     #print(getNetwork(3278210188,3278210207))
+
+     l = [[1296624896, 1296624960, 'BE', 'RIPE', '20200414', 'I', 'IPNEXIA SBC INTERCONNECT'],
+        [1296624896, 1296625151, 'BE', 'RIPE', '20200414', 'I', ''],
+        [1296624961, 1296625023, 'BE', 'RIPE', '20200414', 'I', ''],
+        [1296625024, 1296625039, 'BE', 'RIPE', '20200414', 'I', ''],
+        [1296625040, 1296625055, 'BE', 'RIPE', '20200414', 'I', 'IPNEXIA customer THERABEL'],
+        [1296625056, 1296625063, 'BE', 'RIPE', '20200414', 'I', 'IPNEXIA customer KREDIET PARTNER'],
+        [1296625064, 1296625071, 'BE', 'RIPE', '20200414', 'I', 'IPNEXIA customer POLBRUNO'],
+        [1296625072, 1296625087, 'BE', 'RIPE', '20200414', 'I', 'IPNEXIA IPSEC SIP'],
+        [1296625088, 1296625095, 'BE', 'RIPE', '20200414', 'I', 'IPNEXIA customer TREVI'],
+        [1296625120, 1296625151, 'BE', 'RIPE', '20200414', 'I', 'IPNEXIA customer SILVERLINING']]
+
+     #print(bigrange(l))
+
