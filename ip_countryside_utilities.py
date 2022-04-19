@@ -71,6 +71,5 @@ def getNetwork(ip_from, ip_to):
     if not res.is_integer():
         print("No valid subnetmask", ip_from, " ", ip_to, "with subnetmask: ", res)
         return
-    
-        
+      
     return str(ipaddress.ip_address(ip_from)) + "/" + str(subnetmask)

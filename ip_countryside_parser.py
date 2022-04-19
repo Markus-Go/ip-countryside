@@ -657,70 +657,62 @@ def resolve_overlaps(overlaps):
     
     P.sort()
 
-    res = get_structred_overlaps(overlaps, P)
-
-    # dict_L = {}
-    # dict_R = {}
-
-    # # testen ob mit flag so funktioniert ....   
+    res = get_structured_overlaps(overlaps, P)
+    print(res)
     
-    # for i in range(len(P)):
-       
-    #     if P[i][1] == "L" and P[i+1][1] != "R" :
 
-    #         dict_L[P[i][2]] = P[i][0]
+def get_structured_overlaps(overlaps, P):
 
-    #     elif P[i][1] == "R":
+    return get_structured_overlaps_helper(overlaps, 0, False, -1, P, [])
+
+
+def get_structured_overlaps_helper(overlaps, i, flag, current_index, P, overlaps_structred):
+
+    if i == len(P):
+        return overlaps_structred
+
+    elif P[i][1] == "L":
+
+        if current_index == -1:
+            current_index = P[i][2]
+            flag = False
+
+        else: 
+
+            if not flag: 
+                overlaps_structred.append(
+                    {
+                        "Parent":overlaps[current_index], 
+                        "Children":[]
+                    }
+                )
+                flag = True
+    
+            index = P[i][2]
+            overlaps_structred[-1]["Children"].append(overlaps[index])
+
+            if overlaps[index][1] > overlaps[current_index][1]:
+                current_index = index
+                flag = True
+
+    else:
+
+        if P[i][2] == current_index:
+            current_index = -1
+            flag = False
             
-    #         dict_R[P[i][2]] = P[i][0]
-       
-    # dict_R = dict(sorted(dict_R.items(), key=lambda x: (x[1], -x[0]))) 
-
-    pass 
+    return get_structured_overlaps_helper(overlaps, i+1, flag, current_index, P, overlaps_structred) 
 
 rec = [
 
     [1, 10, 'BG', 'RIPE', '20160603', 'I', ''],
     [1, 8, 'BG', 'RIPE', '20160603', 'I', ''],
     [2, 4, 'BG', 'RIPE', '20150511', 'I', 'BGO Media Ltd.'],
-    [5, 10, 'BG', 'RIPE', '20190128', 'I', 'VPS.AG'],
-    [7, 8, 'BG', 'RIPE', '20170203', 'I', 'DA International Group LTD - Dedicated and VPS'],
-    [9, 10, 'BG', 'RIPE', '20170406', 'I', ''],
+    [7, 10, 'BG', 'RIPE', '20190128', 'I', 'VPS.AG'],
+    [6, 11, 'BG', 'RIPE', '20190128', 'I', 'VPS.AG'],
 
 ]
 
-
-def get_structred_overlaps(overlaps, P):
-
-    return get_structred_overlaps_helper(overlaps, 0, False, -1, P, {})
-
-
-def get_structred_overlaps_helper(overlaps, i, flag, current_index, P, overlaps_structred):
-
-    if i == len(P)-1:
-        return overlaps_structred
-
-    elif P[i][1] == "L" and P[i+1][1] != "R" and not flag:
-        
-        flag = True
-        current_index = P[i][2]
-        overlaps_structred[current_index] = { "parent": overlaps[P[i][2]], "children" : [] } 
-        
-        get_structred_overlaps_helper(overlaps, i+1, flag, current_index , P, overlaps_structred)
-
-    elif flag and current_index == P[i][2]:
-
-        flag = False
-
-        overlaps_structred[current_index]["children"].append(overlaps[P[i][2]])
-
-        get_structred_overlaps_helper(overlaps, i+1, flag, current_index , P, overlaps_structred)
-    
-    elif P[i][1] == "L":
-
-        overlaps_structred[current_index]["children"].append(overlaps[P[i][2]])
-        get_structred_overlaps_helper(overlaps, i+2, flag, current_index , P, overlaps_structred)
-   
 
 def records_overlaps(records):
     """
@@ -955,23 +947,9 @@ def bigrange(records):
 
     return records
     
-
-def getNetwork(ip_from, ip_to):
-    hosts = ip_to + 1 - ip_from 
-    res = math.log2(hosts)
-    subnetmask = 32 - int(res)
-  
-    if not res.is_integer():
-        print("No valid subnetmask", ip_from, " ", ip_to, "with subnetmask: ", res)
-        return
-      
-    return str(ipaddress.ip_address(ip_from)) + "/" + str(subnetmask)
-
    
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
     
     #run_parser() 
-
-
     resolve_overlaps(rec)
