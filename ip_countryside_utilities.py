@@ -1,5 +1,6 @@
 from config import *;
 import ipaddress
+import math
 
 # @TODO Method should call read_db() to get records in form of list     -> Aufwand 1
 # Use a filter instead  
@@ -60,3 +61,16 @@ def empty_entry_by_idx(records, indices):
     records = [x for x in records if x != []]
 
     return records
+
+
+def getNetwork(ip_from, ip_to):
+    hosts = ip_to + 1 - ip_from 
+    res = math.log2(hosts)
+    subnetmask = 32 - int(res)
+  
+    if not res.is_integer():
+        print("No valid subnetmask", ip_from, " ", ip_to, "with subnetmask: ", res)
+        return
+    
+        
+    return str(ipaddress.ip_address(ip_from)) + "/" + str(subnetmask)

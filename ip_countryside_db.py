@@ -122,6 +122,3 @@ def extract_as_json(file=IP2COUNTRY_DB):
 
 def extract_as_yaml(file=IP2COUNTRY_DB):
     pass
-
-
-# later -> sql lite... 

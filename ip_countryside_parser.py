@@ -8,7 +8,6 @@ from datetime import datetime
 import multiprocessing as mp
 import math
 
-
 from config import *;
 from ip_countryside_db import *;
 from ip_countryside_utilities import *;
@@ -35,6 +34,13 @@ from ip_countryside_utilities import *;
 
 # @TODO add city information (when available) to the method parse_inet parse_inet_group     # Aufwand 21
 
+# 
+# 01 Sortiere overlap_sequences based on their coutntry, ipstart, ipfrom
+# 02 Divide intervals that causes overlapings so that they don't overlap with the smaller ones
+#    - For each interval that causes overlaping in a sequence (it's R doesn't come directly after
+#      it's L) creaete an Entry [start - end] and put all of its children
+#      inside it (Children are intervals with [start-ch end-ch], where start-ch => start and 
+#      end-ch <= end) 
 
 # ==============================================================================
 # Delegation parsing methods 
@@ -147,7 +153,8 @@ def parse_del_line(line):
 
 
 # ==============================================================================
-# Inetnum Parsing methods 
+# Inetnum Pars
+
 
 def merge_inet_files():
     
@@ -438,7 +445,6 @@ def remove_duplicates(records=[]):
     print(f"Nr. of records after duplicate deletion {len(records)}")
 
 
-
 def get_duplicate_indicies(records):
 
     # if list is empty return
@@ -505,8 +511,7 @@ def get_duplicate_indicies(records):
     return duplicate_indicies
 
 
-
-def handle_overlaps():
+def extract_overlaps():
 
     # get db records
     records = read_db()
@@ -514,20 +519,17 @@ def handle_overlaps():
     print(f"Nr. of records before overlaps deletion {len(records)}")
 
     # get all records which overlap and their corresponding indicies
-    [overlaps, indicies] = extract_overlaps(records)
+    [overlaps, indicies] = get_overlaps(records)
     
-    resolve_overlaps_length_2(overlaps)
-
     print("Deleting overlaps from db ... ")
 
     records = empty_entry_by_idx(records, indicies)
 
+    # write back the clean list into db file
     write_db(records)
 
     print(f"number of records after overlaps deletion {len(records)}")
- 
 
-    # @TODO -> (delete); temporary (only for debugging) write overlap sequences into a file 
     with open(os.path.join(DEL_FILES_DIR, "overlaping"), "w", encoding='utf-8', errors='ignore') as f:
 
         for overlap_seq in overlaps:
@@ -535,18 +537,23 @@ def handle_overlaps():
             f.write("[\n")
 
             for record in overlap_seq:
+
                 f.write(str(record))
-                f.write("\n")
+                f.write(str("\n"))
 
             f.write("]\n")
     
-    # @TODO
-    # write the clean version of records into the 
-    # data base file again ...
-    # write back the clean list into db file
+    t = []
+    for overlap_seq in t:
+            
+        for record in overlap_seq:
+            
+            t.append(record)
+
+    resolve_overlaps(t)
 
 
-def extract_overlaps(records):
+def get_overlaps(records):
     """
     Search for all overlaps in a list of RIA records and returns list 
     (overlaps) of overlap lists (overlap_seq). The Algorithm has a 
@@ -630,7 +637,7 @@ def extract_overlaps(records):
     # remove empty sequences
     overlaps = [overlap_seq for overlap_seq in overlaps if overlap_seq] 
     
-    # sort sublists
+    # sort sublists by their length
     overlaps.sort(key=lambda seq: len(seq))
 
     print(f"overlaps found {overlaps_nr}\n")
@@ -638,26 +645,82 @@ def extract_overlaps(records):
     return [overlaps, overlap_indicies]
 
 
-def resolve_overlaps_length_2(records):
+def resolve_overlaps(overlaps):
 
-    # get overlaps with length of 2 only 
-    overlaps = [overlap_seq for overlap_seq in records if len(overlap_seq) <= 2] 
+    # the new records (without overlaps)
+    records_dict = {}
+    
+    P = [] 
+    for i in range(len(overlaps)):
+        P.append([overlaps[i][0], "L", i])
+        P.append([overlaps[i][1], "R", i])
+    
+    P.sort()
 
-    # handling two records with same country
-    for overlap_seq in overlaps:
+    res = get_structred_overlaps(overlaps, P)
+
+    # dict_L = {}
+    # dict_R = {}
+
+    # # testen ob mit flag so funktioniert ....   
+    
+    # for i in range(len(P)):
+       
+    #     if P[i][1] == "L" and P[i+1][1] != "R" :
+
+    #         dict_L[P[i][2]] = P[i][0]
+
+    #     elif P[i][1] == "R":
+            
+    #         dict_R[P[i][2]] = P[i][0]
+       
+    # dict_R = dict(sorted(dict_R.items(), key=lambda x: (x[1], -x[0]))) 
+
+    pass 
+
+rec = [
+
+    [1, 10, 'BG', 'RIPE', '20160603', 'I', ''],
+    [1, 8, 'BG', 'RIPE', '20160603', 'I', ''],
+    [2, 4, 'BG', 'RIPE', '20150511', 'I', 'BGO Media Ltd.'],
+    [5, 10, 'BG', 'RIPE', '20190128', 'I', 'VPS.AG'],
+    [7, 8, 'BG', 'RIPE', '20170203', 'I', 'DA International Group LTD - Dedicated and VPS'],
+    [9, 10, 'BG', 'RIPE', '20170406', 'I', ''],
+
+]
+
+
+def get_structred_overlaps(overlaps, P):
+
+    return get_structred_overlaps_helper(overlaps, 0, False, -1, P, {})
+
+
+def get_structred_overlaps_helper(overlaps, i, flag, current_index, P, overlaps_structred):
+
+    if i == len(P)-1:
+        return overlaps_structred
+
+    elif P[i][1] == "L" and P[i+1][1] != "R" and not flag:
         
-        # lets solve records with same country first
-        if overlap_seq[0][2] == overlap_seq[1][2]:
+        flag = True
+        current_index = P[i][2]
+        overlaps_structred[current_index] = { "parent": overlaps[P[i][2]], "children" : [] } 
+        
+        get_structred_overlaps_helper(overlaps, i+1, flag, current_index , P, overlaps_structred)
 
-            # merge these two intervals and save the result into the first record  
-            overlap_seq[0][0] = min(overlap_seq[0][0], overlap_seq[1][0])
-            overlap_seq[0][1] = max(overlap_seq[0][1], overlap_seq[1][1])
+    elif flag and current_index == P[i][2]:
 
-            # delete the second one
-            del overlap_seq[1]
+        flag = False
 
-        # here resolve these records with different countries
+        overlaps_structred[current_index]["children"].append(overlaps[P[i][2]])
 
+        get_structred_overlaps_helper(overlaps, i+1, flag, current_index , P, overlaps_structred)
+    
+    elif P[i][1] == "L":
+
+        overlaps_structred[current_index]["children"].append(overlaps[P[i][2]])
+        get_structred_overlaps_helper(overlaps, i+2, flag, current_index , P, overlaps_structred)
+   
 
 def records_overlaps(records):
     """
@@ -687,7 +750,6 @@ def records_overlaps(records):
       
     P = [] 
 
-    # @TODO why not len -1 ?
     for i in range(len(records)):
         P.append([records[i][0], "L", i])
         P.append([records[i][1], "R", i])
@@ -760,13 +822,13 @@ def run_parser():
     print("parsing started\n")
 
     print("parsing del files ...")
-    merge_del_files()          
-    parse_del_files()           
+    #merge_del_files()          
+    #parse_del_files()           
 
     print("parsing inetnum files ...")
-    merge_inet_files()
+    #merge_inet_files()
     #parse_inet_files_single()
-    parse_inet_files_multicore()
+    #parse_inet_files_multicore()
     
     merge_stripped_files()
     
@@ -776,11 +838,11 @@ def run_parser():
 
    
     print("resolving overlaps ...")
-    handle_overlaps()
+    extract_overlaps()
 
+
+    #print(f"checking if final database file have any ouverlapps: {records_overlaps(read_db())}")
     
-    print("checking if final database file have any ouverlapps ...")
-    print(records_overlaps(read_db()))
 
     # delete_temp_files()
     print("finished\n")
@@ -789,7 +851,6 @@ def run_parser():
     print("total time needed was:", f'{end_time - start_time:.3f}', "s\n") 
     
     return 0
-
 
 
 def merge_following(records):
@@ -903,50 +964,14 @@ def getNetwork(ip_from, ip_to):
     if not res.is_integer():
         print("No valid subnetmask", ip_from, " ", ip_to, "with subnetmask: ", res)
         return
-    
-        
+      
     return str(ipaddress.ip_address(ip_from)) + "/" + str(subnetmask)
 
    
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
-     run_parser()
-        
     
-     #merge_following(l)
+    #run_parser() 
 
-     #result = merge_following(f)
-    
 
-     #for item in result:
-     #    print(*item)
-
-     #print(bigrange(o))
-
-     #run_parser()
-
-    # 3278210188   3278210207
-    #2152576164   2152576175
-    #3279724520   3279724543
-    #1548710752   1548710847
-
-     #db = read_db()
-
-     #for record in db:
-     #    getNetwork(record[0], record[1])
-
-     #print(getNetwork(3278210188,3278210207))
-
-     l = [[1296624896, 1296624960, 'BE', 'RIPE', '20200414', 'I', 'IPNEXIA SBC INTERCONNECT'],
-        [1296624896, 1296625151, 'BE', 'RIPE', '20200414', 'I', ''],
-        [1296624961, 1296625023, 'BE', 'RIPE', '20200414', 'I', ''],
-        [1296625024, 1296625039, 'BE', 'RIPE', '20200414', 'I', ''],
-        [1296625040, 1296625055, 'BE', 'RIPE', '20200414', 'I', 'IPNEXIA customer THERABEL'],
-        [1296625056, 1296625063, 'BE', 'RIPE', '20200414', 'I', 'IPNEXIA customer KREDIET PARTNER'],
-        [1296625064, 1296625071, 'BE', 'RIPE', '20200414', 'I', 'IPNEXIA customer POLBRUNO'],
-        [1296625072, 1296625087, 'BE', 'RIPE', '20200414', 'I', 'IPNEXIA IPSEC SIP'],
-        [1296625088, 1296625095, 'BE', 'RIPE', '20200414', 'I', 'IPNEXIA customer TREVI'],
-        [1296625120, 1296625151, 'BE', 'RIPE', '20200414', 'I', 'IPNEXIA customer SILVERLINING']]
-
-     #print(bigrange(l))
-
+    resolve_overlaps(rec)
