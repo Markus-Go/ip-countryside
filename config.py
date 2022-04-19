@@ -59,6 +59,9 @@ APNIC = {
     'inet_fname_gz':  "apnic.db.inetnum.gz",
     'inet_fname':     "apnic.db.inetnum",
     'inet_timestamp': "apnic.db.inetnum.timestamp",
+    'inet_fname_ipv6_gz':  "apnic.db.inet6num.gz",
+    'inet_fname_ipv6':     "apnic.db.inet6num",
+    'inet_ipv6_timestamp': "apnic.db.inet6num.timestamp",
     'irt_fname_gz':   "apnic.db.irt.gz",
     'irt_timestamp':  "apnic.db.irt.timestamp"
 }
@@ -73,6 +76,9 @@ RIPE = {
     'inet_fname_gz':  "ripe.db.inetnum.gz",
     'inet_fname':     "ripe.db.inetnum",
     'inet_timestamp': "ripe.db.inetnum.timestamp",
+    'inet_fname_ipv6_gz':  "ripe.db.inet6num.gz",
+    'inet_fname_ipv6':     "ripe.db.inet6num",
+    'inet_ipv6_timestamp': "ripe.db.inet6num.timestamp",
     'irt_fname_gz':   "ripe.db.irt.gz",
     'irt_timestamp':  "ripe.db.irt.timestamp"
 }
