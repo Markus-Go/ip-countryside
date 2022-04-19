@@ -158,7 +158,10 @@ def merge_inet_files():
             
             for inet_file in [ 
                   os.path.join(DEL_FILES_DIR, APNIC['inet_fname']), 
-                  os.path.join(DEL_FILES_DIR, RIPE['inet_fname'])
+                  os.path.join(DEL_FILES_DIR, RIPE['inet_fname']),
+                  os.path.join(DEL_FILES_DIR, APNIC['inet_fname_ipv6']),
+                  os.path.join(DEL_FILES_DIR, RIPE['inet_fname_ipv6'])
+                  
                     ]:
 
                 with open(inet_file, "rb") as source:
@@ -177,7 +180,7 @@ def parse_inet_files_single():
     
     with open(MERGED_INET_FILE, 'r', encoding='utf-8', errors='ignore') as merged, open (STRIPPED_INET_FILE, 'w', encoding='utf-8', errors='ignore') as stripped:
         
-        for group in get_inet_group(merged, "inetnum"):
+        for group in get_inet_group(merged, ["inetnum", "inet6num"]):
             
             record = parse_inet_group(group)
             
@@ -204,7 +207,7 @@ def get_inet_group(seq, group_by):
         # so start grouping if a line starts with 'inetnum'
         # if an object has already been initialized then scann also the
         # next lines (or data) 
-        if (line.startswith(group_by) or data) and not line.startswith("\n"):
+        if (line.startswith(group_by[0]) or line.startswith(group_by[1]) or data) and not line.startswith("\n"):
             
             # don't remove spaces from description lines
             if line.startswith('descr'):
@@ -315,7 +318,7 @@ def parse_inet_chunk(file, start=0, stop=0):
         inetnum_file.seek(start)
         lines = inetnum_file.readlines(stop - start)      
         #print(*lines, '\n----------------------------------------\n')
-        for group in get_inet_group(lines, "inetnum"):
+        for group in get_inet_group(lines, ["inetnum", "inet6num"]):
             line = parse_inet_group(group)
             record.append(line)
     return record
@@ -377,7 +380,19 @@ def parse_inet_group(entry):
                     record[key] = value
 
     # extract the ranges out of record
-    range = record['inetnum'].split("-")
+    if 'inetnum' in record:
+         range = record['inetnum'].split("-")
+         range_start   = int(ipaddress.ip_address(range[0]))
+         range_end     = int(ipaddress.ip_address(range[1]))
+    else:
+        range = record['inet6num'].split("/")
+        range_start = int(ipaddress.ip_address(range[0]))
+
+        net = ipaddress.IPv6Network(range[0] + '/' + range[1], False)
+        range_end = int(net.broadcast_address)
+        
+
+   
     
     if re.match(IPV4_PATTERN, range[0]):
         
@@ -394,8 +409,8 @@ def parse_inet_group(entry):
             return []
 
 
-    range_start   = int(ipaddress.ip_address(range[0]))
-    range_end     = int(ipaddress.ip_address(range[1]))
+    
+    
     country       = record['country']
     registry      = record['source'].split("#")[0]
     last_modified = ""
@@ -850,22 +865,23 @@ def run_parser():
     
     merge_stripped_files()
     
-    # get  all duplicates (simply take one from inetnum if 
-    # other is delegation otherwise the one with longer description)
+    ##get  all duplicates (simply take one from inetnum if 
+    ##other is delegation otherwise the one with longer description)
     remove_duplicates()
 
-    # merges all successive records and removes redundants 
-    merge_successive()
+    ##merges all successive records and removes redundants 
+    #merge_successive()
 
+    #merge_big()
 
     print("resolving overlaps ...")
-    handle_overlaps()
+    #handle_overlaps()
 
     
     print("checking if final database file have any ouverlapps ...")
     print(records_overlaps(read_db()))
 
-    # delete_temp_files()
+    #delete_temp_files()
     print("finished\n")
 
     end_time = time.time()
@@ -928,6 +944,55 @@ def merge_following(records):
     return merged_record
     
 
+
+    
+
+def getNetwork(ip_from, ip_to):
+    hosts = ip_to + 1 - ip_from 
+    res = math.log2(hosts)
+    subnetmask = 32 - int(res)
+  
+    if not res.is_integer():
+        print("No valid subnetmask", ip_from, " ", ip_to, "with subnetmask: ", res)
+        return
+    
+        
+    return str(ipaddress.ip_address(ip_from)) + "/" + str(subnetmask)
+
+   
+
+def merge(records):
+ 
+     # if list is empty return
+    if not records:
+        return
+
+    records.sort(key=lambda x: x[0])
+ 
+    merged = []
+    for record in records:
+        if not merged or merged[-1][1] < record[0]:
+            merged.append(record)
+        else:
+            merged[-1][1] = max(merged[-1][1], record[1])
+ 
+    return merged
+
+
+def merge_big(records=[]):
+
+    if not records:
+        records = read_db()
+
+    print(f"Nr. of records before merge {len(records)}")
+
+    records = merge(records)
+
+    print(f"Nr. of records after merge {len(records)}")
+
+    write_db(records)
+
+
 def bigrange(records):
 
     # if list is empty return
@@ -975,69 +1040,46 @@ def bigrange(records):
             return [records[index][0], records[index][1], records[index][2], records[index][3], records[index][4], records[index][5], ""]
 
 
-    return records
-    
-
-def getNetwork(ip_from, ip_to):
-    hosts = ip_to + 1 - ip_from 
-    res = math.log2(hosts)
-    subnetmask = 32 - int(res)
-  
-    if not res.is_integer():
-        print("No valid subnetmask", ip_from, " ", ip_to, "with subnetmask: ", res)
-        return
-    
-        
-    return str(ipaddress.ip_address(ip_from)) + "/" + str(subnetmask)
-
-   
-
- 
-
-
-
+    return records   
 
 
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
-     #run_parser()
+     
+
+    #run_parser()
+
+   
+
+    db = read_db()
+
+    for record in db:
+        getNetwork(record[0], record[1])
+
+    
+
+    l = [[1296624896, 1296624960, 'BE', 'RIPE', '20200414', 'I', 'IPNEXIA SBC INTERCONNECT'],
+    [1296624896, 1296624960, 'BE', 'RIPE', '20200414', 'I', ''],
+    [1296624961, 2296625023, 'BE', 'RIPE', '20200414', 'I', ''],
+    [1296625024, 1296625039, 'BE', 'RIPE', '20200414', 'I', ''],
+    [1296625040, 1296625055, 'BE', 'RIPE', '20200414', 'I', 'IPNEXIA customer THERABEL'],
+    [1296625056, 1296625063, 'BE', 'RIPE', '20200414', 'I', 'IPNEXIA customer KREDIET PARTNER'],
+    [1296625064, 1296625071, 'BE', 'RIPE', '20200414', 'I', 'IPNEXIA customer POLBRUNO'],
+    [1296625072, 1296625087, 'BE', 'RIPE', '20200414', 'I', 'IPNEXIA IPSEC SIP'],
+    [1296625088, 1296625095, 'BE', 'RIPE', '20200414', 'I', 'IPNEXIA customer TREVI'],
+    [1296625120, 1296625151, 'BE', 'RIPE', '20200414', 'I', 'IPNEXIA customer SILVERLINING']]
+
+    t = [
+    [1,5, "", "", "", ""],
+    [3,8, "", "", "", ""],
         
-    
-     #merge_following(l)
+      
+    ]
 
-     #result = merge_following(f)
-    
+    #print(bigrange(t))
 
-     #for item in result:
-     #    print(*item)
+    #print(merge(l))
 
-     #print(bigrange(o))
-
-     #run_parser()
-
-    # 3278210188   3278210207
-    #2152576164   2152576175
-    #3279724520   3279724543
-    #1548710752   1548710847
-
-     #db = read_db()
-
-     #for record in db:
-     #    getNetwork(record[0], record[1])
-
-     #print(getNetwork(3278210188,3278210207))
-
-     l = [[1296624896, 1296624960, 'BE', 'RIPE', '20200414', 'I', 'IPNEXIA SBC INTERCONNECT'],
-        [1296624896, 1296625151, 'BE', 'RIPE', '20200414', 'I', ''],
-        [1296624961, 1296625023, 'BE', 'RIPE', '20200414', 'I', ''],
-        [1296625024, 1296625039, 'BE', 'RIPE', '20200414', 'I', ''],
-        [1296625040, 1296625055, 'BE', 'RIPE', '20200414', 'I', 'IPNEXIA customer THERABEL'],
-        [1296625056, 1296625063, 'BE', 'RIPE', '20200414', 'I', 'IPNEXIA customer KREDIET PARTNER'],
-        [1296625064, 1296625071, 'BE', 'RIPE', '20200414', 'I', 'IPNEXIA customer POLBRUNO'],
-        [1296625072, 1296625087, 'BE', 'RIPE', '20200414', 'I', 'IPNEXIA IPSEC SIP'],
-        [1296625088, 1296625095, 'BE', 'RIPE', '20200414', 'I', 'IPNEXIA customer TREVI'],
-        [1296625120, 1296625151, 'BE', 'RIPE', '20200414', 'I', 'IPNEXIA customer SILVERLINING']]
-
-     print(bigrange(l))
+   
 
 
