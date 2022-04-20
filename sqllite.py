@@ -39,4 +39,3 @@ with open("ip2country.csv", encoding='utf-8', errors='ignore') as csvfile:
 #result = cursor.fetchall()
 #print(result)
 #connection.close()
-

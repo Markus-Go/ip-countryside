@@ -33,9 +33,9 @@ def ip_in_range(ip, start, end):
     return start <= ip_int <= end 
 
 
-def empty_entry_by_idx(records, indices):
+def empty_entry_by_idx(records, indicies):
     """
-    Set for each index in indices the corresponding entry in 
+    Set for each index in indicies the corresponding entry in 
     the given list to empty  []
 
     Arguments
@@ -43,7 +43,7 @@ def empty_entry_by_idx(records, indices):
     records: list
         List from which entries must be removed
 
-    indices: list
+    indicies: list
         List of indicies. 
 
     Returns
@@ -52,7 +52,7 @@ def empty_entry_by_idx(records, indices):
 
     """
 
-    for idx in indices:
+    for idx in indicies:
 
         if idx < len(records):
 
@@ -62,6 +62,15 @@ def empty_entry_by_idx(records, indices):
 
     return records
 
+
+def get_records(records, indicies):
+
+    data = [] 
+
+    for idx in indicies:
+        data.append(records[idx])
+
+    return data
 
 def getNetwork(ip_from, ip_to):
     hosts = ip_to + 1 - ip_from 

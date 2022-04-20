@@ -526,6 +526,192 @@ def get_duplicate_indicies(records):
     return duplicate_indicies
 
 
+def remove_covered(records=[]):
+    
+    if not records:
+        records = read_db()
+
+    print(f"Nr. of records before covered resolving {len(records)}")
+
+    records_dict = get_covered_groups(records)
+    records_dict = remove_covererd_groups_duplicates(records_dict)
+
+    data = []
+    for index, dictionary in records_dict.items():
+        
+        parent = records[index]
+        current_index = -1
+
+        P = []
+        for i in dictionary:
+            P.append([records[i][0], "L", i, records[i][1] - records[i][0] ])
+            P.append([records[i][1], "R", i, records[i][1] - records[i][0] ])
+        
+        P = sorted(
+            P, 
+            key=lambda x:
+                (
+                    x[0], x[1], -x[3]) 
+                    if (x[1] == "L") 
+                    else (x[0], x[1], -x[2])
+                )
+
+        for i in range(len(P)):
+
+            # TODO ignore duplicates ... (they have their own method)
+            # TODO check if parent is not EU but children are EU
+
+            new_record = []
+
+            if P[i][1] == "L":
+                
+                if current_index == -1:
+            
+                    if parent[0] < P[i][0]:
+
+                        new_record = [parent[0], P[i][0]-1, parent[2], parent[3], parent[4], parent[5], parent[6] ]
+                        data.extend([ new_record, records[P[i][2]] ])
+                        
+                        current_index = P[i][2]
+
+                else:
+                
+                    if P[i+1][1] == "L":
+                        current_index = P[i+1][1]
+
+                    data.append(records[P[i][2]])
+
+                    # check if end of current record is not successive with next record 
+                    # lücke in der Mitte .... 
+
+            if i == len(P)-1:
+
+                if P[i][0] < parent[1]:
+                    
+                    new_record = [P[i][0]+1, parent[1], parent[2], parent[3], parent[4], parent[5], parent[6] ]
+                    data.append(new_record)
+
+
+    # with open(os.path.join(DEL_FILES_DIR, "covered"), "w", encoding='utf-8', errors='ignore') as f:
+    
+    #     for index, dictionary in records_dict.items():
+         
+
+    #         f.write("{\n")
+    #         f.write(f" overlaps: {records_overlap(get_records(records, dictionary))} \n \"Parent\": {records[index]}, \n \"Children\": [")
+    #         for index in dictionary:
+
+    #             f.write(str(records[index]))
+    #             f.write(str(", "))
+    #             f.write(str("\n"))
+
+    #         f.write("]\n},\n")
+
+    return data
+
+
+def remove_covererd_groups_duplicates(groups):
+
+    for parent_index, set in groups.items():
+
+        dupplicates = []
+
+        for idx in set: 
+            
+            if idx in groups:
+
+                intersection = set.intersection(groups[idx])
+                
+                dupplicates.extend(list(intersection))
+        
+        set.difference_update(dupplicates)
+
+    return groups
+
+
+def get_covered_groups(records):
+
+    P = [] 
+    for i in range(len(records)):
+        P.append([records[i][0], "L", i, records[i][1] - records[i][0] ])
+        P.append([records[i][1], "R", i, records[i][1] - records[i][0] ])
+    
+    P = sorted(
+        P, 
+        key=lambda x:
+            (
+                x[0], x[1], -x[3]) 
+                if (x[1] == "L") 
+                else (x[0], x[1], -x[2])
+            )
+
+    # save for each record its 
+    records_dict = {}
+
+    indicies_stack = []
+    flag = False
+
+    for i in range(len(P)):
+        
+        p_record = P[i] 
+        
+        # check if there is an overlap 
+        if p_record[1] == "L":
+            
+            # save entry's index so we can check wether it exists 
+            if P[i+1][1] == "L":
+
+                if p_record[2] not in indicies_stack:
+                    
+                    if flag:
+                
+                        # append intervals indicies which may be covered by current record
+                        for index in indicies_stack:
+                                records_dict[index]["Dict_L"].append(p_record[2])
+
+                    indicies_stack.append(p_record[2]) 
+                    
+                    # create dictionary for each entry
+                    records_dict[p_record[2]] = { "Dict_L": [] }
+                    records_dict[p_record[2]]["Dict_R"] = []
+                    
+                    flag = True
+
+            # otherwise save record to clean section of the dictonary
+            if len(indicies_stack) == 0:
+                flag = False
+            
+            else:
+                # append intervals indicies which may be covered by current record
+                for index in indicies_stack:
+                    records_dict[index]["Dict_L"].append(p_record[2])
+
+        else:
+
+            if p_record[2] in indicies_stack:
+                
+                indicies_stack.remove(p_record[2])
+
+             # otherwise save record to clean section of the dictonary
+            if len(indicies_stack) == 0:
+                flag = False
+                
+            else:
+
+                for index in indicies_stack:
+                    records_dict[index]["Dict_R"].append(p_record[2])
+
+    # memory saving
+    del P 
+
+    for index, dictionary in records_dict.items():
+        
+        dictionary = set(dictionary["Dict_L"]).intersection(set(dictionary["Dict_R"]))
+        records_dict.update({index: dictionary})
+
+    return records_dict
+
+
 def extract_overlaps():
 
     # get db records
@@ -564,8 +750,6 @@ def extract_overlaps():
         for record in overlap_seq:
             
             t.append(record)
-
-    resolve_overlaps(t)
 
 
 def get_overlaps(records):
@@ -660,76 +844,7 @@ def get_overlaps(records):
     return [overlaps, overlap_indicies]
 
 
-def resolve_overlaps(overlaps):
-
-    # the new records (without overlaps)
-    records_dict = {}
-    
-    P = [] 
-    for i in range(len(overlaps)):
-        P.append([overlaps[i][0], "L", i])
-        P.append([overlaps[i][1], "R", i])
-    
-    P.sort()
-
-    res = get_structured_overlaps(overlaps, P)
-    print(res)
-    
-
-def get_structured_overlaps(overlaps, P):
-
-    return get_structured_overlaps_helper(overlaps, 0, False, -1, P, [])
-
-
-def get_structured_overlaps_helper(overlaps, i, flag, current_index, P, overlaps_structred):
-
-    if i == len(P):
-        return overlaps_structred
-
-    elif P[i][1] == "L":
-
-        if current_index == -1:
-            current_index = P[i][2]
-            flag = False
-
-        else: 
-
-            if not flag: 
-                overlaps_structred.append(
-                    {
-                        "Parent":overlaps[current_index], 
-                        "Children":[]
-                    }
-                )
-                flag = True
-    
-            index = P[i][2]
-            overlaps_structred[-1]["Children"].append(overlaps[index])
-
-            if overlaps[index][1] > overlaps[current_index][1]:
-                current_index = index
-                flag = True
-
-    else:
-
-        if P[i][2] == current_index:
-            current_index = -1
-            flag = False
-            
-    return get_structured_overlaps_helper(overlaps, i+1, flag, current_index, P, overlaps_structred) 
-
-rec = [
-
-    [1, 10, 'BG', 'RIPE', '20160603', 'I', ''],
-    [1, 8, 'BG', 'RIPE', '20160603', 'I', ''],
-    [2, 4, 'BG', 'RIPE', '20150511', 'I', 'BGO Media Ltd.'],
-    [7, 10, 'BG', 'RIPE', '20190128', 'I', 'VPS.AG'],
-    [6, 11, 'BG', 'RIPE', '20190128', 'I', 'VPS.AG'],
-
-]
-
-
-def records_overlaps(records):
+def records_overlap(records):
     """
     Checks if any two records overlaps in the given list of RIA records 
     Note that complexity  O(n log(n))
@@ -839,18 +954,16 @@ def run_parser():
     
     merge_stripped_files()
     
-    ##get  all duplicates (simply take one from inetnum if 
-    ##other is delegation otherwise the one with longer description)
+    #get  all duplicates (simply take one from inetnum if 
+    # other is delegation otherwise the one with longer description)
     remove_duplicates()
+    remove_covered()
 
-   
     print("resolving overlaps ...")
     extract_overlaps()
 
-
     #print(f"checking if final database file have any ouverlapps: {records_overlaps(read_db())}")
     
-
     #delete_temp_files()
     print("finished\n")
 
@@ -860,145 +973,22 @@ def run_parser():
     return 0
 
 
-def merge_following(records):
-
-    # if list is empty return
-    if not records:
-        return 
-
-    P = [] 
-
-    for i in range(len(records)):
-        P.append([records[i][0], "L", i, i])
-        P.append([records[i][1], "R", i,i])
-
-    P.sort()
-
-    i = 0 
-    while i < len(P)-1:
-
-        # Check if R is followed by L
-        if (P[i][1] == 'R' and P[i+1][1] == 'L'):
-            # Check if distance is 1  
-            if P[i][0] + 1 == P[i+1][0]:
-
-                P[i] = [P[i+2][0],'R', P[i][2], P[i+1][2]]
-                index = P[i+1][2]
-                j = i + 1
-                P.pop(j)
-                while P[j][2] != index:
-                    j += 1
-                P.pop(j)
-            else: 
-                i+= 1
-        else: 
-            i += 1
-    
-    merged_record = []
-    index_list = []
-    for i in range(len(P)-1):
-        curr_index = P[i][2]
-        if curr_index not in index_list:
-            index_list.append(curr_index)
-            j = i + 1
-            while curr_index != P[j][2]:
-                j += 1
-            if P[j][3] == P[j][2]:
-                merged_record.append([P[i][0], P[j][0], records[curr_index][2], records[curr_index][3], records[curr_index][4],
-                                      records[curr_index][5], records[curr_index][6]])
-            else:
-                merged_record.append([P[i][0], P[j][0], records[curr_index][2], records[curr_index][3], records[curr_index][4],
-                                      records[curr_index][5], ""])
-
-    return merged_record
-    
-
-def merge(records):
- 
-     # if list is empty return
-    if not records:
-        return
-
-    records.sort(key=lambda x: x[0])
- 
-    merged = []
-    for record in records:
-        if not merged or merged[-1][1] < record[0]:
-            merged.append(record)
-        else:
-            merged[-1][1] = max(merged[-1][1], record[1])
- 
-    return merged
-
-
-def merge_big(records=[]):
-
-    if not records:
-        records = read_db()
-
-    print(f"Nr. of records before merge {len(records)}")
-
-    records = merge(records)
-
-    print(f"Nr. of records after merge {len(records)}")
-
-    write_db(records)
-
-
-def bigrange(records):
-
-    # if list is empty return
-    if not records:
-        return 
-
-    P = [] 
-
-    for i in range(len(records)):
-        P.append([records[i][0], "L", i])
-        P.append([records[i][1], "R", i])
-
-    P.sort()
-
-    min_value = P[0][0]
-    max_value = P[len(P)-1][0]
-
-    min_in = [P[0][2]]
-    max_in = [P[len(P)-1][2]]
-
-    notchanged = True
-    i = 1
-    while notchanged:
-        if P[i][0] != min_value: 
-            notchanged = False
-            break
-        else:
-            min_in.append(P[i][2])
-            i += 1
-
-    notchanged = True
-    i = len(P) - 2
-    while notchanged:
-        if P[i][0] != max_value: 
-            notchanged = False
-            break
-        else:
-            max_in.append(P[i][2])
-            i -= 1
-
-    for number in min_in:
-
-        if number in max_in:
-            index = number
-            return [records[index][0], records[index][1], records[index][2], records[index][3], records[index][4], records[index][5], ""]
-
-
-
-    return records   
-
-
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
-     
-
     #run_parser()
-    resolve_overlaps(rec)
+
+
+    t = [
+
+        [1, 20, 'CN', 'APNIC', '20210127', 'I', 'AA-NET Co., LTD Rm3208,Bldg Nanguangjiejia,,Shennan Road'], 
+        [2, 4, 'HK', 'APNIC', '20210127', 'I', 'fnetlink CO., LIMITED'], 
+        [4, 17, 'HK', 'APNIC', '20210127', 'I', 'fnetlink CO., LIMITED'], 
+        [5, 15, 'HK', 'APNIC', '20210127', 'I', 'fnetlink CO., LIMITED'], 
+        #[5, 10, 'CN', 'APNIC', '20210127', 'I', 'Rm.2204, Building 2, Huihuang International Building, 10th Shangdi Street, Haidian, China'], 
+        #[11, 15, 'CN', 'APNIC', '20210127', 'I', 'Rm.2204, Building 2, Huihuang International Building, 10th Shangdi Street, Haidian, China'], 
+           
+    ]
+    
+
+    print(remove_covered(t))
+               
