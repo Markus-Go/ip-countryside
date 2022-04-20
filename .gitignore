@@ -6,8 +6,7 @@
 *.pyproj.user
 
 #databank folder
-del_files/*
-!del_files/overlapp
+del_files/
 
 #python
 __pycache__/

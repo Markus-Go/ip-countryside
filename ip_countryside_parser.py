@@ -1,8 +1,10 @@
+from multiprocessing.reduction import duplicate
 import re
 import os
 import shutil
 import fileinput
 import ipaddress
+from ssl import CERT_REQUIRED
 import time
 from datetime import datetime
 import multiprocessing as mp
@@ -14,10 +16,6 @@ from ip_countryside_utilities import *;
 
 # Release 0.9.0 coming soon ... 
 
-# @TODO handle_ranges_overlapp() have now a structure to modify the data                    # Aufwand 5
-# base records. (The PDF can be helpful)           
-# Info: we need to know which entries should be removed. 
-
 # @TODO Bugfix in parse_inet_group() -> see todo there ...                                  # Auufwand 5 
 
 # @TODO comment and write description for each method & clean code                          # Aufwand 5 
@@ -25,22 +23,6 @@ from ip_countryside_utilities import *;
 # @TODO later add parameters for the command line interpreter (cli)                         # Aufwand 5
 
 # @TODO Flussdiagramm vom Parser erstellen                                                  # Aufwand 5
-
-# @TODO MAX MindDB API importieren zum testen und anschauen benutzen                        # Aufwand 8
-# wie sie die Objekte einer Datenbank aufbauen ....
-
-# @TODO Speed up parsing process of inetnum files                                           # Aufwand 13/20
-# Parsing should be done by multiple threads
-
-# @TODO add city information (when available) to the method parse_inet parse_inet_group     # Aufwand 21
-
-# 
-# 01 Sortiere overlap_sequences based on their coutntry, ipstart, ipfrom
-# 02 Divide intervals that causes overlapings so that they don't overlap with the smaller ones
-#    - For each interval that causes overlaping in a sequence (it's R doesn't come directly after
-#      it's L) creaete an Entry [start - end] and put all of its children
-#      inside it (Children are intervals with [start-ch end-ch], where start-ch => start and 
-#      end-ch <= end) 
 
 # ==============================================================================
 # Delegation parsing methods 
@@ -521,20 +503,35 @@ def get_duplicate_indicies(records):
         duplicate_dict[key].pop(-1)
 
         # join indexes of current duplicate sequence
-        duplicate_indicies = duplicate_indicies + duplicate_dict[key]  
+        duplicate_indicies.extend(duplicate_dict[key])  
 
     return duplicate_indicies
 
 
 def remove_covered(records=[]):
-    
+
     if not records:
         records = read_db()
 
     print(f"Nr. of records before covered resolving {len(records)}")
+    
+    [big_ranges_indicies, cleaned_records] = remove_covered_helper(records)
 
-    records_dict = get_covered_groups(records)
-    records_dict = remove_covererd_groups_duplicates(records_dict)
+    records = empty_entry_by_idx(records, big_ranges_indicies)
+    records.extend(cleaned_records)
+
+    print(f"Nr. of records deleted {len(big_ranges_indicies)}")
+    print(f"Nr. of new records added {len(cleaned_records)}")
+    
+    write_db(records)
+
+    print(f"Nr. of records after covered resolving {len(records)}")
+
+
+def remove_covered_helper(records=[]):
+    
+    
+    [covered_indicies, records_dict] = get_covered_groups(records)
 
     data = []
     for index, dictionary in records_dict.items():
@@ -570,11 +567,15 @@ def remove_covered(records=[]):
                     if parent[0] < P[i][0]:
 
                         new_record = [parent[0], P[i][0]-1, parent[2], parent[3], parent[4], parent[5], parent[6] ]
-                        data.extend([ new_record, records[P[i][2]] ])
+                        
+                        data.append(new_record)
                         
                         current_index = P[i][2]
 
-                else:
+                    if not P[i][2] in records_dict:
+                        data.append(records[P[i][2]])
+
+                elif current_index != -1:
                 
                     if P[i+1][1] == "L":
                         current_index = P[i+1][1]
@@ -589,44 +590,12 @@ def remove_covered(records=[]):
                 if P[i][0] < parent[1]:
                     
                     new_record = [P[i][0]+1, parent[1], parent[2], parent[3], parent[4], parent[5], parent[6] ]
-                    data.append(new_record)
-
-
-    # with open(os.path.join(DEL_FILES_DIR, "covered"), "w", encoding='utf-8', errors='ignore') as f:
     
-    #     for index, dictionary in records_dict.items():
-         
-
-    #         f.write("{\n")
-    #         f.write(f" overlaps: {records_overlap(get_records(records, dictionary))} \n \"Parent\": {records[index]}, \n \"Children\": [")
-    #         for index in dictionary:
-
-    #             f.write(str(records[index]))
-    #             f.write(str(", "))
-    #             f.write(str("\n"))
-
-    #         f.write("]\n},\n")
-
-    return data
-
-
-def remove_covererd_groups_duplicates(groups):
-
-    for parent_index, set in groups.items():
-
-        dupplicates = []
-
-        for idx in set: 
-            
-            if idx in groups:
-
-                intersection = set.intersection(groups[idx])
-                
-                dupplicates.extend(list(intersection))
+                    data.append(new_record)
+                    
         
-        set.difference_update(dupplicates)
 
-    return groups
+    return [covered_indicies, data]
 
 
 def get_covered_groups(records):
@@ -640,66 +609,33 @@ def get_covered_groups(records):
         P, 
         key=lambda x:
             (
-                x[0], x[1], -x[3]) 
+                x[0], x[1], -x[3], x[2]) 
                 if (x[1] == "L") 
-                else (x[0], x[1], -x[2])
+                else (x[0], x[1], -x[2], x[3])
             )
 
-    # save for each record its 
     records_dict = {}
-
-    indicies_stack = []
-    flag = False
 
     for i in range(len(P)):
         
-        p_record = P[i] 
+        p_record = P[i]
         
-        # check if there is an overlap 
-        if p_record[1] == "L":
-            
-            # save entry's index so we can check wether it exists 
-            if P[i+1][1] == "L":
+        if P[i][1] == "R":
+            continue
 
-                if p_record[2] not in indicies_stack:
-                    
-                    if flag:
-                
-                        # append intervals indicies which may be covered by current record
-                        for index in indicies_stack:
-                                records_dict[index]["Dict_L"].append(p_record[2])
+        records_dict[p_record[2]] = { "Dict_L": [] }
+        records_dict[p_record[2]]["Dict_R"] = []
 
-                    indicies_stack.append(p_record[2]) 
-                    
-                    # create dictionary for each entry
-                    records_dict[p_record[2]] = { "Dict_L": [] }
-                    records_dict[p_record[2]]["Dict_R"] = []
-                    
-                    flag = True
+        for j in range(i+1, len(P)):
 
-            # otherwise save record to clean section of the dictonary
-            if len(indicies_stack) == 0:
-                flag = False
-            
+            if P[j][2] == P[i][2]:
+                break
+
+            if P[j][1] == "L":
+                records_dict[p_record[2]]["Dict_L"].append(P[j][2])
+
             else:
-                # append intervals indicies which may be covered by current record
-                for index in indicies_stack:
-                    records_dict[index]["Dict_L"].append(p_record[2])
-
-        else:
-
-            if p_record[2] in indicies_stack:
-                
-                indicies_stack.remove(p_record[2])
-
-             # otherwise save record to clean section of the dictonary
-            if len(indicies_stack) == 0:
-                flag = False
-                
-            else:
-
-                for index in indicies_stack:
-                    records_dict[index]["Dict_R"].append(p_record[2])
+                records_dict[p_record[2]]["Dict_R"].append(P[j][2])
 
     # memory saving
     del P 
@@ -709,7 +645,46 @@ def get_covered_groups(records):
         dictionary = set(dictionary["Dict_L"]).intersection(set(dictionary["Dict_R"]))
         records_dict.update({index: dictionary})
 
-    return records_dict
+    # remove empty sets 
+    records_dict = {k: v for k, v in records_dict.items() if v}
+
+    # removes records contained in a child's record (with big range) 
+    [covered_indicies, records_dict,] = get_covered_groups_helper(records_dict, records)
+
+    return [covered_indicies, records_dict]
+
+
+def get_covered_groups_helper(groups, records=[]):
+
+    for parent_index, children in groups.items():
+
+        duplicates = []
+
+        for idx in children: 
+            
+           
+            if idx in groups:
+
+                intersection = children.intersection(groups[idx])
+                
+                duplicates.extend(list(intersection))
+           
+
+        children.difference_update(duplicates)
+
+    # remove empty entries (don't have any intervals contained in them) 
+    groups = {k: v for k, v in groups.items() if v}
+    
+    covered_indicies = set()
+
+    for k, v in groups.items():
+        
+        covered_indicies.add(k)
+        covered_indicies.update(list(v))
+
+    covered_indicies = list(covered_indicies)
+
+    return [ covered_indicies, groups]
 
 
 def extract_overlaps():
@@ -743,14 +718,7 @@ def extract_overlaps():
                 f.write(str("\n"))
 
             f.write("]\n")
-    
-    t = []
-    for overlap_seq in t:
-            
-        for record in overlap_seq:
-            
-            t.append(record)
-
+  
 
 def get_overlaps(records):
     """
@@ -954,41 +922,28 @@ def run_parser():
     
     merge_stripped_files()
     
-    #get  all duplicates (simply take one from inetnum if 
+    remove_covered()
+    
+    # get  all duplicates (simply take one from inetnum if 
     # other is delegation otherwise the one with longer description)
     remove_duplicates()
-    remove_covered()
-
-    print("resolving overlaps ...")
+    
     extract_overlaps()
 
-    #print(f"checking if final database file have any ouverlapps: {records_overlaps(read_db())}")
-    
+    #print("resolving overlaps ...")
+
+    print(f"checking if final database file have any ouverlapps: {records_overlap(read_db())}")
     #delete_temp_files()
     print("finished\n")
 
     end_time = time.time()
     print("total time needed was:", f'{end_time - start_time:.3f}', "s\n") 
     
+
     return 0
 
 
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
-    #run_parser()
 
-
-    t = [
-
-        [1, 20, 'CN', 'APNIC', '20210127', 'I', 'AA-NET Co., LTD Rm3208,Bldg Nanguangjiejia,,Shennan Road'], 
-        [2, 4, 'HK', 'APNIC', '20210127', 'I', 'fnetlink CO., LIMITED'], 
-        [4, 17, 'HK', 'APNIC', '20210127', 'I', 'fnetlink CO., LIMITED'], 
-        [5, 15, 'HK', 'APNIC', '20210127', 'I', 'fnetlink CO., LIMITED'], 
-        #[5, 10, 'CN', 'APNIC', '20210127', 'I', 'Rm.2204, Building 2, Huihuang International Building, 10th Shangdi Street, Haidian, China'], 
-        #[11, 15, 'CN', 'APNIC', '20210127', 'I', 'Rm.2204, Building 2, Huihuang International Building, 10th Shangdi Street, Haidian, China'], 
-           
-    ]
-    
-
-    print(remove_covered(t))
-               
+    run_parser()
