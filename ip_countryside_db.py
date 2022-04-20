@@ -1,5 +1,5 @@
 import json
-
+import yaml
 from config import *;
 
 
@@ -97,7 +97,44 @@ def extract_as_json(file=IP2COUNTRY_DB):
 
 
 def extract_as_yaml(file=IP2COUNTRY_DB):
-    pass
+    
+    data = { }
+    
+    
+    records = read_db(file)
+    
+    try :
+
+        with open(IP2COUNTRY_DB_YAML, 'w',  encoding='utf-8', errors='ignore') as f:
+            
+            f.write("---\n")
+          
+            for record in records:
+                
+             
+                f.write("- IpFrom: " )
+                f.write(str(record[0]))
+                f.write("\n  IpTo: ")
+                f.write(str(record[1]))
+                f.write("\n  CountryCode: ")
+                f.write(record[2])
+                f.write("\n  Registry: ")
+                f.write(record[3])
+                f.write("\n  LastModified: ")
+                f.write(record[4])
+                f.write("\n  Description: ")
+                f.write(record[5])
+                f.write("\n")
 
 
-# later -> sql lite... 
+           
+
+    except IOError as e:
+
+        print(e)
+                
+
+    return 0
+
+extract_as_yaml()
+
