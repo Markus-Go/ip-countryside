@@ -16,6 +16,8 @@ APNIC_DB_IRT           = os.path.join(DEL_FILES_DIR, "apnic.db.irt")
 APNIC_IRT              = os.path.join(DEL_FILES_DIR, "apnic.irt")
 IRTTOADDRESS           = os.path.join(DEL_FILES_DIR, "irtToAddress.py")
 MNT_BYTOADDRESS        = os.path.join(DEL_FILES_DIR, "mnt_byToAddress.py")
+IP2COUNTRY_DB_MMDB_V4     = os.path.join(DEL_FILES_DIR, "db4.mmdb")
+IP2COUNTRY_DB_MMDB_V6     = os.path.join(DEL_FILES_DIR, "db6.mmdb")
 
 # Regex for matching ip versions
 IPV4_PATTERN = "[0-9]+(?:\.[0-9]+){3}"

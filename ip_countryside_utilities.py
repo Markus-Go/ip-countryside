@@ -1,5 +1,5 @@
 from config import *;
-from ip_countryside_parser import get_city
+#from ip_countryside_parser import get_city
 import ipaddress
 
 # @TODO Method should call read_db() to get records in form of list     -> Aufwand 1

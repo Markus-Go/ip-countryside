@@ -1,5 +1,12 @@
+from netaddr import IPSet
+from mmdb_writer import MMDBWriter
+import maxminddb
+import ipaddress
+from ipaddress import ip_address, IPv4Address, IPv6Address, ip_interface
+import json
 import json
 import yaml
+import math
 from config import *;
 
 
@@ -136,5 +143,68 @@ def extract_as_yaml(file=IP2COUNTRY_DB):
 
     return 0
 
-extract_as_yaml()
+def extract_as_mmdb(file=IP2COUNTRY_DB):
+    data = {}
+
+    records = read_db(file)
+
+    writerv4 = MMDBWriter(ip_version=4)
+    writerv6 = MMDBWriter(ip_version=6)
+    for record in records:
+        ipaddress = getNetwork(record[0], record[1])
+        ipversion = ip_interface(ipaddress).ip.version
+        if ipversion == 4:
+            try:
+                writerv4.insert_network(IPSet(['{0}'.format(ipaddress)]),
+                                        {'CountryCode': '{0}'.format(record[2]),
+                                         'Registry': '{0}'.format(record[3]),
+                                         'LastModified': '{0}'.format(record[4]),
+                                         'Description': '{0}'.format(record[5])})
+                writerv4.to_db_file(IP2COUNTRY_DB_MMDB_V4)
+                print("entry added for: " + ipaddress)
+
+            except IOError as e:
+                #print(e)
+                return 0
+
+        if ipversion == 6:
+            try:
+                writerv6.insert_network(IPSet(['{0}'.format(ipaddress)]),
+                                        {'CountryCode': '{0}'.format(record[2]),
+                                         'Registry': '{0}'.format(record[3]),
+                                         'LastModified': '{0}'.format(record[4]),
+                                         'Description': '{0}'.format(record[5])})
+                writerv6.to_db_file(IP2COUNTRY_DB_MMDB_V6)
+                print("entry added for: " + ipaddress)
+
+            except IOError as e:
+                #print(e)
+                return 0
+
+def read_mmdb(ipaddress):
+    if ip_interface(ipaddress).ip.version == 4:
+        m = maxminddb.open_database(IP2COUNTRY_DB_MMDB_V4)
+    else:
+        m = maxminddb.open_database(IP2COUNTRY_DB_MMDB_V6)
+    print(m.get(ipaddress))
+
+def getNetwork(ip_from, ip_to):
+    hosts = ip_to + 1 - ip_from
+    res = math.log2(hosts)
+    subnetmask = 32 - int(res)
+    if subnetmask < 0:
+        subnetmask = subnetmask * -1
+    if not res.is_integer():
+        round(subnetmask, 0)
+        #print("No valid subnetmask", ip_from, " ", ip_to, "with subnetmask: ", res)
+        return str(ipaddress.ip_address(ip_from)) + "/" + str(subnetmask)
+
+    return str(ipaddress.ip_address(ip_from)) + "/" + str(subnetmask)
+
+def getaddress(ip_from):
+    return str(ipaddress.ip_address(ip_from))
+
+#extract_as_mmdb()
+read_mmdb("131.255.44.4")
+read_mmdb("2c0f:eca0::0001")
 
