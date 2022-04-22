@@ -968,11 +968,84 @@ def run_parser():
 
     return 0
 
+def merge_successive(records):
+
+    # if list is empty return
+    if not records:
+        return 
+
+    P = [] 
+
+    for i in range(len(records)):
+        P.append([records[i][0], "L", i, i, records[i][2]])
+        P.append([records[i][1], "R", i, i, records[i][2]])
+
+    P.sort()
+
+    i = 0 
+    while i < len(P)-1:
+
+        # Check if R is followed by L
+        if (P[i][1] == 'R' and P[i+1][1] == 'L'):
+            # Check if distance is 1  and is the same country
+            if P[i][0] + 1 == P[i+1][0] and P[i][4] == P[i+1][4]:
+
+                P[i] = [P[i+2][0],'R', P[i][2], P[i+1][2], P[i][4]]
+                index = P[i+1][2]
+                j = i + 1
+                P.pop(j)
+                while P[j][2] != index:
+                    j += 1
+                P.pop(j)
+            else: 
+                i+= 1
+        else: 
+            i += 1
+    
+    merged_record = []
+    index_list = []
+    for i in range(len(P)-1):
+        curr_index = P[i][2]
+        if curr_index not in index_list:
+            index_list.append(curr_index)
+            j = i + 1
+            while curr_index != P[j][2]:
+                j += 1
+            if P[j][3] == P[j][2]:
+                merged_record.append([P[i][0], P[j][0], records[curr_index][2], records[curr_index][3], records[curr_index][4],
+                                      records[curr_index][5], records[curr_index][6]])
+            else:
+                merged_record.append([P[i][0], P[j][0], records[curr_index][2], records[curr_index][3], records[curr_index][4],
+                                      records[curr_index][5], ""])
+
+    return merged_record
+
+
+def merge(records):
+ 
+     # if list is empty return
+    if not records:
+        return
+
+    records.sort(key=lambda x: x[0])
+ 
+    merged = []
+    for record in records:
+        # Wenn merged nicht leer ist oder der letzte ZU eintrag von merged kleiner ist als der VON vom aktuellen 
+        # Füge den aktuellen zu merged hinzu
+        if not merged or merged[-1][1] < record[0]:
+            merged.append(record)
+        else:
+        # Ersetze den ZU eintrag von merged mit dem max value aus dem letzen ZU von merged und dem aktuellen ZU 
+            merged[-1][1] = max(merged[-1][1], record[1])
+ 
+    return merged
+
 
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
 
-    run_parser()
+    #run_parser()
     
     t = [
 
@@ -993,3 +1066,22 @@ if __name__ == "__main__":
     ]
 
     #remove_duplicates(t)
+
+    
+
+
+
+
+
+    l = [
+        [1,5,'DE','RIPE', '20161012', 'I', 'TELEX SRL'],
+        [6,10,'DE','RIPE', '20161012', 'I', 'TELEX SRL'],
+        [11,20,'DE','RIPE', '20161012', 'I', 'TELEX SRL'],
+        [18,24,'DE','RIPE', '20161012', 'I', 'TELEX SRL']
+        
+        ]
+
+    x = merge(merge_successive(l))
+
+    for line in x:
+        print(line)
