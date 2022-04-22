@@ -509,208 +509,62 @@ def get_duplicate_indicies(records):
     return duplicate_indicies
 
 
-def remove_covered(records=[]):
+def resolve_overlaps(records=[]):
 
     if not records:
         records = read_db()
 
-    print(f"Nr. of records before covered resolving {len(records)}")
+    print(f"Nr. of records before resolving resolving {len(records)}")
     
-    [big_ranges_indicies, cleaned_records] = remove_covered_helper(records)
+    records = resolve_overlaps_helper(records)
 
-    records = empty_entry_by_idx(records, big_ranges_indicies)
-    records.extend(cleaned_records)
-
-    print(f"Nr. of records deleted {len(big_ranges_indicies)}")
-    print(f"Nr. of new records added {len(cleaned_records)}")
-    
-    # TODO remove sort
-    records.sort()
+    print(f"Nr. of records after resolving overlaps {len(records)}")
     
     write_db(records)
 
-    print(f"Nr. of records after covered resolving {len(records)}")
 
+def resolve_overlaps_helper(records=[]):
+    
+    # if list is empty return
+    if not records:
+        return 
 
-def remove_covered_helper(records=[]):
-  
-    [covered_indicies, records_dict] = get_covered_groups(records)
-
+    overlaps_dict = []
     data = []
-    for index, dictionary in records_dict.items():
-        
-        parent = records[index]
-        
-        P = []
-        for i in dictionary:
-            records[i].append(i)
-            P.append(records[i])
 
-        P.sort()
+    endpoints = sorted(list(set([r[0] for r in records] + [r[1] for r in records])))
+    start = {}
+    end = {}
 
-        last_covered_point = parent[0]
-        for i in range(len(P)):
+    for e in endpoints:
+        start[e] = set()
+        end[e] = set()
+    
 
-            new_record = []
-
-            if P[i][0] > last_covered_point:
-
-                new_record = [last_covered_point+1, P[i][0]-1, parent[2], parent[3], parent[4], parent[5], parent[6]]
-                
-                if i == 0 or last_covered_point+1 == P[i][0]:
-                    new_record[0] = last_covered_point
-                
-                if P[i][2] == "EU" and parent[2] != "EU":
-                    P[i][2] = parent[2]
-
-                if not P[i][-1] in records_dict:
-
-                    data.append(P[i])
-                    
-                data.append(new_record)
-                
-                last_covered_point  = max(last_covered_point,P[i][1])
-
-            else:
-
-                if not P[i][-1] in records_dict:
-
-                    if P[i][2] == "EU" and parent[2] != "EU":
-                        P[i][2] = parent[2]
-
-                    data.append(P[i])
-
-                last_covered_point  = max(last_covered_point,P[i][1])
-
-            if i == len(P) - 1 and last_covered_point < parent[1]:
-
-                new_record = [last_covered_point+1, parent[1], parent[2], parent[3], parent[4], parent[5], parent[6]]
-                data.append(new_record)
-            
-
-    return [covered_indicies, data]
-
-
-def get_covered_groups(records):
-
-    P = [] 
     for i in range(len(records)):
-        P.append([records[i][0], "L", i, records[i][1] - records[i][0] ])
-        P.append([records[i][1], "R", i, records[i][1] - records[i][0] ])
-    
-    P = sorted(
-        P, 
-        key=lambda x:
-            (
-                x[0], x[1], -x[3], x[2]) 
-                if (x[1] == "L") 
-                else (x[0], x[1], -x[2], x[3])
-            )
+        start[records[i][0]].add(i)
+        end[records[i][1]].add(i)
 
-    records_dict = {}
+    current_ranges = set()
 
-    for i in range(len(P)):
+    # TODO MemoryError
+    zipped = zip(endpoints[:-1], endpoints[1:])
+    del endpoints
+    for e1, e2 in zipped:
+        current_ranges.difference_update(end[e1])
+        current_ranges.update(start[e1])
         
-        p_record = P[i]
-        
-        if P[i][1] == "R":
-            continue
+        # MemoryError
+        overlaps_dict.append( [ [e1, e2], list(current_ranges) ] )
 
-        records_dict[p_record[2]] = { "Dict_L": [] }
-        records_dict[p_record[2]]["Dict_R"] = []
+    for r in overlaps_dict:
 
-        for j in range(i+1, len(P)):
+        for idx in overlaps_dict[r]:
 
-            if P[j][2] == P[i][2]:
-                break
-
-            if P[j][1] == "L":
-                records_dict[p_record[2]]["Dict_L"].append(P[j][2])
-
-            else:
-                records_dict[p_record[2]]["Dict_R"].append(P[j][2])
-
-    # memory saving
-    del P 
-
-    for index, dictionary in records_dict.items():
-        
-        dictionary = set(dictionary["Dict_L"]).intersection(set(dictionary["Dict_R"]))
-        records_dict.update({index: dictionary})
-
-    # remove empty sets 
-    records_dict = {k: v for k, v in records_dict.items() if v}
-
-    # removes child records (with big range) 
-    [covered_indicies, records_dict,] = get_covered_groups_helper(records_dict, records)
-
-    return [covered_indicies, records_dict]
-
-
-def get_covered_groups_helper(groups, records=[]):
+            record = records[idx]
+            data.append( [ r[0], r[1], record[2], record[3], record[4], record[5], record[6] ] )
     
-    for parent_index, children in groups.items():
-
-        duplicates = []
-
-        for idx in children: 
-            
-            # TODO remove deuplicates here 
-
-            if idx in groups:
-
-                intersection = children.intersection(groups[idx])
-                
-                duplicates.extend(list(intersection))
-           
-        children.difference_update(duplicates)
-
-    counter = 0
-    for i in groups.keys():
-    
-        key_list = list(groups.keys())
-
-        for j in key_list[counter:]:
-            
-            counter += 1
-
-            if i < j:
-
-                intersection = groups[i].intersection(groups[j])
-                if intersection:
-
-                    if records[i][2] != "EU" and records[j][2] == "EU":
-                        records[j][0] = records[i][1]+1
-                        groups[j].difference_update(intersection)
-
-
-                    elif records[i][2] == "EU" and records[j][2] != "EU":
-                        records[i][1] = records[j][0]  - 1
-                        groups[i].difference_update(intersection)
-
-
-                    elif records[i][2] == records[j][2]:
-                        records[j][0] = records[i][1]+1       
-                        groups[j].difference_update(intersection)
-                        
-                    else:   
-                        groups[j] = {}
-                        groups[i] = {}
-                    
-
-    # remove empty entries (don't have any intervals contained in them) 
-    groups = {k: v for k, v in groups.items() if v}
-    
-    covered_indicies = set()
-
-    for k, v in groups.items():
-        
-        covered_indicies.add(k)
-        covered_indicies.update(list(v))
-
-    covered_indicies = list(covered_indicies)
-
-    return [ covered_indicies, groups]
+    return list(data)
 
 
 def extract_overlaps():
@@ -948,15 +802,12 @@ def run_parser():
     
     merge_stripped_files()
     
-    remove_covered()
+    resolve_overlaps()
 
-    # get  all duplicates (simply take one from inetnum if 
-    # other is delegation otherwise the one with longer description)
     remove_duplicates()
-    
+
     extract_overlaps()
 
-    #print("resolving overlaps ...")
 
     print(f"checking if final database file have any ouverlapps: {records_overlap(read_db())}")
     #delete_temp_files()
@@ -972,24 +823,32 @@ def run_parser():
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
 
-    run_parser()
+    #run_parser()
     
     t = [
 
-        [1, 22, 'RU', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-        [1, 22, 'RU', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-        [1, 22, 'RU', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-        [1, 35, 'DE', 'APNIC', '20091023', 'I', '2'],
-        [5, 30, 'DE', 'APNIC', '20091023', 'I', '3'],
-        [5, 30, 'DE', 'APNIC', '20091023', 'I', '3'],
-        [2, 4, 'EU', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-        [3, 4, 'EU', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-        [4, 5, 'IN', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-        [6, 8, 'IN', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-       # [7, 9, 'EU', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-       # [10, 15, 'IN', 'APNIC', '20210303', 'I', 'IPS Pool'],
-       # [2, 22, 'EU', 'APNIC', '20091023', 'I', '2'],
-
+        [1, 50, 'A', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
+        [10, 20, 'B', 'APNIC', '2', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
+    #   [25, 50, 'A', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
+    #   [10, 60, 'C', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
+    #   [1, 60, 'C', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
+        [60, 70, 'D', 'APNIC', '2', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
+        [60, 100, 'D', 'APNIC', '2', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
+    
     ]
 
-    #remove_duplicates(t)
+    # Result should be:
+
+    # 1|9|A|APNIC|20091023|I
+
+    # 10|40|A|APNIC|2|I
+    # 10|40|B|APNIC|2|I|Doors and Doors Systems (India) Pvt Ltd
+    # 10|40|C|APNIC|2|I
+
+    # 41|50|A|APNIC|20091023|I
+    # 41|50|C|APNIC|20091023|I
+
+    # 51|60|C|APNIC|20091023|I
+
+
+    resolve_overlaps(t)
