@@ -161,13 +161,10 @@ def create_app(test_config=None):
     def api_id():
 
         if 'id' in request.args:
-            id = str(request.args['id'])
-            results = read_mmdb("131.255.44.4")
-            return jsonify(results)
+            id = request.args['id']
+            return jsonify(read_mmdb(id))
 
         else:
             return "No id field provided. Please specify an id."
-
-
 
     return app

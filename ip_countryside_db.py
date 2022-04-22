@@ -186,7 +186,7 @@ def read_mmdb(ipaddress):
         m = maxminddb.open_database(IP2COUNTRY_DB_MMDB_V4)
     else:
         m = maxminddb.open_database(IP2COUNTRY_DB_MMDB_V6)
-    print(m.get(ipaddress))
+    return m.get(ipaddress)
 
 def getNetwork(ip_from, ip_to):
     hosts = ip_to + 1 - ip_from
@@ -205,6 +205,6 @@ def getaddress(ip_from):
     return str(ipaddress.ip_address(ip_from))
 
 #extract_as_mmdb()
-read_mmdb("131.255.44.4")
-read_mmdb("2c0f:eca0::0001")
+print(read_mmdb("131.255.44.4"))
+print(read_mmdb("2c0f:eca0::0001"))
 
