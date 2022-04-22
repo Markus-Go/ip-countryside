@@ -9,6 +9,7 @@ import time
 from datetime import datetime
 import multiprocessing as mp
 import math
+from tokenize import group
 
 from config import *;
 from ip_countryside_db import *;
@@ -523,77 +524,69 @@ def remove_covered(records=[]):
     print(f"Nr. of records deleted {len(big_ranges_indicies)}")
     print(f"Nr. of new records added {len(cleaned_records)}")
     
+    # TODO remove sort
+    records.sort()
+    
     write_db(records)
 
     print(f"Nr. of records after covered resolving {len(records)}")
 
 
 def remove_covered_helper(records=[]):
-    
-    
+  
     [covered_indicies, records_dict] = get_covered_groups(records)
 
     data = []
     for index, dictionary in records_dict.items():
         
         parent = records[index]
-        current_index = -1
-
+        
         P = []
         for i in dictionary:
-            P.append([records[i][0], "L", i, records[i][1] - records[i][0] ])
-            P.append([records[i][1], "R", i, records[i][1] - records[i][0] ])
-        
-        P = sorted(
-            P, 
-            key=lambda x:
-                (
-                    x[0], x[1], -x[3]) 
-                    if (x[1] == "L") 
-                    else (x[0], x[1], -x[2])
-                )
+            records[i].append(i)
+            P.append(records[i])
 
+        P.sort()
+
+        last_covered_point = parent[0]
         for i in range(len(P)):
-
-            # TODO ignore duplicates ... (they have their own method)
-            # TODO check if parent is not EU but children are EU
 
             new_record = []
 
-            if P[i][1] == "L":
+            if P[i][0] > last_covered_point:
+
+                new_record = [last_covered_point+1, P[i][0]-1, parent[2], parent[3], parent[4], parent[5], parent[6]]
                 
-                if current_index == -1:
+                if i == 0 or last_covered_point+1 == P[i][0]:
+                    new_record[0] = last_covered_point
+                
+                if P[i][2] == "EU" and parent[2] != "EU":
+                    P[i][2] = parent[2]
+
+                if not P[i][-1] in records_dict:
+
+                    data.append(P[i])
+                    
+                data.append(new_record)
+                
+                last_covered_point  = max(last_covered_point,P[i][1])
+
+            else:
+
+                if not P[i][-1] in records_dict:
+
+                    if P[i][2] == "EU" and parent[2] != "EU":
+                        P[i][2] = parent[2]
+
+                    data.append(P[i])
+
+                last_covered_point  = max(last_covered_point,P[i][1])
+
+            if i == len(P) - 1 and last_covered_point < parent[1]:
+
+                new_record = [last_covered_point+1, parent[1], parent[2], parent[3], parent[4], parent[5], parent[6]]
+                data.append(new_record)
             
-                    if parent[0] < P[i][0]:
-
-                        new_record = [parent[0], P[i][0]-1, parent[2], parent[3], parent[4], parent[5], parent[6] ]
-                        
-                        data.append(new_record)
-                        
-                        current_index = P[i][2]
-
-                    if not P[i][2] in records_dict:
-                        data.append(records[P[i][2]])
-
-                elif current_index != -1:
-                
-                    if P[i+1][1] == "L":
-                        current_index = P[i+1][1]
-
-                    data.append(records[P[i][2]])
-
-                    # check if end of current record is not successive with next record 
-                    # lücke in der Mitte .... 
-
-            if i == len(P)-1:
-
-                if P[i][0] < parent[1]:
-                    
-                    new_record = [P[i][0]+1, parent[1], parent[2], parent[3], parent[4], parent[5], parent[6] ]
-    
-                    data.append(new_record)
-                    
-        
 
     return [covered_indicies, data]
 
@@ -648,29 +641,62 @@ def get_covered_groups(records):
     # remove empty sets 
     records_dict = {k: v for k, v in records_dict.items() if v}
 
-    # removes records contained in a child's record (with big range) 
+    # removes child records (with big range) 
     [covered_indicies, records_dict,] = get_covered_groups_helper(records_dict, records)
 
     return [covered_indicies, records_dict]
 
 
 def get_covered_groups_helper(groups, records=[]):
-
+    
     for parent_index, children in groups.items():
 
         duplicates = []
 
         for idx in children: 
             
-           
+            # TODO remove deuplicates here 
+
             if idx in groups:
 
                 intersection = children.intersection(groups[idx])
                 
                 duplicates.extend(list(intersection))
            
-
         children.difference_update(duplicates)
+
+    counter = 0
+    for i in groups.keys():
+    
+        key_list = list(groups.keys())
+
+        for j in key_list[counter:]:
+            
+            counter += 1
+
+            if i < j:
+
+                intersection = groups[i].intersection(groups[j])
+                if intersection:
+
+                    if records[i][2] != "EU" and records[j][2] == "EU":
+                        records[j][0] = records[i][1]+1
+                        groups[j].difference_update(intersection)
+
+
+                    elif records[i][2] == "EU" and records[j][2] != "EU":
+                        records[i][1] = records[j][0]  - 1
+                        groups[i].difference_update(intersection)
+
+
+                    elif records[i][2] == records[j][2]:
+                        records[j][0] = records[i][1]+1       
+                        groups[j].difference_update(intersection)
+                        
+                    else:   
+                        groups[j] = {}
+                        groups[i] = {}
+                    
 
     # remove empty entries (don't have any intervals contained in them) 
     groups = {k: v for k, v in groups.items() if v}
@@ -923,7 +949,7 @@ def run_parser():
     merge_stripped_files()
     
     remove_covered()
-    
+
     # get  all duplicates (simply take one from inetnum if 
     # other is delegation otherwise the one with longer description)
     remove_duplicates()
@@ -947,3 +973,23 @@ def run_parser():
 if __name__ == "__main__":   
 
     run_parser()
+    
+    t = [
+
+        [1, 22, 'RU', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
+        [1, 22, 'RU', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
+        [1, 22, 'RU', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
+        [1, 35, 'DE', 'APNIC', '20091023', 'I', '2'],
+        [5, 30, 'DE', 'APNIC', '20091023', 'I', '3'],
+        [5, 30, 'DE', 'APNIC', '20091023', 'I', '3'],
+        [2, 4, 'EU', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
+        [3, 4, 'EU', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
+        [4, 5, 'IN', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
+        [6, 8, 'IN', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
+       # [7, 9, 'EU', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
+       # [10, 15, 'IN', 'APNIC', '20210303', 'I', 'IPS Pool'],
+       # [2, 22, 'EU', 'APNIC', '20091023', 'I', '2'],
+
+    ]
+
+    #remove_duplicates(t)
