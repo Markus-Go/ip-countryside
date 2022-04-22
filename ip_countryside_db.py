@@ -4,9 +4,10 @@ import maxminddb
 import ipaddress
 from ipaddress import ip_address, IPv4Address, IPv6Address, ip_interface
 import json
-import json
 import yaml
 import math
+import sqlite3
+import csv
 from config import *;
 
 
@@ -143,6 +144,45 @@ def extract_as_yaml(file=IP2COUNTRY_DB):
 
     return 0
 
+
+def extract_as_sqllite(file=IP2COUNTRY_DB):
+    
+    connection = sqlite3.connect("sql_lite.db")
+    cursor = connection.cursor()
+
+    #ip_from|ip_to|country|ria|date|file|description
+    
+    query = """
+    CREATE TABLE IF NOT EXISTS ip2country (
+    ip_from INT,
+    ip_to INT,
+    country varchar(3),
+    ria varchar(10),
+    date varchar(20),
+    file varchar(20),
+    description varchar(255),
+    PRIMARY KEY (ip_from, ip_to)
+    );"""
+
+    cursor.execute(query)
+
+    query = """
+    INSERT OR REPLACE INTO ip2country (ip_from, ip_to, country, ria, date, file, description)
+    VALUES (:ip_from, :ip_to, :country, :ria, :date, :file, :description)
+    """
+
+    with open(file, encoding='utf-8', errors='ignore') as csvfile:
+        csv_reader_object = csv.reader(csvfile, delimiter='|', quoting=csv.QUOTE_NONE)
+
+        with sqlite3.connect("sql_lite.db") as connection:
+            cursor = connection.cursor()
+            try:
+                cursor.executemany(query, csv_reader_object)
+            except  Exception as e: 
+                print("Exception: ", e)
+
+
+
 def extract_as_mmdb(file=IP2COUNTRY_DB):
     data = {}
 
@@ -205,6 +245,6 @@ def getaddress(ip_from):
     return str(ipaddress.ip_address(ip_from))
 
 #extract_as_mmdb()
-print(read_mmdb("131.255.44.4"))
-print(read_mmdb("2c0f:eca0::0001"))
+#print(read_mmdb("131.255.44.4"))
+#print(read_mmdb("2c0f:eca0::0001"))
 
