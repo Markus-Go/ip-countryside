@@ -2,8 +2,13 @@ from config import *;
 import ipaddress
 import math
 
+import pandas as pd
+
+
 # @TODO Method should call read_db() to get records in form of list     -> Aufwand 1
 # Use a filter instead  
+
+# 12,73 s old method
 
 def get_record_by_ip(ip):
     

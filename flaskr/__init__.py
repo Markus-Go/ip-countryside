@@ -121,16 +121,30 @@ def create_app(test_config=None):
         else:
             ipaddress = os.popen('curl -s ifconfig.me').readline()
             temp = get_record_by_ip(ipaddress)
-            country = temp[0] 
-            flag = temp[1]
-            address = temp[0]
-            comment = "-"
-            isValid = True
+
+            if temp:
+                country = temp[0] 
+                flag = temp[1]
+                address = temp[0]
+                comment = "-"
+                isValid = True
+
+            else:
+                country = "-" 
+                flag = "Arrr"
+                comment = "No Valid IP-Adress"
+                lat = 0
+                lon = 0
+                address = "-"
+                isValid = False
+
+
             try:
                 geolocator = Nominatim(user_agent="Your_Name")
                 location = geolocator.geocode(address)
                 lat = location.latitude
                 lon = location.longitude
+                
             except:
                 isValid = False
                 lat = 0
