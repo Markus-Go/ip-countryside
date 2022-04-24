@@ -15,6 +15,8 @@ from config import *;
 from ip_countryside_db import *;
 from ip_countryside_utilities import *;
 
+import pandas as pd
+
 # Release 0.9.0 coming soon ... 
 
 # @TODO Bugfix in parse_inet_group() -> see todo there ...                                  # Auufwand 5 
@@ -509,68 +511,10 @@ def get_duplicate_indicies(records):
     return duplicate_indicies
 
 
-def resolve_overlaps(records=[]):
+def extract_overlaps(records=[]):
 
     if not records:
         records = read_db()
-
-    print(f"Nr. of records before resolving resolving {len(records)}")
-    
-    records = resolve_overlaps_helper(records)
-
-    print(f"Nr. of records after resolving overlaps {len(records)}")
-    
-    write_db(records)
-
-
-def resolve_overlaps_helper(records=[]):
-    
-    # if list is empty return
-    if not records:
-        return 
-
-    overlaps_dict = []
-    data = []
-
-    endpoints = sorted(list(set([r[0] for r in records] + [r[1] for r in records])))
-    start = {}
-    end = {}
-
-    for e in endpoints:
-        start[e] = set()
-        end[e] = set()
-    
-
-    for i in range(len(records)):
-        start[records[i][0]].add(i)
-        end[records[i][1]].add(i)
-
-    current_ranges = set()
-
-    # TODO MemoryError
-    zipped = zip(endpoints[:-1], endpoints[1:])
-    del endpoints
-    for e1, e2 in zipped:
-        current_ranges.difference_update(end[e1])
-        current_ranges.update(start[e1])
-        
-        # MemoryError
-        overlaps_dict.append( [ [e1, e2], list(current_ranges) ] )
-
-    for r in overlaps_dict:
-
-        for idx in overlaps_dict[r]:
-
-            record = records[idx]
-            data.append( [ r[0], r[1], record[2], record[3], record[4], record[5], record[6] ] )
-    
-    return list(data)
-
-
-def extract_overlaps():
-
-    # get db records
-    records = read_db()
 
     print(f"Nr. of records before overlaps deletion {len(records)}")
 
@@ -591,6 +535,8 @@ def extract_overlaps():
         for overlap_seq in overlaps:
             
             f.write("[\n")
+
+            overlap_seq = resolve_overlaps(overlap_seq)
 
             for record in overlap_seq:
 
@@ -690,6 +636,46 @@ def get_overlaps(records):
     print(f"overlaps found {overlaps_nr}\n")
 
     return [overlaps, overlap_indicies]
+
+
+def resolve_overlaps(records=[]):
+    
+    # if list is empty return
+    if not records:
+        return 
+
+    data = []
+
+    endpoints = sorted(list(set([r[0] for r in records] + [r[1] for r in records])))
+    start = {}
+    end = {}
+
+    for e in endpoints:
+        start[e] = set()
+        end[e] = set()
+    
+
+    for i in range(len(records)):
+        start[records[i][0]].add(i)
+        end[records[i][1]].add(i)
+
+    
+    current_ranges = set()
+    
+    # TODO MemoryError
+    zipped = zip(endpoints[:-1], endpoints[1:])
+    del endpoints
+    for e1, e2 in zipped:
+        current_ranges.difference_update(end[e1])
+        current_ranges.update(start[e1])
+        
+        for idx in list(current_ranges):
+
+            record = records[idx]
+            data.append( [ e1, e2, record[2], record[3], record[4], record[5], record[6] ] )
+
+       
+    return data
 
 
 def records_overlap(records):
@@ -802,12 +788,9 @@ def run_parser():
     
     merge_stripped_files()
     
-    resolve_overlaps()
-
-    remove_duplicates()
+    #remove_duplicates()
 
     extract_overlaps()
-
 
     print(f"checking if final database file have any ouverlapps: {records_overlap(read_db())}")
     #delete_temp_files()
@@ -819,6 +802,26 @@ def run_parser():
 
     return 0
 
+
+def get_overlaps_2(records):
+    
+    if not records:
+        return 
+
+    df = pd.DataFrame(data=records,
+        columns=["ip_from", "ip_to", "cc", "registry", "last-modifie", "record_type", "description"]
+    )
+
+    idx = 0
+    dfs = []
+    while True: 
+        low = df.ip_from[idx]
+        high = df.ip_to[idx]
+        sub_df = df[(df.ip_from <= high) & (low <= df.ip_from)]
+        dfs.append(sub_df)
+        idx = sub_df.index.max() + 1
+        if idx > df.index.max():
+            break
 
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
@@ -850,5 +853,6 @@ if __name__ == "__main__":
 
     # 51|60|C|APNIC|20091023|I
 
-
-    resolve_overlaps(t)
+    #merge_stripped_files()
+    get_overlaps_2(read_db())
+    #extract_overlaps(t)
