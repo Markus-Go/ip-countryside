@@ -1,3 +1,4 @@
+from numpy import record
 from config import *;
 import ipaddress
 import math
@@ -5,38 +6,26 @@ import math
 import pandas as pd
 
 
-# @TODO Method should call read_db() to get records in form of list     -> Aufwand 1
-# Use a filter instead  
-
-# 12,73 s old method
-
 def get_record_by_ip(ip):
     
-    with open(IP2COUNTRY_DB, encoding='utf-8', errors='ignore') as file:
+    col_names = ["ip_from", "ip_to", "cc", "registry", "last-modified", "record_type", "description"]
 
-        for line in file:
+    df = pd.read_csv(IP2COUNTRY_DB, delimiter="|", names=col_names, converters={'ip_from':int, 'ip_to':int})
 
-            item = line.split("|")
+    # convert incoming ip from dot notation to int 
+    ip = ipaddress.ip_address(ip)
+    ip_int = int(ip)
+    
+    # this is actually not 100% correct. If the Database is clean,
+    # there should only be one record returned !
+    record = df.loc[ ( (df['ip_from'] <= ip_int) & (df['ip_to'] >= ip_int) ) ].values[0]
+    cc = record[2]
 
-            range_start = int(item[0])
-            range_end   = int(item[1])
-            country     = item[2].rstrip('\n')
-
-            if ip_in_range(ip, range_start, range_end):
-
-                return COUNTRY_DICTIONARY[country], country
-            
+    if cc:
+        return COUNTRY_DICTIONARY[cc], cc
 
     return False
     
-
-def ip_in_range(ip, start, end):
-    
-    ip = ipaddress.ip_address(ip)
-    ip_int = int(ip)
-
-    return start <= ip_int <= end 
-
 
 def empty_entry_by_idx(records, indicies):
     """
@@ -67,15 +56,6 @@ def empty_entry_by_idx(records, indicies):
 
     return records
 
-
-def get_records(records, indicies):
-
-    data = [] 
-
-    for idx in indicies:
-        data.append(records[idx])
-
-    return data
 
 def getNetwork(ip_from, ip_to):
     hosts = ip_to + 1 - ip_from 
