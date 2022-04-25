@@ -16,16 +16,8 @@ from ip_countryside_db import *;
 from ip_countryside_utilities import *;
 
 import pandas as pd
-
-# Release 0.9.0 coming soon ... 
-
-# @TODO Bugfix in parse_inet_group() -> see todo there ...                                  # Auufwand 5 
-
-# @TODO comment and write description for each method & clean code                          # Aufwand 5 
-
-# @TODO later add parameters for the command line interpreter (cli)                         # Aufwand 5
-
-# @TODO Flussdiagramm vom Parser erstellen                                                  # Aufwand 5
+import dask.dataframe as dd
+import numpy as np
 
 # ==============================================================================
 # Delegation parsing methods 
@@ -534,17 +526,12 @@ def extract_overlaps(records=[]):
 
         for overlap_seq in overlaps:
             
-            f.write("[\n")
-
-            overlap_seq = resolve_overlaps(overlap_seq)
-
             for record in overlap_seq:
 
-                f.write(str(record))
-                f.write(str("\n"))
+                line = "|".join(map(str, record))
+                line = line + '\n'
+                f.write(line)
 
-            f.write("]\n")
-  
 
 def get_overlaps(records):
     """
@@ -788,9 +775,11 @@ def run_parser():
     
     merge_stripped_files()
     
-    #remove_duplicates()
+    remove_duplicates()
 
     extract_overlaps()
+
+    resolve_overlaps_2()
 
     print(f"checking if final database file have any ouverlapps: {records_overlap(read_db())}")
     #delete_temp_files()
@@ -802,26 +791,50 @@ def run_parser():
 
     return 0
 
-
-def get_overlaps_2(records):
+import dask.array as da 
+def resolve_overlaps_2(records=[]):
     
     if not records:
-        return 
+        records = read_db(os.path.join(DEL_FILES_DIR, "overlaping"))
 
-    df = pd.DataFrame(data=records,
-        columns=["ip_from", "ip_to", "cc", "registry", "last-modifie", "record_type", "description"]
-    )
+ 
+    start = {}
+    end = {}
+    endpoints = sorted(list(set([r[0] for r in records] + [r[1] for r in records])))
+    elems = []
 
-    idx = 0
-    dfs = []
-    while True: 
-        low = df.ip_from[idx]
-        high = df.ip_to[idx]
-        sub_df = df[(df.ip_from <= high) & (low <= df.ip_from)]
-        dfs.append(sub_df)
-        idx = sub_df.index.max() + 1
-        if idx > df.index.max():
-            break
+    for e in endpoints:
+        start[e] = set()
+        end[e] = set()
+    
+    for i in range(len(records)):
+        start[records[i][0]].add(i)
+        end[records[i][1]].add(i)
+
+    
+    print("geting overlaped intervals")
+    
+    elems_start = [list(x) for x in start.values()]
+    elems_end = [list(x) for x in end.values()]
+    data = list(zip(endpoints[:-1], endpoints[1:], elems_start , elems_end))
+
+    df = pd.DataFrame(data=data, columns=['ip_from', 'ip_to', 'start_elems', 'end_elems'])
+    df = dd.from_pandas(df, npartitions=4)
+    df['elems'] = df.start_elems.where(df.start_elems > df.end_elems, df.end_elems)
+
+
+    current_ranges = set()
+    zipped = zip(endpoints[:-1], endpoints[1:])
+    for e1, e2 in zipped:
+
+        current_ranges.difference_update(end[e1])
+        current_ranges.update(start[e1]) 
+        
+    print("sotring results into csv file")
+
+    print(df.compute())
+    df.to_csv(os.path.join(DEL_FILES_DIR, "overlaping_df2.csv"), index=False)
+
 
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
@@ -853,6 +866,4 @@ if __name__ == "__main__":
 
     # 51|60|C|APNIC|20091023|I
 
-    #merge_stripped_files()
-    get_overlaps_2(read_db())
-    #extract_overlaps(t)
+    resolve_overlaps_2(t)
