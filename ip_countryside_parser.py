@@ -10,9 +10,6 @@ from datetime import datetime
 #import locationtagger
 import multiprocessing as mp
 
-from del_files.irtToAddress import *;
-from del_files.mnt_byToAddress import *;
-
 from config import *;
 from ip_countryside_db import *;
 from ip_countryside_utilities import *;
@@ -943,19 +940,19 @@ def delete_temp_files():
     os.remove(STRIPPED_INET_FILE)
 
 
-#def get_city(string, countryCode):
+def get_city(string, countryCode):
 
-#    place_entity = locationtagger.find_locations(text = string)
+    place_entity = locationtagger.find_locations(text = string)
    
-#    # getting all country cities
-#    print("The countries cities in text : ")
-#    print(place_entity.country_cities)
+    # getting all country cities
+    print("The countries cities in text : ")
+    print(place_entity.country_cities)
 
-#    for c in place_entity.country_cities:
-#        if c.upper() == COUNTRY_DICTIONARY[countryCode]:
-#            #print(place_entity.country_cities[c], "is in",COUNTRY_DICTIONARY[countryCode])
-#            return place_entity.country_cities[c][0]  
-#    return "No City information"      
+    for c in place_entity.country_cities:
+        if c.upper() == COUNTRY_DICTIONARY[countryCode]:
+            #print(place_entity.country_cities[c], "is in",COUNTRY_DICTIONARY[countryCode])
+            return place_entity.country_cities[c][0]  
+    return "No City information"      
 
 ##string = "11F Shibuya cross tower, 2-15-1, Shibuya-ku Shibuya, Tokyo 150-0002, Japan"
 ##countryCode = "JP"

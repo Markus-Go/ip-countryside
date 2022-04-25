@@ -89,7 +89,7 @@ def download_del_files_needed(host, cwd, delFileName):
         return True
 
  
-def download_del_files(force):
+def download_del_files(force = False):
    """
    Downloads all delegation files
 
@@ -143,27 +143,27 @@ def download_del_files(force):
 
    #download if older than one week
 
-   if(get_timestamp(AFRINIC["host"], AFRINIC["del_cwd"], AFRINIC["del_fname"], AFRINIC["del_timestamp"])):
+   if(force or get_timestamp(AFRINIC["host"], AFRINIC["del_cwd"], AFRINIC["del_fname"], AFRINIC["del_timestamp"])):
        download_del_file(AFRINIC["host"], AFRINIC["del_cwd"], AFRINIC["del_fname"])
-   if(get_timestamp(LACNIC["host"], LACNIC["del_cwd"], LACNIC["del_fname"], LACNIC["del_timestamp"])):
+   if(force or get_timestamp(LACNIC["host"], LACNIC["del_cwd"], LACNIC["del_fname"], LACNIC["del_timestamp"])):
       download_del_file(LACNIC["host"],  LACNIC["del_cwd"],  LACNIC["del_fname"])
-   if(get_timestamp(ARIN["host"],    ARIN["del_cwd"],    ARIN["del_fname"],    ARIN["del_timestamp"])):
+   if(force or get_timestamp(ARIN["host"],    ARIN["del_cwd"],    ARIN["del_fname"],    ARIN["del_timestamp"])):
       download_del_file(ARIN["host"],    ARIN["del_cwd"],    ARIN["del_fname"])
-   if(get_timestamp(APNIC["host"],   APNIC["del_cwd"],   APNIC["del_fname"],   APNIC["del_timestamp"])):
+   if(force or get_timestamp(APNIC["host"],   APNIC["del_cwd"],   APNIC["del_fname"],   APNIC["del_timestamp"])):
       download_del_file(APNIC["host"],   APNIC["del_cwd"],   APNIC["del_fname"])
-   if(get_timestamp(RIPE["host"],    RIPE["del_cwd"],    RIPE["del_fname"],    RIPE["del_timestamp"])):
+   if(force or get_timestamp(RIPE["host"],    RIPE["del_cwd"],    RIPE["del_fname"],    RIPE["del_timestamp"])):
       download_del_file(RIPE["host"],    RIPE["del_cwd"],    RIPE["del_fname"])
 
     #irt files
-   if(get_timestamp(APNIC["host"],   APNIC["inet_cwd"],  APNIC["irt_fname_gz"], APNIC["irt_timestamp"])):
+   if(force or get_timestamp(APNIC["host"],   APNIC["inet_cwd"],  APNIC["irt_fname_gz"], APNIC["irt_timestamp"])):
       download_del_file(APNIC["host"],   APNIC["inet_cwd"],  APNIC["irt_fname_gz"], True)
-   if(get_timestamp(RIPE["host"],    RIPE["inet_cwd"],   RIPE["irt_fname_gz"], RIPE["irt_timestamp"])):  
+   if(force or get_timestamp(RIPE["host"],    RIPE["inet_cwd"],   RIPE["irt_fname_gz"], RIPE["irt_timestamp"])):  
       download_del_file(RIPE["host"],    RIPE["inet_cwd"],   RIPE["irt_fname_gz"], True)
 
     #zip files
-   if(get_timestamp(APNIC["host"],   APNIC["inet_cwd"],  APNIC["inet_fname_gz"], APNIC["inet_timestamp"])):
+   if(force or get_timestamp(APNIC["host"],   APNIC["inet_cwd"],  APNIC["inet_fname_gz"], APNIC["inet_timestamp"])):
       download_del_file(APNIC["host"],   APNIC["inet_cwd"],  APNIC["inet_fname_gz"], True)
-   if(get_timestamp(RIPE["host"],    RIPE["inet_cwd"],   RIPE["inet_fname_gz"], RIPE["inet_timestamp"])):  
+   if(force or get_timestamp(RIPE["host"],    RIPE["inet_cwd"],   RIPE["inet_fname_gz"], RIPE["inet_timestamp"])):  
       download_del_file(RIPE["host"],    RIPE["inet_cwd"],   RIPE["inet_fname_gz"], True)
    
    if os.path.exists('temp'):
@@ -238,11 +238,3 @@ def download_del_file(host, cwd, delFileName, zipped=False):
     except IOError as e:
 
         print(e)
-
-
-def run_downloader(force=True):
-
-    download_del_files(force)
-
-
-run_downloader()
