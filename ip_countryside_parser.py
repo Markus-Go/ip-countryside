@@ -297,15 +297,21 @@ def parse_inet_files_multicore(kb = 5):
 
 # process file chunk 
 def parse_inet_chunk(file, start=0, stop=0):
+    
     record = []
+    
     with open(file, 'r', encoding='utf-8', errors='ignore') as inetnum_file:
+    
         # Read only specified part of the file
         inetnum_file.seek(start)
         lines = inetnum_file.readlines(stop - start)      
+    
         #print(*lines, '\n----------------------------------------\n')
+    
         for group in get_inet_group(lines, ["inetnum", "inet6num"]):
             line = parse_inet_group(group)
             record.append(line)
+    
     return record
 
 
@@ -775,22 +781,14 @@ def run_parser():
     #parse_inet_files_single()
     #parse_inet_files_multicore()
     
-    merge_stripped_files()
+    #merge_stripped_files()
     
-    remove_duplicates()
+    #remove_duplicates()
 
-    extract_overlaps()
+    #extract_overlaps()
 
-    #resolve_overlaps_2()
+    resolve_overlaps_2()
     
-    print("read DB")
-    records = read_db()
-    multiset = MultiSet(records)
-    print("split ranges")
-    temp = multiset.split_ranges()
-    print("write DB")
-    write_db(temp)
-
     print(f"checking if final database file have any ouverlapps: {records_overlap(read_db())}")
     #delete_temp_files()
     print("finished\n")
@@ -801,48 +799,6 @@ def run_parser():
 
     return 0
 
-def resolve_overlaps_2(records=[]):
-    
-    if not records:
-        records = read_db(os.path.join(DEL_FILES_DIR, "overlaping"))
-
- 
-    start = {}
-    end = {}
-    endpoints = sorted(list(set([r[0] for r in records] + [r[1] for r in records])))
-    elems = []
-
-    for e in endpoints:
-        start[e] = set()
-        end[e] = set()
-    
-    for i in range(len(records)):
-        start[records[i][0]].add(i)
-        end[records[i][1]].add(i)
-
-    
-    print("geting overlaped intervals")
-    
-    elems_start = [list(x) for x in start.values()]
-    elems_end = [list(x) for x in end.values()]
-    data = list(zip(endpoints[:-1], endpoints[1:], elems_start , elems_end))
-
-    df = pd.DataFrame(data=data, columns=['ip_from', 'ip_to', 'start_elems', 'end_elems'])
-    df = dd.from_pandas(df, npartitions=4)
-    df['elems'] = df.start_elems.where(df.start_elems > df.end_elems, df.end_elems)
-
-
-    current_ranges = set()
-    zipped = zip(endpoints[:-1], endpoints[1:])
-    for e1, e2 in zipped:
-
-        current_ranges.difference_update(end[e1])
-        current_ranges.update(start[e1]) 
-        
-    print("sotring results into csv file")
-
-    print(df.compute())
-    df.to_csv(os.path.join(DEL_FILES_DIR, "overlaping_df2.csv"), index=False)
 
 def merge_successive(records):
 
@@ -917,76 +873,66 @@ def merge(records):
  
     return merged
 
-class MultiSet(object):
-    def __init__(self, intervals):
-        self.intervals = intervals
-        self.events = None
 
-    def split_ranges(self):
-        self.events = []
-        for start, stop, symbol, registry, host, file, description in self.intervals:
-            self.events.append((start, True, stop, symbol, host, file, description))
-            self.events.append((stop, False, start, symbol, host, file, description))
+def resolve_overlaps_2(records=[]):
+    
+    if not records:
+        records = read_db(os.path.join(DEL_FILES_DIR, "overlaping"))
 
-        def event_key(event):
-            key_endpoint, key_is_start, key_other, host, file, description, _ = event
-            key_order = 0 if key_is_start else 1
-            return key_endpoint, key_order, key_other, host, file, description
+    start = {}
+    end = {}
+    endpoints = sorted(list(set([r[0] for r in records] + [r[1] for r in records])))
 
-        self.events.sort(key=event_key)
+    for e in endpoints:
+        start[e] = set()
+        end[e] = set()
+    
+    for i in range(len(records)):
+        start[records[i][0]].add(i)
+        end[records[i][1]].add(i)
+        
+    elems_start = [list(x) for x in start.values()]
+    elems_end = [list(x) for x in end.values()]
+    data = list(zip(endpoints, endpoints, elems_start , elems_end))
 
-        ranges = []
-        current_start = -1
-        test = {}
-        i = 0 
+    del start
+    del end
+    del endpoints
 
-        for endpoint, is_start, other, symbol, host, file, description in self.events:
-            if is_start:
-                if current_start != -1 and endpoint != current_start and \
-                       endpoint - 1 >= current_start:
-                    for t in test:
-                        #print("777 ", current_start, endpoint, test[t][0], test[t][1], test[t][2], test[t][3], test[t][4])
-                        ranges.append((current_start, endpoint - 1, test[t][0], test[t][1], test[t][2], test[t][3], test[t][4]))
-                    
-                    #print("1 ", current_start, endpoint, symbol, registry, host, file, description)
-                    test={}
-                    i = 0
-                current_start = endpoint
-                test[i] = symbol, registry, host, file, description
-                i=i+1
-                #print("2 ", current_start, endpoint, symbol, registry, host, file, description)
-            else:
-                if current_start != -1 and endpoint >= current_start:
-                    for t in test:
-                        #print("777 ", current_start, endpoint, test[t][0], test[t][1], test[t][2], test[t][3], test[t][4])
-                        ranges.append((current_start, endpoint, test[t][0], test[t][1], test[t][2], test[t][3], test[t][4]))
-                    #print("3 ", current_start, endpoint, symbol, registry, host, file, description)
-                    test={}
-                    i = 0
-                current_start = endpoint + 1
-                test[i] = symbol, registry, host, file, description
-                i=i+1
-                #print("4 ", current_start, endpoint, symbol, registry, host, file, description)
-            #print("555 ", current_start, endpoint, symbol, registry, host, file, description)
+    df = pd.DataFrame(data=data, columns=['ip_from', 'ip_to', 'start', 'end'])
+    df = dd.from_pandas(df, npartitions=20)
 
-        return ranges
+    print("Creating overlaped records column")
+    df['records'] = df.apply(lambda row: len(get_records_involved(row, records)) , meta=('list'), axis=1)
+
+    print("Writing records to csv")
+    
+    df.to_csv(os.path.join(DEL_FILES_DIR, "overlaping_df2.csv"), index=False)
+
+cr = set()
+def get_records_involved(row, records):
+
+    cr.difference_update(row.end)
+    cr.update(row.start) 
+    
+    indicies = {records[index][2]: index for index in cr}
+    
+    return list(indicies.values())
+
+    
+t = [
+    [1, 50, 'A', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
+    [10, 40, 'B', 'APNIC', '2', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
+    [10, 60, 'C', 'APNIC', '20091023s', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
+    [1, 60, 'C', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
+   #[60, 70, 'D', 'APNIC', '2', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
+   #[60, 100, 'D', 'APNIC', '2', 'I', 'Doors and Doors Systems (India) Pvt Ltd']
+]
 
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
 
     run_parser()
-    
-    t = [
-
-        [1, 50, 'A', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-        [10, 20, 'B', 'APNIC', '2', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-        [25, 50, 'A', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-        [10, 60, 'C', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-        [1, 60, 'C', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-        [60, 70, 'D', 'APNIC', '2', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-        [60, 100, 'D', 'APNIC', '2', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-    
-    ]
 
     # Result should be:
 
@@ -1002,8 +948,9 @@ if __name__ == "__main__":
     # 51|60|C|APNIC|20091023|I
 
     #resolve_overlaps_2(t)
-#
+
     #l = [
+    #
     #    [1,5,'DE','RIPE', '20161012', 'I', 'TELEX SRL'],
     #    [6,10,'DE','RIPE', '20161012', 'I', 'TELEX SRL'],
     #    [11,20,'DE','RIPE', '20161012', 'I', 'TELEX SRL'],
@@ -1015,6 +962,6 @@ if __name__ == "__main__":
 #
     #for line in x:
     #    print(line)
-    #intervals = t
+    #intervals = tn
     #multiset = MultiSet(intervals)
     #print(multiset.split_ranges())
