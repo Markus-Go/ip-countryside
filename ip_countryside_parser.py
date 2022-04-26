@@ -429,17 +429,11 @@ def remove_duplicates(records=[]):
     if not records:
         records = read_db()
 
-    print(f"Nr. of records before duplicate deletion {len(records)}")
-
     duplicate_indicies = get_duplicate_indicies(records)
-
-    print(f"Nr. of duplicates being removed {len(duplicate_indicies)}")
     
     records = empty_entry_by_idx(records, duplicate_indicies)
 
-    write_db(records)
-
-    print(f"Nr. of records after duplicate deletion {len(records)}")
+    return records
 
 
 def get_duplicate_indicies(records):
@@ -630,46 +624,6 @@ def get_overlaps(records):
     return [overlaps, overlap_indicies]
 
 
-def resolve_overlaps(records=[]):
-    
-    # if list is empty return
-    if not records:
-        return 
-
-    data = []
-
-    endpoints = sorted(list(set([r[0] for r in records] + [r[1] for r in records])))
-    start = {}
-    end = {}
-
-    for e in endpoints:
-        start[e] = set()
-        end[e] = set()
-    
-
-    for i in range(len(records)):
-        start[records[i][0]].add(i)
-        end[records[i][1]].add(i)
-
-    
-    current_ranges = set()
-    
-    # TODO MemoryError
-    zipped = zip(endpoints[:-1], endpoints[1:])
-    del endpoints
-    for e1, e2 in zipped:
-        current_ranges.difference_update(end[e1])
-        current_ranges.update(start[e1])
-        
-        for idx in list(current_ranges):
-
-            record = records[idx]
-            data.append( [ e1, e2, record[2], record[3], record[4], record[5], record[6] ] )
-
-       
-    return data
-
-
 def records_overlap(records):
     """
     Checks if any two records overlaps in the given list of RIA records 
@@ -764,41 +718,6 @@ def delete_temp_files():
 ## Parser Entry Method 
 
 
-def run_parser():
-
-    start_time = time.time()
-    print("parsing started\n")
-
-    print("parsing del files ...")
-    #merge_del_files()          
-    #parse_del_files()           
-
-    print("parsing inetnum files ...")
-    #merge_inet_files()
-    #parse_inet_files_single()
-    #parse_inet_files_multicore()
-    
-
-    merge_stripped_files()
-    
-
-    remove_duplicates()
-
-
-    extract_overlaps()
-
-
-    print(f"checking if final database file have any ouverlapps: {records_overlap(read_db())}")
-    #delete_temp_files()
-    print("finished\n")
-
-
-    end_time = time.time()
-    print("total time needed was:", f'{end_time - start_time:.3f}', "s\n") 
-    
-    return 0
-
-
 def merge_successive(records):
 
     # if list is empty return
@@ -854,7 +773,7 @@ def merge_successive(records):
 
 def merge(records):
  
-     # if list is empty return
+    # if list is empty return
     if not records:
         return
 
@@ -871,6 +790,91 @@ def merge(records):
             merged[-1][1] = max(merged[-1][1], record[1])
  
     return merged
+
+
+
+def resolve_overlaps(records=[]):
+    
+    # if list is empty return
+    if not records:
+        return 
+
+    data = []
+
+    endpoints = sorted(list(set([r[0] for r in records] + [r[1] for r in records])))
+    start = {}
+    end = {}
+
+    for e in endpoints:
+        start[e] = set()
+        end[e] = set()
+    
+
+    for i in range(len(records)):
+        start[records[i][0]].add(i)
+        end[records[i][1]].add(i)
+
+    
+    current_ranges = set()
+    
+    # TODO MemoryError
+    zipped = zip(endpoints[:-1], endpoints[1:])
+    del endpoints
+    for e1, e2 in zipped:
+        current_ranges.difference_update(end[e1])
+        current_ranges.update(start[e1])
+        
+        for idx in list(current_ranges):
+
+            record = records[idx]
+            data.append( [ e1, e2, record[2], record[3], record[4], record[5], record[6] ] )
+
+       
+    return data
+cr = set()
+def resolve_overlaps_2(records=[]):
+    
+    if not records:
+        records = read_db(os.path.join(DEL_FILES_DIR, "overlaping"))
+
+    start = {}
+    end = {}
+    endpoints = sorted(list(set([r[0] for r in records] + [r[1] for r in records])))
+
+    for e in endpoints:
+        start[e] = set()
+        end[e] = set()
+    
+    for i in range(len(records)):
+        start[records[i][0]].add(i)
+        end[records[i][1]].add(i)
+        
+    elems_start = [list(x) for x in start.values()]
+    elems_end = [list(x) for x in end.values()]
+    data = list(zip(endpoints, endpoints, elems_start , elems_end))
+
+    del start
+    del end
+    del endpoints
+
+    df = pd.DataFrame(data=data, columns=['ip_from', 'ip_to', 'start', 'end'])
+    df = dd.from_pandas(df, npartitions=2)
+
+    print("Creating overlaped records column")
+    
+    df['records'] = df.apply(lambda row: get_records_involved(row, cr) , meta=('list'), axis=1)
+
+    print("Writing records to csv")
+    
+    new_raw_df =  df.drop(['start', 'end'], axis=1).copy()
+    new_raw_df =  df.copy()
+    new_raw_df['ip_to'] = df['ip_to'].shift(-1)
+    new_raw_df.to_csv(os.path.join(DEL_FILES_DIR, "overlaping_df2.csv"), index=False)
+def get_records_involved(row, cr):
+
+    cr.difference_update(row.end)
+    cr.update(row.start) 
+    return cr
 
 
 
@@ -915,53 +919,98 @@ class MultiSet(object):
         return ranges
 
 
-cr = set()
-def resolve_overlaps_2(records=[]):
+              
+def handle_overlaps():
     
-    if not records:
-        records = read_db(os.path.join(DEL_FILES_DIR, "overlaping"))
-
-    start = {}
-    end = {}
-    endpoints = sorted(list(set([r[0] for r in records] + [r[1] for r in records])))
-
-    for e in endpoints:
-        start[e] = set()
-        end[e] = set()
+    # get db records
+    records = read_db()
+   
+    print(f"Nr. of records before overlaps deletion {len(records)}")
     
-    for i in range(len(records)):
-        start[records[i][0]].add(i)
-        end[records[i][1]].add(i)
+    # get all records which overlap and their corresponding indicies
+    [overlaps, indicies] = get_overlaps(records)
+    
+    merge_stripped_files()
+    print("Deleting overlaps from db ... ")
+    records = empty_entry_by_idx(records, indicies)
+    write_db(records)
+    print(f"number of records after overlaps deletion {len(records)}")
+ 
+    with open(os.path.join(DEL_FILES_DIR, "overlaping"), "w", encoding='utf-8', errors='ignore') as f:
         
-    elems_start = [list(x) for x in start.values()]
-    elems_end = [list(x) for x in end.values()]
-    data = list(zip(endpoints, endpoints, elems_start , elems_end))
+        for overlap_seq in overlaps:
+            
+            overlap_seq = merge_successive(overlap_seq)
+            overlap_seq = remove_duplicates(overlap_seq)
+            
+            if len(overlap_seq) > 1:
+                
+                if sameCountry(overlap_seq):
+                    overlap_seq = merge(overlap_seq)
+                    # kann zur finalen datenbank geschrieben werden overlaps werden in merge gelöst
+                    
 
-    del start
-    del end
-    del endpoints
+                else:
 
-    df = pd.DataFrame(data=data, columns=['ip_from', 'ip_to', 'start', 'end'])
-    df = dd.from_pandas(df, npartitions=2)
+                    # overlaps to solve
+      
+                        for record in overlap_seq:
+                            f.write(str(record))
+                            f.write("\n")
+      
+            else: 
+                pass
+                # kein overlap weil nur 1 eintrag kann zur finalen database geschrieben werden
+ 
+def sameCountry(record):
+    country = record[0][2]
+    for r in record:
+        if not country == r[2]:
+            return False
+    return True
 
-    print("Creating overlaped records column")
+
+def run_parser():
+
+    start_time = time.time()
+    print("parsing started\n")
+
+    print("parsing del files ...")
+    #merge_del_files()          
+    #parse_del_files()           
+
+    print("parsing inetnum files ...")
+    #merge_inet_files()
+    #parse_inet_files_single()
+    #parse_inet_files_multicore()
     
-    df['records'] = df.apply(lambda row: get_records_involved(row, cr) , meta=('list'), axis=1)
-
-    print("Writing records to csv")
+    #merge_stripped_files()
     
-    new_raw_df =  df.drop(['start', 'end'], axis=1).copy()
-    new_raw_df =  df.copy()
-    new_raw_df['ip_to'] = df['ip_to'].shift(-1)
-    new_raw_df.to_csv(os.path.join(DEL_FILES_DIR, "overlaping_df2.csv"), index=False)
+    #remove_duplicates()
 
+    #handle_overlaps()
 
-def get_records_involved(row, cr):
+    #extract_overlaps()
 
-    cr.difference_update(row.end)
-    cr.update(row.start) 
-    return cr
+    #resolve_overlaps_2()
+    
+    #print("read DB")
+    #records = read_db()
+    #multiset = MultiSet(records)
+    #print("split ranges")
+    #temp = multiset.split_ranges()
+    #print("write DB")
+    #write_db(temp)
 
+    #print(f"checking if final database file have any ouverlapps: {records_overlap(read_db())}")
+    #delete_temp_files()
+    print("finished\n")
+
+    end_time = time.time()
+    print("total time needed was:", f'{end_time - start_time:.3f}', "s\n") 
+    
+
+    return 0
 
 
 # Needed if for multiprocessing not to crash
@@ -970,33 +1019,33 @@ if __name__ == "__main__":
     run_parser()
 
     # Result should be:
-
     # 1|9|A|APNIC|20091023|I
-
     # 10|40|A|APNIC|2|I
     # 10|40|B|APNIC|2|I|Doors and Doors Systems (India) Pvt Ltd
     # 10|40|C|APNIC|2|I
-
     # 41|50|A|APNIC|20091023|I
     # 41|50|C|APNIC|20091023|I
-
     # 51|60|C|APNIC|20091023|I
 
+    # test with about 10 records ...
+    #resolve_overlaps(t)
+    
     #resolve_overlaps_2(t)
 
-    #l = [
-    #
-    #    [1,5,'DE','RIPE', '20161012', 'I', 'TELEX SRL'],
-    #    [6,10,'DE','RIPE', '20161012', 'I', 'TELEX SRL'],
-    #    [11,20,'DE','RIPE', '20161012', 'I', 'TELEX SRL'],
-    #    [18,24,'DE','RIPE', '20161012', 'I', 'TELEX SRL']
-    #    
-    #    ]
+    l = [
+    
+       [1,5,'DE','RIPE', '20161012', 'I', 'TELEX SRL'],
+       [6,10,'DE','RIPE', '20161012', 'I', 'TELEX SRL'],
+       [6,10,'AE','RIPE', '20161012', 'I', 'TELEX SRL'],
+       [11,20,'DE','RIPE', '20161012', 'I', 'TELEX SRL'],
+       [18,24,'DE','RIPE', '20161012', 'I', 'TELEX SRL'],
 
-    #x = merge(merge_successive(l))
+       ]
 
-    #for line in x:
-    #    print(line)
+    x = merge_successive(l)
+
+    for line in x:
+        print(line)
     #intervals = tn
     # multiset = MultiSet(t)
     # print(multiset.split_ranges())

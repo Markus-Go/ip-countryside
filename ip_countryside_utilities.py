@@ -56,14 +56,36 @@ def empty_entry_by_idx(records, indicies):
     return records
 
 
-def getNetwork(ip_from, ip_to):
-    hosts = ip_to + 1 - ip_from 
-    res = math.log2(hosts)
-    subnetmask = 32 - int(res)
-  
-    if not res.is_integer():
-        print("No valid subnetmask", ip_from, " ", ip_to, "with subnetmask: ", res)
-        return
-    
+def converttoNetwork(records):
+    append_list = []
+    for record in records: 
+        ip_from = record[0]
+        ip_to = record[1]
+        hosts = ip_to + 1 - ip_from 
+        res = math.log2(hosts)
+ 
         
-    return str(ipaddress.ip_address(ip_from)) + "/" + str(subnetmask)
+        if not res.is_integer() and not record[3] == 'ZZ':
+          powers = getPowers(int(hosts)) 
+         
+        start = ip_from
+        end = ip_to
+     
+        for i in range(len(powers)):
+            end = start + powers[i] -1
+            append_list.append([start, end, record[3], record[4], record[5]])
+            start = end + 1
+
+    # returns a list with split up subnetmasks 
+    return append_list
+
+
+def getPowers(x):
+
+    powers = []
+    i = 1
+    while i <= x:
+        if i & x:
+            powers.append(i)
+        i <<= 1
+    return powers
