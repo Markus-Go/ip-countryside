@@ -775,11 +775,11 @@ def run_parser():
     #parse_inet_files_single()
     #parse_inet_files_multicore()
     
-    merge_stripped_files()
-    
-    remove_duplicates()
-
-    extract_overlaps()
+    #merge_stripped_files()
+    #
+    #remove_duplicates()
+#
+    #extract_overlaps()
 
     #resolve_overlaps_2()
     
@@ -935,39 +935,24 @@ class MultiSet(object):
 
         self.events.sort(key=event_key)
 
+        current_set = set()
         ranges = []
         current_start = -1
-        test = {}
-        i = 0 
 
         for endpoint, is_start, other, symbol, host, file, description in self.events:
             if is_start:
                 if current_start != -1 and endpoint != current_start and \
                        endpoint - 1 >= current_start:
-                    for t in test:
-                        #print("777 ", current_start, endpoint, test[t][0], test[t][1], test[t][2], test[t][3], test[t][4])
-                        ranges.append((current_start, endpoint - 1, test[t][0], test[t][1], test[t][2], test[t][3], test[t][4]))
-                    
-                    #print("1 ", current_start, endpoint, symbol, registry, host, file, description)
-                    test={}
-                    i = 0
+                    for s in current_set:
+                        ranges.append((current_start, endpoint - 1, s[0], s[1], s[2], s[3], s[4]))
+                current_set.add((symbol, registry, host, file, description))
                 current_start = endpoint
-                test[i] = symbol, registry, host, file, description
-                i=i+1
-                #print("2 ", current_start, endpoint, symbol, registry, host, file, description)
             else:
                 if current_start != -1 and endpoint >= current_start:
-                    for t in test:
-                        #print("777 ", current_start, endpoint, test[t][0], test[t][1], test[t][2], test[t][3], test[t][4])
-                        ranges.append((current_start, endpoint, test[t][0], test[t][1], test[t][2], test[t][3], test[t][4]))
-                    #print("3 ", current_start, endpoint, symbol, registry, host, file, description)
-                    test={}
-                    i = 0
+                    for s in current_set:
+                        ranges.append((current_start, endpoint, s[0], s[1], s[2], s[3], s[4]))
+                current_set.remove((symbol, registry, host, file, description))
                 current_start = endpoint + 1
-                test[i] = symbol, registry, host, file, description
-                i=i+1
-                #print("4 ", current_start, endpoint, symbol, registry, host, file, description)
-            #print("555 ", current_start, endpoint, symbol, registry, host, file, description)
 
         return ranges
 
