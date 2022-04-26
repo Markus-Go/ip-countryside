@@ -437,6 +437,7 @@ def remove_duplicates(records=[]):
     #write_db(records)
 
     #print(f"Nr. of records after duplicate deletion {len(records)}")
+
     return records
 
 
@@ -807,58 +808,40 @@ def resolve_overlaps_2(records=[]):
     print(df.compute())
     df.to_csv(os.path.join(DEL_FILES_DIR, "overlaping_df2.csv"), index=False)
 
+
+
 def merge_successive(records):
-
-    # if list is empty return
-    if not records:
-        return 
-
-    P = [] 
-
-    for i in range(len(records)):
-        P.append([records[i][0], "L", i, i, records[i][2]])
-        P.append([records[i][1], "R", i, i, records[i][2]])
-
-    P.sort()
-
-    i = 0 
-    while i < len(P)-1:
-
-        # Check if R is followed by L
-        if (P[i][1] == 'R' and P[i+1][1] == 'L'):
-            # Check if distance is 1  and is the same country
-            if P[i][0] + 1 == P[i+1][0] and P[i][4] == P[i+1][4]:
-
-                P[i] = [P[i+2][0],'R', P[i][2], P[i+1][2], P[i][4]]
-                index = P[i+1][2]
-                j = i + 1
-                P.pop(j)
-                while P[j][2] != index:
-                    j += 1
-                P.pop(j)
-            else: 
-                i+= 1
-        else: 
-            i += 1
+    records.sort()
     
-    merged_record = []
-    index_list = []
-    for i in range(len(P)-1):
-        curr_index = P[i][2]
-        if curr_index not in index_list:
-            index_list.append(curr_index)
-            j = i + 1
-            while curr_index != P[j][2]:
-                j += 1
-            if P[j][3] == P[j][2]:
-                merged_record.append([P[i][0], P[j][0], records[curr_index][2], records[curr_index][3], records[curr_index][4],
-                                      records[curr_index][5], records[curr_index][6]])
-            else:
-                merged_record.append([P[i][0], P[j][0], records[curr_index][2], records[curr_index][3], records[curr_index][4],
-                                      records[curr_index][5], ""])
+    i = 0
+    end = len(records)
+   
+    merged_list = []
+    while i < end - 1:
 
-    return merged_record
+        temp_list = []
+        j = i
 
+        if records[i][1] + 1 == records[j+1][0] and records[i][2] == records[i + 1][2]:
+
+            while records[i][1] + 1 == records[j+1][0]:
+
+                if  records[i][2] == records[i + 1][2]:
+                    entry = records.pop(j+1)
+                    temp_list.append(entry[1])
+                else: 
+                    break
+                if i < end - 1:
+                    break
+            
+            newend = max(temp_list)
+            records[i][1] = newend
+            end = len(records)
+        else:
+            i += 1
+          
+
+    return records
 
 def merge(records):
  
@@ -1108,7 +1091,7 @@ def run_parser():
     
     #remove_duplicates()
 
-    #handle_overlaps()
+    handle_overlaps()
 
     #extract_overlaps()
 
@@ -1132,50 +1115,34 @@ def run_parser():
 
     return 0
 
+
+
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
 
     run_parser()
+    #l = [[3411254784, 3411255039, 'KR', 'APNIC', '20170125', 'I', 'Korea Internet Security Agency'],
+    #        [3411247104, 3411255295, 'KR', 'APNIC', '20041019', 'D', ''],
+    #        [3411255040, 3411255295, 'KR', 'APNIC', '20170125', 'I', 'Korea Internet Security Agency']]
+
+    #x = merge_successive(l)
+
+    #for y in x:
+    #    print(y)
+
+
     
-    t = [
 
-        [1, 50, 'A', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-        [10, 20, 'B', 'APNIC', '2', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-        [25, 50, 'A', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-        [10, 60, 'C', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-        [1, 60, 'C', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-        [60, 70, 'D', 'APNIC', '2', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-        [60, 100, 'D', 'APNIC', '2', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-    
-    ]
 
-    # Result should be:
+  
 
-    # 1|9|A|APNIC|20091023|I
 
-    # 10|40|A|APNIC|2|I
-    # 10|40|B|APNIC|2|I|Doors and Doors Systems (India) Pvt Ltd
-    # 10|40|C|APNIC|2|I
 
-    # 41|50|A|APNIC|20091023|I
-    # 41|50|C|APNIC|20091023|I
 
-    # 51|60|C|APNIC|20091023|I
 
-    #resolve_overlaps_2(t)
-#
-    #l = [
-    #    [1,5,'DE','RIPE', '20161012', 'I', 'TELEX SRL'],
-    #    [6,10,'DE','RIPE', '20161012', 'I', 'TELEX SRL'],
-    #    [11,20,'DE','RIPE', '20161012', 'I', 'TELEX SRL'],
-    #    [18,24,'DE','RIPE', '20161012', 'I', 'TELEX SRL']
-    #    
-    #    ]
-#
-    #x = merge(merge_successive(l))
-#
-    #for line in x:
-    #    print(line)
-    #intervals = t
-    #multiset = MultiSet(intervals)
-    #print(multiset.split_ranges())
+            
+       
+
+            
+
+
