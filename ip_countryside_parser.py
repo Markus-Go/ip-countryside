@@ -9,8 +9,6 @@ from ssl import CERT_REQUIRED
 import time
 from datetime import datetime
 import multiprocessing as mp
-import math
-from tokenize import group
 
 from config import *;
 from ip_countryside_db import *;
@@ -784,7 +782,7 @@ def run_parser():
     #merge_stripped_files()
     
     #remove_duplicates()
-
+    
     #extract_overlaps()
 
     resolve_overlaps_2()
@@ -874,6 +872,47 @@ def merge(records):
     return merged
 
 
+
+class MultiSet(object):
+    def __init__(self, intervals):
+        self.intervals = intervals
+        self.events = None
+
+    def split_ranges(self):
+        self.events = []
+        for start, stop, symbol, registry, host, file, description in self.intervals:
+            self.events.append((start, True, stop, symbol, host, file, description))
+            self.events.append((stop, False, start, symbol, host, file, description))
+
+        def event_key(event):
+            key_endpoint, key_is_start, key_other, host, file, description, _ = event
+            key_order = 0 if key_is_start else 1
+            return key_endpoint, key_order, key_other, host, file, description
+
+        self.events.sort(key=event_key)
+
+        current_set = set()
+        ranges = []
+        current_start = -1
+
+        for endpoint, is_start, other, symbol, host, file, description in self.events:
+            if is_start:
+                if current_start != -1 and endpoint != current_start and \
+                       endpoint - 1 >= current_start:
+                    for s in current_set:
+                        ranges.append((current_start, endpoint - 1, s[0], s[1], s[2], s[3], s[4]))
+                current_set.add((symbol, registry, host, file, description))
+                current_start = endpoint
+            else:
+                if current_start != -1 and endpoint >= current_start:
+                    for s in current_set:
+                        ranges.append((current_start, endpoint, s[0], s[1], s[2], s[3], s[4]))
+                current_set.remove((symbol, registry, host, file, description))
+                current_start = endpoint + 1
+
+        return ranges
+
+
 def resolve_overlaps_2(records=[]):
     
     if not records:
@@ -900,14 +939,20 @@ def resolve_overlaps_2(records=[]):
     del endpoints
 
     df = pd.DataFrame(data=data, columns=['ip_from', 'ip_to', 'start', 'end'])
-    df = dd.from_pandas(df, npartitions=20)
+    df = dd.from_pandas(df, npartitions=1)
+
 
     print("Creating overlaped records column")
-    df['records'] = df.apply(lambda row: len(get_records_involved(row, records)) , meta=('list'), axis=1)
+    df['records'] = df.apply(lambda row: get_records_involved(row, records) , meta=('list'), axis=1)
 
     print("Writing records to csv")
     
-    df.to_csv(os.path.join(DEL_FILES_DIR, "overlaping_df2.csv"), index=False)
+    
+    new_raw_df =  df.drop(['start', 'end'], axis=1).copy()
+
+
+    new_raw_df.to_csv(os.path.join(DEL_FILES_DIR, "overlaping_df2.csv"), index=False)
+
 
 cr = set()
 def get_records_involved(row, records):
@@ -915,9 +960,8 @@ def get_records_involved(row, records):
     cr.difference_update(row.end)
     cr.update(row.start) 
     
-    indicies = {records[index][2]: index for index in cr}
     
-    return list(indicies.values())
+    return list(cr)
 
     
 t = [
@@ -925,14 +969,14 @@ t = [
     [10, 40, 'B', 'APNIC', '2', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
     [10, 60, 'C', 'APNIC', '20091023s', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
     [1, 60, 'C', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-   #[60, 70, 'D', 'APNIC', '2', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-   #[60, 100, 'D', 'APNIC', '2', 'I', 'Doors and Doors Systems (India) Pvt Ltd']
+    [60, 70, 'D', 'APNIC', '2', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
+    [60, 100, 'D', 'APNIC', '2', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
 ]
 
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
 
-    run_parser()
+    #run_parser()
 
     # Result should be:
 
@@ -947,7 +991,7 @@ if __name__ == "__main__":
 
     # 51|60|C|APNIC|20091023|I
 
-    #resolve_overlaps_2(t)
+    resolve_overlaps_2(t)
 
     #l = [
     #
@@ -963,5 +1007,5 @@ if __name__ == "__main__":
     #for line in x:
     #    print(line)
     #intervals = tn
-    #multiset = MultiSet(intervals)
+    #multiset = MultiSet(t)
     #print(multiset.split_ranges())
