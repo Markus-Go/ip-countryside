@@ -5,7 +5,6 @@ import os
 import shutil
 import fileinput
 import ipaddress
-from ssl import CERT_REQUIRED
 import time
 from datetime import datetime
 import multiprocessing as mp
@@ -779,22 +778,24 @@ def run_parser():
     #parse_inet_files_single()
     #parse_inet_files_multicore()
     
-    #merge_stripped_files()
-    
-    #remove_duplicates()
-    
-    #extract_overlaps()
 
-    resolve_overlaps_2()
+    merge_stripped_files()
     
+
+    remove_duplicates()
+
+
+    extract_overlaps()
+
+
     print(f"checking if final database file have any ouverlapps: {records_overlap(read_db())}")
     #delete_temp_files()
     print("finished\n")
 
+
     end_time = time.time()
     print("total time needed was:", f'{end_time - start_time:.3f}', "s\n") 
     
-
     return 0
 
 
@@ -907,12 +908,14 @@ class MultiSet(object):
                 if current_start != -1 and endpoint >= current_start:
                     for s in current_set:
                         ranges.append((current_start, endpoint, s[0], s[1], s[2], s[3], s[4]))
-                current_set.remove((symbol, registry, host, file, description))
+                if not current_set == set():
+                    current_set.remove((symbol, registry, host, file, description))
                 current_start = endpoint + 1
 
         return ranges
 
 
+cr = set()
 def resolve_overlaps_2(records=[]):
     
     if not records:
@@ -939,44 +942,32 @@ def resolve_overlaps_2(records=[]):
     del endpoints
 
     df = pd.DataFrame(data=data, columns=['ip_from', 'ip_to', 'start', 'end'])
-    df = dd.from_pandas(df, npartitions=1)
-
+    df = dd.from_pandas(df, npartitions=2)
 
     print("Creating overlaped records column")
-    df['records'] = df.apply(lambda row: get_records_involved(row, records) , meta=('list'), axis=1)
+    
+    df['records'] = df.apply(lambda row: get_records_involved(row, cr) , meta=('list'), axis=1)
 
     print("Writing records to csv")
     
-    
     new_raw_df =  df.drop(['start', 'end'], axis=1).copy()
-
-
+    new_raw_df =  df.copy()
+    new_raw_df['ip_to'] = df['ip_to'].shift(-1)
     new_raw_df.to_csv(os.path.join(DEL_FILES_DIR, "overlaping_df2.csv"), index=False)
 
 
-cr = set()
-def get_records_involved(row, records):
+def get_records_involved(row, cr):
 
     cr.difference_update(row.end)
     cr.update(row.start) 
-    
-    
-    return list(cr)
+    return cr
 
-    
-t = [
-    [1, 50, 'A', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-    [10, 40, 'B', 'APNIC', '2', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-    [10, 60, 'C', 'APNIC', '20091023s', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-    [1, 60, 'C', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-    [60, 70, 'D', 'APNIC', '2', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-    [60, 100, 'D', 'APNIC', '2', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-]
+
 
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
 
-    #run_parser()
+    run_parser()
 
     # Result should be:
 
@@ -991,7 +982,7 @@ if __name__ == "__main__":
 
     # 51|60|C|APNIC|20091023|I
 
-    resolve_overlaps_2(t)
+    #resolve_overlaps_2(t)
 
     #l = [
     #
@@ -1001,11 +992,11 @@ if __name__ == "__main__":
     #    [18,24,'DE','RIPE', '20161012', 'I', 'TELEX SRL']
     #    
     #    ]
-#
+
     #x = merge(merge_successive(l))
-#
+
     #for line in x:
     #    print(line)
     #intervals = tn
-    #multiset = MultiSet(t)
-    #print(multiset.split_ranges())
+    # multiset = MultiSet(t)
+    # print(multiset.split_ranges())
