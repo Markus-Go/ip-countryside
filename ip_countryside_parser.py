@@ -951,7 +951,8 @@ class MultiSet(object):
                 if current_start != -1 and endpoint >= current_start:
                     for s in current_set:
                         ranges.append((current_start, endpoint, s[0], s[1], s[2], s[3], s[4]))
-                current_set.remove((symbol, registry, host, file, description))
+                if not current_set == set():
+                    current_set.remove((symbol, registry, host, file, description))
                 current_start = endpoint + 1
 
         return ranges
