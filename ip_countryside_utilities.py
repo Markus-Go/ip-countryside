@@ -57,6 +57,7 @@ def empty_entry_by_idx(records, indicies):
 
 
 def converttoNetwork(records):
+  
     append_list = []
     for record in records: 
         ip_from = record[0]

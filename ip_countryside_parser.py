@@ -23,32 +23,6 @@ import csv
 # Delegation parsing methods 
 
 
-def merge_del_files():
-
-    try: 
-        
-        # merges the delegated files into a one file 
-        with open(MERGED_DEL_FILE, "wb") as f:
-            
-            for del_file in [ 
-                    os.path.join(DEL_FILES_DIR, AFRINIC['del_fname']), 
-                    os.path.join(DEL_FILES_DIR, LACNIC['del_fname']),
-                    os.path.join(DEL_FILES_DIR, ARIN['del_fname']),
-                    os.path.join(DEL_FILES_DIR, APNIC['del_fname']), 
-                    os.path.join(DEL_FILES_DIR, RIPE['del_fname'])
-                    ]:
-
-                with open(del_file, "rb") as source:
-
-                    shutil.copyfileobj(source, f)
-
-                    f.write(os.linesep.encode())
-    
-    except IOError as e:
-        
-        print(e)
-
-
 def parse_del_files():
 
     try:
@@ -131,32 +105,6 @@ def parse_del_line(line):
 
 # ==============================================================================
 # Inetnum Pars
-
-
-def merge_inet_files():
-    
-    try: 
-        
-        with open(MERGED_INET_FILE, "wb") as f:
-            
-            for inet_file in [ 
-                  os.path.join(DEL_FILES_DIR, APNIC['inet_fname']), 
-                  os.path.join(DEL_FILES_DIR, RIPE['inet_fname']),
-                  os.path.join(DEL_FILES_DIR, APNIC['inet_fname_ipv6']),
-                  os.path.join(DEL_FILES_DIR, RIPE['inet_fname_ipv6'])
-                  
-                    ]:
-
-                with open(inet_file, "rb") as source:
-
-                    shutil.copyfileobj(source, f)
-
-                    f.write(os.linesep.encode())
-    
-    except IOError as e:
-        
-        print(e)
-
 
 # Parses merged_ine file and writes it into stripped_ine_file
 def parse_inet_files_single():
@@ -436,11 +384,6 @@ def remove_duplicates(records=[]):
     
     records = empty_entry_by_idx(records, duplicate_indicies)
 
-
-    #write_db(records)
-
-    #print(f"Nr. of records after duplicate deletion {len(records)}")
-
     return records
 
 
@@ -530,40 +473,6 @@ def get_duplicate_indicies(records):
 
     return duplicate_indicies
 
-
-def extract_overlaps(records=[]):
-
-    if not records:
-        records = read_db()
-
-    print(f"Nr. of records before overlaps deletion {len(records)}")
-
-    # get all records which overlap and their corresponding indicies
-    [overlaps, indicies] = get_overlaps(records)
-    
-    print("Deleting overlaps from db ... ")
-
-    records = empty_entry_by_idx(records, indicies)
-
-    # write back the clean list into db file
-    write_db(records)
-
-    print(f"number of records after overlaps deletion {len(records)}")
-
-    with open(os.path.join(DEL_FILES_DIR, "overlaping"), "w", encoding='utf-8', errors='ignore') as f:
-
-        for overlap_seq in overlaps:
-         
-            f.write("[\n")
-
-            for record in overlap_seq:
-
-                line = "|".join(map(str, record))
-                line = line + '\n'
-                f.write(line)
-
-            f.write("\n]")
-            
 
 def get_overlaps(records):
     """
@@ -703,29 +612,6 @@ def records_overlap(records):
 # Help Methods used for all files ... 
 
 
-def merge_stripped_files():
-    
-    try: 
-        
-        # merges the stripped files into a one file (final database)
-        with open(IP2COUNTRY_DB, "wb") as f:
-            
-            for del_file in [ 
-                    os.path.join(STRIPPED_DEL_FILE), 
-                    os.path.join(STRIPPED_INET_FILE),
-                    ]:
-
-                with open(del_file, "rb") as source:
-
-                    shutil.copyfileobj(source, f)
-
-                    f.write(os.linesep.encode())
- 
-    except IOError as e:
-        
-        print(e)
-
-
 def sort_file(file=IP2COUNTRY_DB):
 
     records = []
@@ -747,9 +633,28 @@ def delete_temp_files():
     os.remove(STRIPPED_INET_FILE)
 
 
+def merge_files(output, files):
+
+    try: 
+        
+        # merges the delegated files into a one file 
+        with open(output, "wb") as f:
+            
+            for del_file in files:
+
+                with open(del_file, "rb") as source:
+
+                    shutil.copyfileobj(source, f)
+
+                    f.write(os.linesep.encode())
+    
+    except IOError as e:
+        
+        print(e)
+
+
 ## ==============================================================================
 ## Parser Entry Method 
-
 
 
 def merge_successive(records):
@@ -785,6 +690,7 @@ def merge_successive(records):
 
     return records
 
+
 def merge(records):
  
     # if list is empty return
@@ -807,6 +713,7 @@ def merge(records):
 
 
 class MultiSet(object):
+   
     def __init__(self, intervals):
         self.intervals = intervals
         self.events = None
@@ -854,48 +761,45 @@ class MultiSet(object):
         return ranges
 
               
-def handle_overlaps():
+def handle_overlaps(records=[]):
     
     # get db records
-    records = read_db(os.path.join(DEL_FILES_DIR, "overlaping"))
+    if not records:
+        records = read_db()
    
     print(f"Nr. of records before overlaps deletion {len(records)}")
     
     # get all records which overlap and their corresponding indicies
-    [overlaps, indicies] = get_overlaps(records)
+    [overlaps_temp, indicies] = get_overlaps(records)
     
-    merge_stripped_files()
-    print("Deleting overlaps from db ... ")
     records = empty_entry_by_idx(records, indicies)
-    write_db(records)
+    overlaps = []
+
     print(f"number of records after overlaps deletion {len(records)}")
  
-    with open(os.path.join(DEL_FILES_DIR, "overlaping"), "w", encoding='utf-8', errors='ignore') as f:
+    for overlap_seq in overlaps_temp:
         
-        for overlap_seq in overlaps:
+        overlap_seq = merge_successive(overlap_seq)
+        overlap_seq = remove_duplicates(overlap_seq)
+        
+        if len(overlap_seq) > 1:
             
-            overlap_seq = merge_successive(overlap_seq)
-            overlap_seq = remove_duplicates(overlap_seq)
+            if sameCountry(overlap_seq):
+                overlap_seq = merge(overlap_seq)
+                # kann zur finalen datenbank geschrieben werden overlaps werden in merge gelöst
+                records.extend(overlap_seq)
+
+            else:
+                # overlaps to solve
+                overlaps.extend(overlap_seq)
+
+        else: 
             
-            if len(overlap_seq) > 1:
-                
-                if sameCountry(overlap_seq):
-                    overlap_seq = merge(overlap_seq)
-                    # kann zur finalen datenbank geschrieben werden overlaps werden in merge gelöst
-                    
+            records.append(overlap_seq[0])
 
-                else:
+    return [records, overlaps]
 
-                    # overlaps to solve
-      
-                        for record in overlap_seq:
-                            f.write(str(record))
-                            f.write("\n")
-      
-            else: 
-                pass
-                # kein overlap weil nur 1 eintrag kann zur finalen database geschrieben werden
- 
+
 def sameCountry(record):
     country = record[0][2]
     for r in record:
@@ -909,71 +813,57 @@ def run_parser():
     start_time = time.time()
     print("parsing started\n")
 
+    del_files = [
+        os.path.join(DEL_FILES_DIR, AFRINIC['del_fname']), 
+        os.path.join(DEL_FILES_DIR, LACNIC['del_fname']),
+        os.path.join(DEL_FILES_DIR, ARIN['del_fname']),
+        os.path.join(DEL_FILES_DIR, APNIC['del_fname']), 
+        os.path.join(DEL_FILES_DIR, RIPE['del_fname'])
+    ]
+    #merge_files(MERGED_DEL_FILE, del_files)          
+     
+    
+    inet_files = [
+        os.path.join(DEL_FILES_DIR, APNIC['inet_fname']), 
+        os.path.join(DEL_FILES_DIR, RIPE['inet_fname']),
+        os.path.join(DEL_FILES_DIR, APNIC['inet_fname_ipv6']),
+        os.path.join(DEL_FILES_DIR, RIPE['inet_fname_ipv6'])
+    ]
+    #merge_files(MERGED_INET_FILE, inet_files)          
+
     print("parsing del files ...")
-    #merge_del_files()          
     #parse_del_files()           
 
     print("parsing inetnum files ...")
-    #merge_inet_files()
     #parse_inet_files_single()
     #parse_inet_files_multicore()
-    
-    merge_stripped_files()
+
+    stripped_files = [
+        os.path.join(STRIPPED_DEL_FILE), 
+        os.path.join(STRIPPED_INET_FILE),
+    ]
+    merge_files(IP2COUNTRY_DB, stripped_files)
 
     records = remove_duplicates()
-    write_db(records)
 
-    extract_overlaps()
+    [records, overlaps] = handle_overlaps(records)
 
-    overlaping_db = os.path.join(DEL_FILES_DIR, "overlaping")
+    multiset = MultiSet(overlaps)
+    overlaps = multiset.split_ranges()
+    overlaps = remove_duplicates(overlaps)
+    records.extend(overlaps)
 
-    handle_overlaps()
-    records = read_db(overlaping_db)
-    records = remove_duplicates(records)
+    write_db(records, IP2COUNTRY_DB)
 
-    multiset = MultiSet(records)
-    print("split ranges")
-    temp = multiset.split_ranges()
-    print("write DB")
-    temp = remove_duplicates(temp)
-    print(f"checking if final database file have any ouverlapps: {records_overlap(temp)}")
-    write_db(temp, overlaping_db)
-
-
-    #print(f"checking if final database file have any ouverlapps: {records_overlap(read_db())}")
     #delete_temp_files()
     print("finished\n")
 
     end_time = time.time()
     print("total time needed was:", f'{end_time - start_time:.3f}', "s\n") 
     
-
     return 0
 
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
 
     run_parser()
-
-    t = [
-        [1, 50, 'A', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-        [1, 50, 'A', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-        [10, 40, 'B', 'APNIC', '2', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-        [10, 60, 'C', 'APNIC', '20091023s', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-        [1, 60, 'C', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-        [60, 70, 'D', 'APNIC', '2', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-        [60, 100, 'D', 'APNIC', '2', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-        [101, 200, 'D', 'APNIC', '2', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-        [201, 300, 'D', 'APNIC', '2', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-        [301, 400, 'D', 'APNIC', '2', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
-    ]
-
-    # Result should be:
-    # 1|9|A|APNIC|20091023|I
-    # 10|40|A|APNIC|2|I
-    # 10|40|B|APNIC|2|I|Doors and Doors Systems (India) Pvt Ltd
-    # 10|40|C|APNIC|2|I
-    # 41|50|A|APNIC|20091023|I
-    # 41|50|C|APNIC|20091023|I
-    # 51|60|C|APNIC|20091023|I
-
