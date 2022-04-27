@@ -436,6 +436,11 @@ def remove_duplicates(records=[]):
     
     records = empty_entry_by_idx(records, duplicate_indicies)
 
+
+    #write_db(records)
+
+    #print(f"Nr. of records after duplicate deletion {len(records)}")
+
     return records
 
 
@@ -746,58 +751,39 @@ def delete_temp_files():
 ## Parser Entry Method 
 
 
+
 def merge_successive(records):
-
-    # if list is empty return
-    if not records:
-        return 
-
-    P = [] 
-
-    for i in range(len(records)):
-        P.append([records[i][0], "L", i, i, records[i][2]])
-        P.append([records[i][1], "R", i, i, records[i][2]])
-
-    P.sort()
-
-    i = 0 
-    while i < len(P)-1:
-
-        # Check if R is followed by L
-        if (P[i][1] == 'R' and P[i+1][1] == 'L'):
-            # Check if distance is 1  and is the same country
-            if P[i][0] + 1 == P[i+1][0] and P[i][4] == P[i+1][4]:
-
-                P[i] = [P[i+2][0],'R', P[i][2], P[i+1][2], P[i][4]]
-                index = P[i+1][2]
-                j = i + 1
-                P.pop(j)
-                while P[j][2] != index:
-                    j += 1
-                P.pop(j)
-            else: 
-                i+= 1
-        else: 
-            i += 1
+    records.sort()
     
-    merged_record = []
-    index_list = []
-    for i in range(len(P)-1):
-        curr_index = P[i][2]
-        if curr_index not in index_list:
-            index_list.append(curr_index)
-            j = i + 1
-            while curr_index != P[j][2]:
-                j += 1
-            if P[j][3] == P[j][2]:
-                merged_record.append([P[i][0], P[j][0], records[curr_index][2], records[curr_index][3], records[curr_index][4],
-                                      records[curr_index][5], records[curr_index][6]])
-            else:
-                merged_record.append([P[i][0], P[j][0], records[curr_index][2], records[curr_index][3], records[curr_index][4],
-                                      records[curr_index][5], ""])
+    i = 0
+    end = len(records)
+   
+    merged_list = []
+    while i < end - 1:
 
-    return merged_record
+        temp_list = []
+        j = i
 
+        if records[i][1] + 1 == records[j+1][0] and records[i][2] == records[i + 1][2]:
+
+            while records[i][1] + 1 == records[j+1][0]:
+
+                if  records[i][2] == records[i + 1][2]:
+                    entry = records.pop(j+1)
+                    temp_list.append(entry[1])
+                else: 
+                    break
+                if i < end - 1:
+                    break
+            
+            newend = max(temp_list)
+            records[i][1] = newend
+            end = len(records)
+        else:
+            i += 1
+          
+
+    return records
 
 def merge(records):
  
@@ -964,12 +950,10 @@ def run_parser():
 
     return 0
 
-
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
 
     run_parser()
-
 
     t = [
         [1, 50, 'A', 'APNIC', '20091023', 'I', 'Doors and Doors Systems (India) Pvt Ltd'],
@@ -992,5 +976,4 @@ if __name__ == "__main__":
     # 41|50|A|APNIC|20091023|I
     # 41|50|C|APNIC|20091023|I
     # 51|60|C|APNIC|20091023|I
-
 
