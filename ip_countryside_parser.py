@@ -658,35 +658,32 @@ def merge_files(output, files):
 
 
 def merge_successive(records):
-    records.sort()
     
     i = 0
     end = len(records)
-   
-    merged_list = []
-    while i < end - 1:
+    
+    try : 
+        while i < end - 1:
+            temp_list = []
+            j = i
+            if records[i][1] + 1 == records[j+1][0] and records[i][2] == records[i + 1][2]:
+                while records[i][1] + 1 == records[j+1][0]:
+                    if  records[i][2] == records[i + 1][2]:
+                        entry = records.pop(j+1)
+                        temp_list.append(entry[1])
+                    else: 
+                        break
+                    if i < end - 1:
+                        break
+                newend = max(temp_list)
+                records[i][1] = newend
+                end = len(records)
+            else:
+                i += 1
 
-        temp_list = []
-        j = i
-
-        if records[i][1] + 1 == records[j+1][0] and records[i][2] == records[i + 1][2]:
-
-            while records[i][1] + 1 == records[j+1][0]:
-
-                if  records[i][2] == records[i + 1][2]:
-                    entry = records.pop(j+1)
-                    temp_list.append(entry[1])
-                else: 
-                    break
-                if i < end - 1:
-                    break
-            
-            newend = max(temp_list)
-            records[i][1] = newend
-            end = len(records)
-        else:
-            i += 1
-          
+    except TypeError:
+        
+        print(records[i])
 
     return records
 
@@ -740,13 +737,13 @@ class MultiSet(object):
                 if current_start != -1 and endpoint != current_start and \
                        endpoint - 1 >= current_start:
                     for s in current_set:
-                        ranges.append((current_start, endpoint - 1, s[0], s[1], s[2], s[3], s[4]))
+                        ranges.append([current_start, endpoint - 1, s[0], s[1], s[2], s[3], s[4]])
                 current_set.add((symbol, registry, host, file, description))
                 current_start = endpoint
             else:
                 if current_start != -1 and endpoint >= current_start:
                     for s in current_set:
-                        ranges.append((current_start, endpoint, s[0], s[1], s[2], s[3], s[4]))
+                        ranges.append([current_start, endpoint, s[0], s[1], s[2], s[3], s[4]])
                 if not current_set == set():
                     try:
                         
@@ -776,7 +773,7 @@ def handle_overlaps(records=[]):
     overlaps = []
 
     print(f"number of records after overlaps deletion {len(records)}")
- 
+
     for overlap_seq in overlaps_temp:
         
         overlap_seq = merge_successive(overlap_seq)
@@ -793,8 +790,8 @@ def handle_overlaps(records=[]):
                 # overlaps to solve
                 overlaps.extend(overlap_seq)
 
-        else: 
-            
+        else:
+
             records.append(overlap_seq[0])
 
     return [records, overlaps]
@@ -831,10 +828,10 @@ def run_parser():
     ]
     #merge_files(MERGED_INET_FILE, inet_files)          
 
-    print("parsing del files ...")
+    #print("parsing del files ...")
     #parse_del_files()           
 
-    print("parsing inetnum files ...")
+    #print("parsing inetnum files ...")
     #parse_inet_files_single()
     #parse_inet_files_multicore()
 
@@ -851,8 +848,14 @@ def run_parser():
     multiset = MultiSet(overlaps)
     overlaps = multiset.split_ranges()
     overlaps = remove_duplicates(overlaps)
+    
     records.extend(overlaps)
 
+    # TODO ... Error !!
+    #records = merge_successive(records) 
+
+    print(f"checking if there are stil any overlaps in final database ... -> {records_overlap(records)}")
+    
     write_db(records, IP2COUNTRY_DB)
 
     #delete_temp_files()
