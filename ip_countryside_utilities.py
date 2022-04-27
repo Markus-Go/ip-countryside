@@ -26,36 +26,6 @@ def get_record_by_ip(ip):
     return False
     
 
-def empty_entry_by_idx(records, indicies):
-    """
-    Set for each index in indicies the corresponding entry in 
-    the given list to empty  []
-
-    Arguments
-    ----------
-    records: list
-        List from which entries must be removed
-
-    indicies: list
-        List of indicies. 
-
-    Returns
-    ----------
-    void
-
-    """
-
-    for idx in indicies:
-
-        if idx < len(records):
-
-            records[idx] = []
-
-    records = [x for x in records if x != []]
-
-    return records
-
-
 def converttoNetwork(records):
   
     append_list = []
