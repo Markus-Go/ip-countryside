@@ -26,37 +26,50 @@ def get_record_by_ip(ip):
     return False
     
 
-def converttoNetwork(records):
+def empty_entry_by_idx(records, indicies):
+    """
+    Set for each index in indicies the corresponding entry in 
+    the given list to empty  []
+
+    Arguments
+    ----------
+    records: list
+        List from which entries must be removed
+
+    indicies: list
+        List of indicies. 
+
+    Returns
+    ----------
+    void
+
+    """
+
+    for idx in indicies:
+
+        if idx < len(records):
+
+            records[idx] = []
+
+    records = [x for x in records if x != []]
+
+    return records
+
+
+def getNetwork(ip_from, ip_to):
+    hosts = ip_to + 1 - ip_from 
+    res = math.log2(hosts)
+    subnetmask = 32 - int(res)
   
-    append_list = []
-    for record in records: 
-        ip_from = record[0]
-        ip_to = record[1]
-        hosts = ip_to + 1 - ip_from 
-        res = math.log2(hosts)
- 
+    if not res.is_integer():
+        print("No valid subnetmask", ip_from, " ", ip_to, "with subnetmask: ", res)
+        return
+    
         
-        if not res.is_integer() and not record[3] == 'ZZ':
-          powers = getPowers(int(hosts)) 
-         
-        start = ip_from
-        end = ip_to
-     
-        for i in range(len(powers)):
-            end = start + powers[i] -1
-            append_list.append([start, end, record[3], record[4], record[5]])
-            start = end + 1
-
-    # returns a list with split up subnetmasks 
-    return append_list
+    return str(ipaddress.ip_address(ip_from)) + "/" + str(subnetmask)
 
 
-def getPowers(x):
 
-    powers = []
-    i = 1
-    while i <= x:
-        if i & x:
-            powers.append(i)
-        i <<= 1
-    return powers
+
+
+#print(get_record_by_ip("2003:EF:DF13:DCE9:F897:5C93:DA97:4722"))
