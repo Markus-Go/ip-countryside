@@ -1,5 +1,3 @@
-from copy import copy
-from multiprocessing.reduction import duplicate
 import re
 import os
 import shutil
@@ -13,10 +11,11 @@ from config import *;
 from ip_countryside_db import *;
 from ip_countryside_utilities import *;
 
+from csvsort import csvsort
+import csv 
 
 # ==============================================================================
 # Delegation parsing methods 
-
 
 def parse_del_files():
 
@@ -96,7 +95,6 @@ def parse_del_line(line):
         date = "19700101"
 
     return [range_start, range_end, country, registry, date, record_type]
-
 
 # ==============================================================================
 # Inetnum Pars
@@ -397,7 +395,6 @@ def split_records(records=[]):
 
     with open(IP2COUNTRY_DB, "w", encoding='utf-8', errors='ignore') as f:
 
-        
         for i in range(len(P)):
             
             current = P[i]
@@ -452,7 +449,7 @@ def split_records(records=[]):
                     # add right edge for current element before deleting 
                     data[current[2]].add(records[current[2]][1])
                     
-                    # write index of record and it's interval split points
+                    # split a db record by given list of edges 
                     split_records_helper(records, [current[2], list(data[current[2]])], f)
                     
                     # delete this record from data to save memory
@@ -484,18 +481,103 @@ def split_records_helper(records, record, f):
         f.write(line)
 
 
-def remove_duplicates(records=[]):
+def remove_duplicates():
 
-    pass
+    with open(IP2COUNTRY_DB, 'r', encoding='utf-8', errors='ignore') as f:
+
+        data = []
+
+        for group in get_dupplicate_group(f):
+
+            data.append(remove_duplicates_helper(group))
+
+    write_db(data)
 
 
-def remove_duplicates_helper():
+def get_dupplicate_group(file):
 
+    data = []
+    
+    for line in file:
+
+        record = read_db_record(line)
+
+        # if data array is empty then append current record
+        if len(data) == 0:
+
+            data.append(record)
+            continue
+        
+        # otherwise check if we're still reading duplicate group
+        elif record[0] == data[0][0] and record[1] == data[0][1]:
+            
+            data.append(record)
+
+        # keep track of current record, yield group and
+        # proccess further
+        else:
+            
+            temp = record
+            yield data
+            data = []
+            data.append(temp)
+
+    # if we finished the file we still may have record in data 
+    # process this one also
+    if data:
+
+        yield data
+        data = []
+
+
+def remove_duplicates_helper(duplicate_group):
+    
+    # remove euql records
+    data = {}
+    record = []
+
+    # categorize data based on 
+    # 1. country
+    # 2. quelle 
+    for record in duplicate_group:
+
+        # add record if country not in dict already 
+        if not record[2] in data:    
+            
+            # 1. add country category 
+            data[record[2]] = {}
+
+            # 2. add quelle category
+            data[record[2]][record[5]] = []
+            data[record[2]][record[5]].append(record)
+
+        # otherwise just append the record to the correspnding category
+        else:
+
+            if not record[5] in data[record[2]]:
+                data[record[2]][record[5]] = []
+
+            data[record[2]][record[5]].append(record)
+
+    # remove EU records if thery are not the only records we have
+    if "EU" in data.keys() and len(data) > 1:
+        data.pop("EU")
+
+    # if we still have more than one country
+    # simply take first one 
+    data = list(data.items())[0]
+    data = data[1]
+
+    # check if there is inetnum record 
+    if "I" in data:
+        
+        return data["I"][0]
+    
+    else:
+        
+        return data["D"][0]
+        
    
-    return ""
-
-
-
 def records_overlap(records):
     """
     Checks if any two records overlaps in the given list of RIA records 
@@ -589,38 +671,32 @@ def merge_files(output, input_files):
 
 def merge_successive(records):
     
-    # if list is empty return
-    if not records:
-        return 
-      
-    P = {}
-
-    # categorize end and start points by contry code
-    for i in range(len(records)):
-        
-        cc = records[i][2]
-
-        if cc not in P:
-            
-            P[cc] = set()
-            P[cc].add( ( records[i][0], "L", records[i][2], i, records[i][5], False ) )
-            P[cc].add( ( records[i][1], "R", records[i][2], i, records[i][5], False ) )
-        
-        else:
-
-            P[cc].add( ( records[i][0], "L", records[i][2], i, records[i][5], False ) )
-            P[cc].add( ( records[i][1], "R", records[i][2], i, records[i][5], False ) )
-
-    for cc in P:
-        
-        # sort each category     
-        P[cc] = sorted(P[cc])
- 
-    for key, items in P.items():
-
-        for p_item in items:
+    i = 0
+    end = len(records)
     
-            pass 
+    try : 
+        while i < end - 1:
+            temp_list = []
+            j = i
+            if records[i][1] + 1 == records[j+1][0] and records[i][2] == records[i + 1][2]:
+                while records[i][1] + 1 == records[j+1][0]:
+                    if  records[i][2] == records[i + 1][2]:
+                        entry = records.pop(j+1)
+                        temp_list.append(entry[1])
+                    else: 
+                        break
+                    if i < end - 1:
+                        break
+                newend = max(temp_list)
+                records[i][1] = newend
+                end = len(records)
+            else:
+                i += 1
+
+    except TypeError:
+        
+        print(records[i])
+
 
     return records
 
@@ -637,7 +713,7 @@ def run_parser():
         os.path.join(DEL_FILES_DIR, APNIC['del_fname']), 
         os.path.join(DEL_FILES_DIR, RIPE['del_fname'])
     ]
-    merge_files(MERGED_DEL_FILE, del_files)          
+    #merge_files(MERGED_DEL_FILE, del_files)          
      
     
     inet_files = [
@@ -646,30 +722,35 @@ def run_parser():
         os.path.join(DEL_FILES_DIR, APNIC['inet_fname_ipv6']),
         os.path.join(DEL_FILES_DIR, RIPE['inet_fname_ipv6'])
     ]
-    merge_files(MERGED_INET_FILE, inet_files)          
+    #merge_files(MERGED_INET_FILE, inet_files)          
 
 
     #print("parsing del files ...")
-    parse_del_files()           
+    #parse_del_files()           
 
 
     #print("parsing inetnum files ...")
     #parse_inet_files_single()
-    parse_inet_files_multicore()
+    #parse_inet_files_multicore()
+
 
     stripped_files = [
         os.path.join(STRIPPED_DEL_FILE), 
         os.path.join(STRIPPED_INET_FILE),
     ]
-    merge_files(IP2COUNTRY_DB, stripped_files)
-
+    #merge_files(IP2COUNTRY_DB, stripped_files)
 
     split_records()
 
-    
+    # @TODO Error in Encoding 
+    # csvsort(IP2COUNTRY_DB,  [0], delimiter="|", max_size=1000, has_header=False, quoting=csv.QUOTE_ALL, show_progress=True, encoding="utf-8") 
+    # takes a lot of memory !!
     sort_file()
 
-    # print(f"checking if there are stil any overlaps in final database ... -> {records_overlap(records)}")
+    remove_duplicates()
+
+
+    #print(f"checking if there are stil any overlaps in final database ... -> {records_overlap()}")
 
     #delete_temp_files()
     print("finished\n")
@@ -688,11 +769,23 @@ if __name__ == "__main__":
     t = [
        
        [1,20,'DE','RIPE', '20161012', 'I', 'TELEX SRL'],
+       [1,20,'EU','RIPE', '20161012', 'D', 'TELEX SRL'],
+       [1,20,'RU','RIPE', '20161012', 'I', 'TELEX SRL'],
        [10,30,'AU','RIPE', '20161012', 'I', 'TELEX SRL'],
-       [15,25,'NL','RIPE', '20161012', 'I', 'TELEX SRL'],
-       [20,55,'BE','RIPE', '20161012', 'I', 'TELEX SRL'],
-       [40,60,'SY','RIPE', '20161012', 'I', 'TELEX SRL'],
-       [45,55,'AT','RIPE', '20161012', 'I', 'TELEX SRL'],
-       [50,100,'TE','RIPE', '20161012', 'I', 'TELEX SRL'],
-
+      #  [15,25,'NL','RIPE', '20161012', 'I', 'TELEX SRL'],
+      #  [20,55,'BE','RIPE', '20161012', 'I', 'TELEX SRL'],
+      #  [40,60,'SY','RIPE', '20161012', 'I', 'TELEX SRL'],
+      #  [45,55,'AT','RIPE', '20161012', 'I', 'TELEX SRL'],
+      #  [50,100,'TE','RIPE', '20161012', 'I', 'TELEX SRL'],
        ]
+
+    split_records(t)
+    
+    # @TODO
+    # 01. sort method optimieren
+    # 02. grenzen (split_files())
+    # 03. mergen
+    # 04. remove_duplicates -> Wird nicht richtig gelöst 
+    #       1|10|RU|RIPE|20161012|I|TELEX SRL
+    #       1|10|DE|RIPE|20161012|D|TELEX SRL
+    
