@@ -104,7 +104,7 @@ def parse_del_line(line):
 
 
 # ==============================================================================
-# Inetnum Pars
+# Inetnum parsing methods
 
 # Parses merged_ine file and writes it into stripped_ine_file
 def parse_inet_files_single():
@@ -775,9 +775,22 @@ def handle_overlaps(records=[]):
     print(f"number of records after overlaps deletion {len(records)}")
 
     length = 0
-    for item in overlaps_temp:
-        for subitem in item:
-            length += 1
+    with open("overlaping", 'w', encoding='utf-8', errors='ignore') as f:
+   
+        for item in overlaps_temp:
+
+            f.write("[\n")
+
+            for subitem in item:
+
+                length += 1
+                line = "|".join(map(str, subitem))
+                line = line + '\n'
+                f.write(line)
+                    
+
+            f.write("]\n")
+            
 
     print(f"number of overlaps before {length}")
 
@@ -1005,10 +1018,15 @@ def handle_overlaps(records=[]):
 
 
 def sameCountry(record):
+    
     country = record[0][2]
+    
     for r in record:
+    
         if not country == r[2]:
+    
             return False
+    
     return True
 
 
@@ -1038,75 +1056,73 @@ def split_records(records=[]):
             )
 
 
-    with open(IP2COUNTRY_DB, "w", encoding='utf-8', errors='ignore') as f:
+    record_split = []
 
-        record_split = []
+    for i in range(len(P)):
+        
+        current = P[i]
 
-        for i in range(len(P)):
-            
-            current = P[i]
+        # if current index is not in dictionary
+        # then this is a new record to be processed
+        if not current[2] in data: 
 
-            # if current index is not in dictionary
-            # then this is a new record to be processed
-            if not current[2] in data: 
+            # save index of the record in dict
+            data[current[2]] = set()
+            data[current[2]].add(current[0])
 
-                # save index of the record 
-                data[current[2]] = set()
-                data[current[2]].add(current[0])
-
-                # if loop at first record save its index to the queue 
-                # and jump to next item in P 
-                if i == 0:
-                    queue.add(current[2])
-                    continue
-            
-                else:
-                    
-                    # save edge of current for all records in queue 
-                    # -> for each record with it's index within the queue
-                    # -> save edge of overlaping (current[0]) -> to split
-                    # the record at this point later
-                    # worst case -> queue = [1,2,3,4,5,6,7,8,9, ...]
-                    # meaning records are nested successively (wount be the case)
-                    for idx in queue:
-
-                        data[idx].add(current[0])
-
-                    queue.add(current[2])
-
-            # if current index is in dictionary
-            # then we arrived the right edge of a record
+            # if loop at first record save its index to the queue 
+            # and jump to next item in P 
+            if i == 0:
+                queue.add(current[2])
+                continue
+        
             else:
-
-                # save edge of current for all records in queue 
-                # -> for each record with it's index within the queue
-                # -> save edge of overlaping (current[0]) -> to split
-                # the record at this point later
+                
+                # -> for each record's index in the queue
+                # -> save a left edge (current[0]) 
+                #    to split the affected records at this point later
+                # worst case -> queue = [1,2,3,4,5,6,7,8,9, ...]
+                # meaning records are nested successively (wount be the case)
                 for idx in queue:
 
                     data[idx].add(current[0])
 
-                # if we arrived at the right edge of current then 
-                # we processed all overlaps with 'current' 
-                if current[1] == "R" and current[2] in data and current[2] in queue :
-                    
-                    # remove record index from queue
-                    queue.remove(current[2])
+                queue.add(current[2])
 
-                    # add right edge for current element before deleting 
-                    data[current[2]].add(records[current[2]][1])
-                    
-                    # split a db record by given list of edges 
-                    record_split.extend(split_records_helper(records, [current[2], list(data[current[2]])], f))
-                    
-                    # delete this record from data to save memory
-                    data.pop(current[2])
+        # if current index is in dictionary
+        # then we arrived the right edge of a record
+        else:
+
+            # -> for each record's index in the queue
+            # -> save right edge (current[0]) 
+            #    to split the affected records at this point later
+            # worst case -> queue = [1,2,3,4,5,6,7,8,9, ...]
+            # meaning records are nested successively (wount be the case)
+            for idx in queue:
+
+                data[idx].add(current[0])
+
+            # if we arrived at the right edge of current then 
+            # we processed all overlap edges within this record 
+            if current[1] == "R" and current[2] in data and current[2] in queue :
+                
+                # remove record index from queue
+                queue.remove(current[2])
+
+                # add right edge for current element before deleting 
+                data[current[2]].add(records[current[2]][1])
+                
+                # split a db record by given list of edges 
+                record_split.extend(split_records_helper(records, [current[2], list(data[current[2]])]))
+                
+                # delete this record from data to save memory
+                data.pop(current[2])
 
     record_split.sort()
     return record_split
 
 
-def split_records_helper(records, record, f):
+def split_records_helper(records, record):
 
     idx = int(record[0])
 
@@ -1123,7 +1139,7 @@ def split_records_helper(records, record, f):
     for i in range(len(record[1])-1):
 
         start = record[1][i]
-        end = record[1][i+1] - 1
+        end = record[1][i+1]
         
         new_record = [start, end, cc, registry, last_modified, record_type, description]
 
@@ -1131,6 +1147,7 @@ def split_records_helper(records, record, f):
         
     
     return ret_value
+
 
 def run_parser():
 
@@ -1172,11 +1189,6 @@ def run_parser():
 
     [records, overlaps] = handle_overlaps()
 
-    
-
-
-
-    
     records.extend(overlaps)
 
     # TODO ... Error !!
@@ -1194,25 +1206,25 @@ def run_parser():
     
     return 0
 
+
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
 
     run_parser()
 
-    #t = [
-       
+    # t = [   
     #   [1,20,'DE','RIPE', '20161012', 'I', 'TELEX SRL'],
     #   [1,20,'EU','RIPE', '20161012', 'D', 'TELEX SRL'],
     #   [1,20,'RU','RIPE', '20161012', 'I', 'TELEX SRL'],
     #   [10,30,'AU','RIPE', '20161012', 'I', 'TELEX SRL'],
-    #  #  [15,25,'NL','RIPE', '20161012', 'I', 'TELEX SRL'],
-    #  #  [20,55,'BE','RIPE', '20161012', 'I', 'TELEX SRL'],
-    #  #  [40,60,'SY','RIPE', '20161012', 'I', 'TELEX SRL'],
-    #  #  [45,55,'AT','RIPE', '20161012', 'I', 'TELEX SRL'],
-    #  #  [50,100,'TE','RIPE', '20161012', 'I', 'TELEX SRL'],
+    #   [15,25,'NL','RIPE', '20161012', 'I', 'TELEX SRL'],
+    #   [20,55,'BE','RIPE', '20161012', 'I', 'TELEX SRL'],
+    #   [40,60,'SY','RIPE', '20161012', 'I', 'TELEX SRL'],
+    #   [45,55,'AT','RIPE', '20161012', 'I', 'TELEX SRL'],
+    #   [50,100,'TE','RIPE', '20161012', 'I', 'TELEX SRL'],
     #   ]
 
-    #l = split_records(t)
-    #l.sort()
-    #for x in l:
+    # l = split_records(t)
+    # l.sort()
+    # for x in l:
     #    print(x)
