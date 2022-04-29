@@ -13,10 +13,10 @@ from config import *;
 from ip_countryside_db import *;
 from ip_countryside_utilities import *;
 
-import pandas as pd
-import dask.dataframe as dd
-import numpy as np
-import dask.array as da 
+#import pandas as pd
+#import dask.dataframe as dd
+#import numpy as np
+#import dask.array as da 
 import csv 
 
 # ==============================================================================
@@ -252,11 +252,10 @@ def parse_inet_chunk(file, start=0, stop=0):
         inetnum_file.seek(start)
         lines = inetnum_file.readlines(stop - start)      
     
-        #print(*lines, '\n----------------------------------------\n')
-    
         for group in get_inet_group(lines, ["inetnum", "inet6num"]):
             line = parse_inet_group(group)
-            record.append(line)
+            if line:
+                record.append(line)
     
     return record
 
@@ -646,7 +645,7 @@ def merge_files(output, files):
 
                     shutil.copyfileobj(source, f)
 
-                    f.write(os.linesep.encode())
+                    #f.write(os.linesep.encode())
     
     except IOError as e:
         
@@ -1176,7 +1175,7 @@ def run_parser():
     #parse_del_files()           
 
     #print("parsing inetnum files ...")
-    #parse_inet_files_single()
+    ##parse_inet_files_single()
     #parse_inet_files_multicore()
 
     stripped_files = [
@@ -1185,14 +1184,17 @@ def run_parser():
     ]
     merge_files(IP2COUNTRY_DB, stripped_files)
 
+
+    #shutil.copyfile(IP2COUNTRY_DB, TRACE_FILE)
+
+
     records = remove_duplicates()
 
     [records, overlaps] = handle_overlaps()
 
     records.extend(overlaps)
 
-    # TODO ... Error !!
-    #records = merge_successive(records) 
+  
 
     print(f"checking if there are stil any overlaps in final database ... -> {records_overlap(records)}")
     
@@ -1210,21 +1212,10 @@ def run_parser():
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
 
-    run_parser()
+    #run_parser()
 
-    # t = [   
-    #   [1,20,'DE','RIPE', '20161012', 'I', 'TELEX SRL'],
-    #   [1,20,'EU','RIPE', '20161012', 'D', 'TELEX SRL'],
-    #   [1,20,'RU','RIPE', '20161012', 'I', 'TELEX SRL'],
-    #   [10,30,'AU','RIPE', '20161012', 'I', 'TELEX SRL'],
-    #   [15,25,'NL','RIPE', '20161012', 'I', 'TELEX SRL'],
-    #   [20,55,'BE','RIPE', '20161012', 'I', 'TELEX SRL'],
-    #   [40,60,'SY','RIPE', '20161012', 'I', 'TELEX SRL'],
-    #   [45,55,'AT','RIPE', '20161012', 'I', 'TELEX SRL'],
-    #   [50,100,'TE','RIPE', '20161012', 'I', 'TELEX SRL'],
-    #   ]
+    #result = traceIP("2.59.10.0")
 
-    # l = split_records(t)
-    # l.sort()
-    # for x in l:
-    #    print(x)
+    #for r in result:
+    #    print(r)
+

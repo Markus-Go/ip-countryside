@@ -70,5 +70,70 @@ def getNetwork(ip_from, ip_to):
     return str(ipaddress.ip_address(ip_from)) + "/" + str(subnetmask)
 
 
+def converttoNetwork(records):
+  
+    append_list = []
+    for record in records: 
+        ip_from = record[0]
+        ip_to = record[1]
+        hosts = ip_to + 1 - ip_from 
+        res = math.log2(hosts)
+ 
+        
+        if not res.is_integer() and not record[3] == 'ZZ':
+          powers = getPowers(int(hosts)) 
+         
+        start = ip_from
+        end = ip_to
+     
+        for i in range(len(powers)):
+            end = start + powers[i] -1
+            append_list.append([start, end, record[3], record[4], record[5]])
+            start = end + 1
+
+    # returns a list with split up subnetmasks 
+    return append_list
+
+
+def getPowers(x):
+
+    powers = []
+    i = 1
+    while i <= x:
+        if i & x:
+            powers.append(i)
+        i <<= 1
+    return powers
+
+
+def traceIP(ip_addr):
+    
+    ip = int(ipaddress.ip_address(ip_addr))
+    return_list = []
+
+    with open(TRACE_FILE, 'r', encoding='utf-8', errors='ignore') as f:
+        i = 0
+        for line in f:
+            # not sure if is needed 
+            if line != '\n':
+                entry = line.split('|')
+                ip_from = int(entry[0])
+                ip_to = int(entry[1])
+                if ip_from <= ip and ip_to >= ip:
+                    return_list.append(entry)
+
+            
+    for r in return_list:
+        r[0] =  str(ipaddress.ip_address(int(r[0])))
+        r[1] = str(ipaddress.ip_address(int(r[1])))
+        r[-1] = r[-1].replace('\n', '')
+
+
+    return return_list
+
+
+
+
+
 
 #print(get_record_by_ip("2003:EF:DF13:DCE9:F897:5C93:DA97:4722"))
