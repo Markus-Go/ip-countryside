@@ -1146,6 +1146,21 @@ def split_records_helper(records, record):
     
     return ret_value
 
+def splitdb(records):
+
+    ipv4 = []
+    ipv6 = []
+
+    for entry in records:
+        if len(str(entry[0])) < 11:
+            ipv4.append(entry)
+        else:
+            ipv6.append(entry)
+
+    write_db(ipv4, IP2COUNTRY_DB_IPV4)
+    write_db(ipv6, IP2COUNTRY_DB_IPV6)
+    
+    return
 
 def run_parser():
 
@@ -1193,7 +1208,7 @@ def run_parser():
 
     records.extend(overlaps)
 
-  
+    splitdb(records)
 
     print(f"checking if there are stil any overlaps in final database ... -> {records_overlap(records)}")
     
@@ -1217,7 +1232,7 @@ def restoreNetmasks(file = IP2COUNTRY_DB):
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
 
-    #run_parser()
+    run_parser()
 
     #result = traceIP("2.59.10.0")
 
