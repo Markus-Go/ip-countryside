@@ -17,13 +17,14 @@ def get_record_by_ip(ip):
     
     # this is actually not 100% correct. If the Database is clean,
     # there should only be one record returned !
-    record = df.loc[ ( (df['ip_from'] <= ip_int) & (df['ip_to'] >= ip_int) ) ].values[0]
-    cc = record[2]
-
-    if cc:
-        return COUNTRY_DICTIONARY[cc], cc
-
-    return False
+    record = df.loc[ ( (df['ip_from'] <= ip_int) & (df['ip_to'] >= ip_int) ) ].values
+    
+    if record:
+        record = record[0]
+    
+        cc = record[2]
+        if cc:
+            return COUNTRY_DICTIONARY[cc], cc
     
 
 def empty_entry_by_idx(records, indicies):
