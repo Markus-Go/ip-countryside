@@ -13,10 +13,10 @@ from config import *;
 from ip_countryside_db import *;
 from ip_countryside_utilities import *;
 
-#import pandas as pd
-#import dask.dataframe as dd
-#import numpy as np
-#import dask.array as da 
+import pandas as pd
+import dask.dataframe as dd
+import numpy as np
+import dask.array as da 
 import csv 
 
 # ==============================================================================
@@ -664,11 +664,10 @@ def merge_successive(records):
     try : 
         while i < end - 1:
             temp_list = []
-            j = i
-            if records[i][1] + 1 == records[j+1][0] and records[i][2] == records[i + 1][2]:
-                while records[i][1] + 1 == records[j+1][0]:
-                    if  records[i][2] == records[i + 1][2]:
-                        entry = records.pop(j+1)
+            if records[i][1] + 1 == records[i+1][0] and records[i][2] == records[i + 1][2] and records[i][5] == records[i+1][5]:
+                while records[i][1] + 1 == records[i+1][0]:
+                    if  records[i][2] == records[i + 1][2] and records[i][5] == records[i+1][5]:
+                        entry = records.pop(i+1)
                         temp_list.append(entry[1])
                     else: 
                         break
@@ -1209,6 +1208,12 @@ def run_parser():
     return 0
 
 
+def restoreNetmasks(file = IP2COUNTRY_DB):
+    pass
+
+
+
+
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
 
@@ -1218,4 +1223,6 @@ if __name__ == "__main__":
 
     #for r in result:
     #    print(r)
-
+    
+    #write_db(converttoNetwork(read_db()))
+    

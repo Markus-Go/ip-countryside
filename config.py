@@ -10,6 +10,7 @@ MERGED_INET_FILE       = os.path.join(DEL_FILES_DIR, "merged_inet_file.csv")
 STRIPPED_INET_FILE     = os.path.join(DEL_FILES_DIR, "stipped_inet_file.csv")
 TRACE_FILE             = os.path.join(DEL_FILES_DIR, "trace_ip_file.csv")
 IP2COUNTRY_DB          = os.path.join(DEL_FILES_DIR, "ip2country_2.db")
+IP2COUNTRY_MM          = os.path.join(DEL_FILES_DIR, "ip2country_mm_extended.db")
 IP2COUNTRY_DB_JSON     = os.path.join(DEL_FILES_DIR, "db.json")
 IP2COUNTRY_DB_YAML     = os.path.join(DEL_FILES_DIR, "db.yaml")
 

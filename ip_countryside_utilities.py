@@ -2,7 +2,7 @@ from config import *;
 import ipaddress
 import math
 
-import pandas as pd
+#import pandas as pd
 
 
 def get_record_by_ip(ip):
@@ -71,29 +71,34 @@ def getNetwork(ip_from, ip_to):
 
 
 def converttoNetwork(records):
-  
-    append_list = []
-    for record in records: 
-        ip_from = record[0]
-        ip_to = record[1]
-        hosts = ip_to + 1 - ip_from 
-        res = math.log2(hosts)
+                         
+    with open(IP2COUNTRY_MM, 'w', encoding='utf-8', errors='ignore') as f:
+
+        for record in records: 
+            powers = []
+            ip_from = int(record[0])
+            ip_to = int(record[1])
+            hosts = ip_to + 1 - ip_from 
+            res = math.log2(hosts)
  
         
-        if not res.is_integer() and not record[3] == 'ZZ':
-          powers = getPowers(int(hosts)) 
+            if not res.is_integer() and not record[3] == 'ZZ':
+                powers = getPowers(int(hosts)) 
          
-        start = ip_from
-        end = ip_to
+                start = ip_from
+                end = ip_to
+          
+                for i in range(len(powers)):
+                    end = start + powers[i] -1
+                    line = "|".join(map(str, [start, end, record[2], record[3], record[4], record[5]]))
+                    line = line + '\n'
+                    f.write(line)   
+                    start = end + 1
+            else:
+                    line = "|".join(map(str, record))
+                    line = line + '\n'
+                    f.write(line)
      
-        for i in range(len(powers)):
-            end = start + powers[i] -1
-            append_list.append([start, end, record[3], record[4], record[5]])
-            start = end + 1
-
-    # returns a list with split up subnetmasks 
-    return append_list
-
 
 def getPowers(x):
 
