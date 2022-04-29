@@ -19,7 +19,7 @@ def get_record_by_ip(ip):
     # there should only be one record returned !
     record = df.loc[ ( (df['ip_from'] <= ip_int) & (df['ip_to'] >= ip_int) ) ].values
     
-    if record:
+    if len(record) > 0:
         record = record[0]
     
         cc = record[2]
@@ -68,8 +68,6 @@ def getNetwork(ip_from, ip_to):
     
         
     return str(ipaddress.ip_address(ip_from)) + "/" + str(subnetmask)
-
-
 
 
 
