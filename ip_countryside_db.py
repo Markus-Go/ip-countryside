@@ -70,15 +70,16 @@ def read_db_record(line):
         ip_from         = int(line[0]) 
         ip_to           = int(line[1]) 
         country         = line[2].upper()
-        registry        = line[3].rstrip('\n').upper()
+        registry        = line[3].upper()
         last_modified   = line[4]
-        record_type     = line[5].rstrip("\n")
+        record_type     = line[5]
+        status          = line[6].rstrip("\n")
         descr           = ""
         
-        if len(line) > 6:
-            descr = line[6].rstrip("\n")
+        if len(line) > 7:
+            descr = line[7].rstrip("\n")
 
-        return [ip_from, ip_to, country, registry, last_modified, record_type, descr]
+        return [ip_from, ip_to, country, registry, last_modified, record_type, status, descr]
 
     return []
 
@@ -104,7 +105,8 @@ def extract_as_json(file=IP2COUNTRY_DB):
                     'Registry':      record[3],
                     'LastModified':  record[4],
                     'RecordType':    record[5],
-                    'Description':   record[6],
+                    'Status':        record[6],
+                    'Description':   record[7],
                 }
 
                 f.write(json.dumps(data, indent=4))

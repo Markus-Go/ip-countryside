@@ -57,7 +57,7 @@ def parse_del_line(line):
     network_ip  = record[3]
     mask        = record[4]
     date        = record[5]
-    status      = record[6]
+    status      = record[6].rstrip("\n").upper()
     record_type = "D"
 
     # calculate int value of network ip
@@ -88,13 +88,13 @@ def parse_del_line(line):
         registry = "RIPE"
 
     # if line doesn't have any country
-    if status == 'reserved' or status == "available":
+    if status == 'RESERVED' or status == "AVAILABLE":
         country = "ZZ"
     
     if not date:
         date = "19700101"
 
-    return [range_start, range_end, country, registry, date, record_type]
+    return [range_start, range_end, country, registry, date, record_type, status]
 
 # ==============================================================================
 # Inetnum Pars
@@ -109,6 +109,7 @@ def parse_inet_files_single():
             record = parse_inet_group(group)
             
             if record:
+                
                 line = "|".join(map(str, record))
                 line = line + '\n'
                 stripped.write(line)
@@ -134,7 +135,7 @@ def get_inet_group(seq, group_by):
         if (line.startswith(group_by[0]) or line.startswith(group_by[1]) or data) and not line.startswith("\n"):
             
             # don't remove spaces from description lines
-            if line.startswith('descr'):
+            if line.startswith("descr") or line.startswith("status"):
                 
                 line = line.replace("\n", "")
             
@@ -274,7 +275,6 @@ def parse_inet_group(entry):
             # Warum ? -> parser-bug ? investigate ... 
             if(len(item) > 1):
                 
-
                 key = item[0]
                 value = item[1].strip()
                 
@@ -324,10 +324,7 @@ def parse_inet_group(entry):
 
         net = ipaddress.IPv6Network(range[0] + '/' + range[1], False)
         range_end = int(net.broadcast_address)
-        
-
-   
-    
+      
     if re.match(IPV4_PATTERN, range[0]):
         
         # check if ranges are not reserved
@@ -342,13 +339,11 @@ def parse_inet_group(entry):
         if is_reserved:
             return []
 
-
-    
-    
     country       = record['country']
-    registry      = record['source'].split("#")[0]
+    registry      = record['source'].split("#")[0].upper()
     last_modified = ""
     descr         = "" 
+    status        = record['status'] 
     record_type   = "I"
 
     if "last-modified" in record and record["last-modified"]:
@@ -361,7 +356,8 @@ def parse_inet_group(entry):
     if "descr" in record:
         descr = record["descr"]
 
-    return [range_start, range_end, country, registry, last_modified, record_type, descr]
+
+    return [range_start, range_end, country, registry, last_modified, record_type, status, descr]
 
 
 # ==============================================================================
@@ -467,14 +463,15 @@ def split_records_helper(records, record, f):
     registry = records[idx][3]
     last_modified = records[idx][4]
     record_type = records[idx][5]
-    description = records[idx][6]
+    status = records[idx][6]
+    description = records[idx][7]
         
     for i in range(len(record[1])-1):
 
         start = record[1][i]
         end = record[1][i+1]
         
-        new_record = [start, end, cc, registry, last_modified, record_type, description]
+        new_record = [start, end, cc, registry, last_modified, record_type, status, description]
 
         line = "|".join(map(str, new_record))
         line = line + '\n'
@@ -483,19 +480,30 @@ def split_records_helper(records, record, f):
 
 def remove_duplicates():
 
+    t = []
+
     with open(IP2COUNTRY_DB, 'r', encoding='utf-8', errors='ignore') as f:
 
-        data = []
+        # non overlaped records list
+        records = []
 
+        # groups is a sequence of duplicate records    
         for group in get_dupplicate_group(f):
 
-            data.append(remove_duplicates_helper(group))
-
-    write_db(data)
+            # solve this duplicate and append it to records
+            records.append(remove_duplicates_helper(group))
+            
+    write_db(records)
 
 
 def get_dupplicate_group(file):
 
+    # data is s duplicates sequence in the splitted db file 
+    # note all duplicates will be successive (sorted db file)
+    # for example a duplicate group may be like this:
+    # 10|20|DE|RIPE|20161012|I|TELEX SRL
+    # 10|20|AU|RIPE|20161012|I|TELEX SRL
+    # 10|20|RB|RIPE|20161012|I|TELEX SRL
     data = []
     
     for line in file:
@@ -518,12 +526,18 @@ def get_dupplicate_group(file):
         else:
             
             temp = record
+
+            # retrun current duplicate sequence to be proccessed
             yield data
+
+            # clean data to begin with next duplicates group
             data = []
+
+            # write the record which ends a duplicates sequence
             data.append(temp)
 
     # if we finished the file we still may have record in data 
-    # process this one also
+    # return this one also 
     if data:
 
         yield data
@@ -536,48 +550,69 @@ def remove_duplicates_helper(duplicate_group):
     data = {}
     record = []
 
-    # categorize data based on 
-    # 1. country
-    # 2. quelle 
+    inet_group = []
+    del_group = []
+
     for record in duplicate_group:
+
+        if record[5] == "I":
+            inet_group.append(record)
+        elif record[5] == "D":
+            del_group.append(record)
+        else: 
+            print("There may be records which doesn't have any registry assigned. Please check the data!")
+
+    # remove delegation if we have inetnum records
+    if inet_group and del_group:
+        del_group = []
+
+    if inet_group:
+        data = group_records_by_country(inet_group)
+
+    if del_group:
+        data = group_records_by_country(del_group)
+
+    # remove EU records if thery are not the only countries we have
+    if "EU" in data.keys() and len(data) > 1:
+        data.pop("EU")
+
+    # if we only have one country left then lets take any record
+    if len(data) == 1:
+
+        records_list = data[list(data.keys())[0]]
+        
+        # @TODO 
+        # we can take one with longer description
+        # proiority is low at the mean time ... 
+        return records_list[0]
+
+    # if we still have multiple countries we need to handle
+    else:
+
+        pass
+
+
+def group_records_by_country(records):
+
+    data = {}
+
+    # categorize data based on country
+    for record in records:
 
         # add record if country not in dict already 
         if not record[2] in data:    
             
-            # 1. add country category 
-            data[record[2]] = {}
-
-            # 2. add quelle category
-            data[record[2]][record[5]] = []
-            data[record[2]][record[5]].append(record)
+            # add country category 
+            data[record[2]] = [record]
 
         # otherwise just append the record to the correspnding category
         else:
 
-            if not record[5] in data[record[2]]:
-                data[record[2]][record[5]] = []
+            data[record[2]].append(record)
 
-            data[record[2]][record[5]].append(record)
+    return data
 
-    # remove EU records if thery are not the only records we have
-    if "EU" in data.keys() and len(data) > 1:
-        data.pop("EU")
 
-    # if we still have more than one country
-    # simply take first one 
-    data = list(data.items())[0]
-    data = data[1]
-
-    # check if there is inetnum record 
-    if "I" in data:
-        
-        return data["I"][0]
-    
-    else:
-        
-        return data["D"][0]
-        
-   
 def records_overlap(records):
     """
     Checks if any two records overlaps in the given list of RIA records 
@@ -738,7 +773,7 @@ def run_parser():
         os.path.join(STRIPPED_DEL_FILE), 
         os.path.join(STRIPPED_INET_FILE),
     ]
-    #merge_files(IP2COUNTRY_DB, stripped_files)
+    merge_files(IP2COUNTRY_DB, stripped_files)
 
     split_records()
 
@@ -766,26 +801,44 @@ if __name__ == "__main__":
 
     #run_parser()
 
-    t = [
-       
-       [1,20,'DE','RIPE', '20161012', 'I', 'TELEX SRL'],
-       [1,20,'EU','RIPE', '20161012', 'D', 'TELEX SRL'],
-       [1,20,'RU','RIPE', '20161012', 'I', 'TELEX SRL'],
-       [10,30,'AU','RIPE', '20161012', 'I', 'TELEX SRL'],
-      #  [15,25,'NL','RIPE', '20161012', 'I', 'TELEX SRL'],
-      #  [20,55,'BE','RIPE', '20161012', 'I', 'TELEX SRL'],
-      #  [40,60,'SY','RIPE', '20161012', 'I', 'TELEX SRL'],
-      #  [45,55,'AT','RIPE', '20161012', 'I', 'TELEX SRL'],
-      #  [50,100,'TE','RIPE', '20161012', 'I', 'TELEX SRL'],
-       ]
-
-    split_records(t)
-    
-    # @TODO
+     
+    # @TODOs
     # 01. sort method optimieren
     # 02. grenzen (split_files())
     # 03. mergen
     # 04. remove_duplicates -> Wird nicht richtig gelöst 
     #       1|10|RU|RIPE|20161012|I|TELEX SRL
     #       1|10|DE|RIPE|20161012|D|TELEX SRL
+   
+    t = [
+        
+        [1,20,'DE','RIPE', '20161012', 'I', 'TELEX SRL'],
+        [1,20,'RE','RIPE', '20161012', 'I', 'TELEX SRL'],
+        [1,20,'EU','RIPE', '20161012', 'I', 'TELEX SRL'],
+        #[1,30,'AU','RIPE', '20161012', 'I', 'TELEX SRL'],
+        #  [15,25,'NL','RIPE', '20161012', 'I', 'TELEX SRL'],
+        #  [20,55,'BE','RIPE', '20161012', 'I', 'TELEX SRL'],
+        #  [40,60,'SY','RIPE', '20161012', 'I', 'TELEX SRL'],
+        #  [45,55,'AT','RIPE', '20161012', 'I', 'TELEX SRL'],
+        [50,100,'TE','RIPE', '20161012', 'I', 'TELEX SRL'],
+
+    ]
+
+    # split_records(t)
+    # sort_file()
+    
+    # remove_duplicates()
+
+    parse_del_files()
+    parse_inet_files_multicore()
+    
+    stripped_files = [
+        os.path.join(STRIPPED_DEL_FILE), 
+        os.path.join(STRIPPED_INET_FILE),
+    ]
+    merge_files(IP2COUNTRY_DB, stripped_files)
+
+    t = read_db()
+
+    write_db(t)
     

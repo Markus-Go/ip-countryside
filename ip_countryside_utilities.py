@@ -7,7 +7,7 @@ import pandas as pd
 
 def get_record_by_ip(ip):
     
-    col_names = ["ip_from", "ip_to", "cc", "registry", "last-modified", "record_type", "description"]
+    col_names = ["ip_from", "ip_to", "cc", "registry", "last-modified", "record_type", "status", "description"]
 
     df = pd.read_csv(IP2COUNTRY_DB, delimiter="|", names=col_names, converters={'ip_from':int, 'ip_to':int})
 
