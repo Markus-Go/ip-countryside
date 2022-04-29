@@ -1,10 +1,5 @@
 import json
-
 from config import *;
-
-
-# @TODO
-# Implement an exctract to YAML method      -> Aufwand 5
 
 
 def read_db(file=IP2COUNTRY_DB):
@@ -57,8 +52,8 @@ def write_db(records, file=IP2COUNTRY_DB):
 
 def read_db_record(line):
     
-    # record index:    0       1   2    3           4            5          6
-    # record format: ip_from|ip_to|cc|registry|last-modified|record_type|description
+    # record index:    0       1   2    3           4            5          6       7
+    # record format: ip_from|ip_to|cc|registry|last-modified|record_type|status|description
 
     if line.startswith("\n"):
         return []
@@ -76,7 +71,7 @@ def read_db_record(line):
         status          = line[6].rstrip("\n")
         descr           = ""
         
-        if len(line) > 7:
+        if len(line)-1 > 6:
             descr = line[7].rstrip("\n")
 
         return [ip_from, ip_to, country, registry, last_modified, record_type, status, descr]

@@ -12,6 +12,8 @@ IP2COUNTRY_DB          = os.path.join(DEL_FILES_DIR, "ip2country_2.db")
 IP2COUNTRY_DB_JSON     = os.path.join(DEL_FILES_DIR, "db.json")
 IP2COUNTRY_DB_YAML     = os.path.join(DEL_FILES_DIR, "db.yaml")
 
+INET_CONFLICTS        = os.path.join(DEL_FILES_DIR, "inetnum_country_conflicts")
+
 APNIC_DB_IRT           = os.path.join(DEL_FILES_DIR, "apnic.db.irt")
 APNIC_IRT              = os.path.join(DEL_FILES_DIR, "apnic.irt")
 IRTTOADDRESS           = os.path.join(DEL_FILES_DIR, "irtToAddress.py")

@@ -6,13 +6,13 @@ import ipaddress
 import time
 from datetime import datetime
 import multiprocessing as mp
+from csvsort import csvsort
+import csv 
 
 from config import *;
 from ip_countryside_db import *;
 from ip_countryside_utilities import *;
 
-from csvsort import csvsort
-import csv 
 
 # ==============================================================================
 # Delegation parsing methods 
@@ -464,7 +464,10 @@ def split_records_helper(records, record, f):
     last_modified = records[idx][4]
     record_type = records[idx][5]
     status = records[idx][6]
-    description = records[idx][7]
+    description = ""
+
+    if len(record)-1 > 6:
+        description = records[idx][7]
         
     for i in range(len(record[1])-1):
 
@@ -478,9 +481,79 @@ def split_records_helper(records, record, f):
         f.write(line)
 
 
-def remove_duplicates():
+def save_inetnum_conflicts():
 
-    t = []
+    with open(IP2COUNTRY_DB, 'r', encoding='utf-8', errors='ignore') as f, open(INET_CONFLICTS, 'w', encoding='utf-8', errors='ignore') as output:
+
+        # groups is a sequence of duplicate records    
+        for group in get_dupplicate_group(f):
+
+            inetnum_country_conflicts = save_inetnum_conflicts_helper(group) 
+
+            if inetnum_country_conflicts:
+                
+                output.write(">>>>>>>>>>>>>>>>>>>>>>>>>>>\n")
+
+                for record in inetnum_country_conflicts:
+                    
+                    if record:
+
+                        line = "|".join(map(str, record))
+                        line = line + '\n'
+                        output.write(line)
+
+                output.write("<<<<<<<<<<<<<<<<<<<<<<<<<<<\n")
+
+
+def save_inetnum_conflicts_helper(group):
+
+    # remove euql records
+    data = {}
+    record = []
+
+    inet_group = []
+    del_group = []
+
+    for record in group:
+
+        if record[5] == "I":
+            inet_group.append(record)
+        elif record[5] == "D":
+            del_group.append(record)
+        else: 
+            print("There may be records which doesn't have any registry assigned. Please check the data!")
+
+    # remove delegation if we have inetnum records
+    if inet_group and del_group:
+        del_group = []
+
+    if inet_group:
+        data = group_records_by_country(inet_group)
+
+    if del_group:
+        data = group_records_by_country(del_group)
+
+    # remove EU records if thery are not the only countries we have
+    if "EU" in data.keys() and len(data) > 1:
+        data.pop("EU")
+
+    # if we only have conflicts in countries
+    if len(data) > 1:
+
+        countries = list(data.keys())
+        result = []
+
+        if len(countries) > 1:
+
+            for country in countries:
+                result.extend(data[country])
+
+            return result
+
+    return []
+
+
+def remove_duplicates():
 
     with open(IP2COUNTRY_DB, 'r', encoding='utf-8', errors='ignore') as f:
 
@@ -544,7 +617,7 @@ def get_dupplicate_group(file):
         data = []
 
 
-def remove_duplicates_helper(duplicate_group):
+def remove_duplicates_helper(group):
     
     # remove euql records
     data = {}
@@ -553,7 +626,7 @@ def remove_duplicates_helper(duplicate_group):
     inet_group = []
     del_group = []
 
-    for record in duplicate_group:
+    for record in group:
 
         if record[5] == "I":
             inet_group.append(record)
@@ -736,7 +809,7 @@ def merge_successive(records):
     return records
 
 
-def run_parser():
+def run_parser(save_inet_conflicts=False):
 
     start_time = time.time()
     print("parsing started\n")
@@ -782,8 +855,10 @@ def run_parser():
     # takes a lot of memory !!
     sort_file()
 
-    remove_duplicates()
+    if(save_inet_conflicts):
+        save_inetnum_conflicts()
 
+    remove_duplicates()
 
     #print(f"checking if there are stil any overlaps in final database ... -> {records_overlap()}")
 
@@ -815,30 +890,26 @@ if __name__ == "__main__":
         [1,20,'DE','RIPE', '20161012', 'I', 'TELEX SRL'],
         [1,20,'RE','RIPE', '20161012', 'I', 'TELEX SRL'],
         [1,20,'EU','RIPE', '20161012', 'I', 'TELEX SRL'],
-        #[1,30,'AU','RIPE', '20161012', 'I', 'TELEX SRL'],
-        #  [15,25,'NL','RIPE', '20161012', 'I', 'TELEX SRL'],
-        #  [20,55,'BE','RIPE', '20161012', 'I', 'TELEX SRL'],
-        #  [40,60,'SY','RIPE', '20161012', 'I', 'TELEX SRL'],
-        #  [45,55,'AT','RIPE', '20161012', 'I', 'TELEX SRL'],
-        [50,100,'TE','RIPE', '20161012', 'I', 'TELEX SRL'],
+        [1,30,'AU','RIPE', '20161012', 'I', 'TELEX SRL'],
+        [15,25,'NL','RIPE', '20161012', 'I', 'TELEX SRL'],
+        [20,55,'BE','RIPE', '20161012', 'I', 'TELEX SRL'],
+        [40,60,'SY','RIPE', '20161012', 'I', 'TELEX SRL'],
+        [45,55,'AT','RIPE', '20161012', 'I', 'TELEX SRL'],
+        [60,100,'TE','RIPE', '20161012', 'I', 'TELEX SRL'],
+        [70,100,'TE','RIPE', '20161012', 'I', 'TELEX SRL'],
+        [40,100,'TE','RIPE', '20161012', 'I', 'TELEX SRL'],
 
     ]
 
-    # split_records(t)
-    # sort_file()
-    
     # remove_duplicates()
 
-    parse_del_files()
-    parse_inet_files_multicore()
-    
     stripped_files = [
         os.path.join(STRIPPED_DEL_FILE), 
         os.path.join(STRIPPED_INET_FILE),
     ]
     merge_files(IP2COUNTRY_DB, stripped_files)
 
-    t = read_db()
+    split_records()
+    sort_file()
 
-    write_db(t)
-    
+    save_inetnum_conflicts()
