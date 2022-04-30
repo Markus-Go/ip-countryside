@@ -290,7 +290,6 @@ def parse_inet_group(entry):
                 # for example: in ripe.db.inetnum some ip ranges with the description 
                 # "IPV4 ADDRESS BLOCK NOT MANAGED BY THE RIPE NCC" may appear -> these 
                 # don't need to be parsed at all.
-                # -> otherwise 5430 conflicts 
                 if key == "descr":
 
                      if ("THIS NETWORK RANGE IS NOT ALLOCATED TO APNIC"    in value.strip().upper() or
@@ -513,7 +512,7 @@ def save_inetnum_conflicts_helper(group):
 
     # create dictionary with I and D as keys, 
     # each key have records with the corresponding source
-    data = group_records_by_source(group)
+    data =  group_records_by_type(group)
     inet_group = data["I"]
     del_group = data["D"]
     
@@ -624,12 +623,16 @@ def remove_duplicates_helper(group):
 
     # create dictionary with I and D as keys, 
     # each key have records with the corresponding source
-    data = group_records_by_source(group)
+    data =  group_records_by_type(group)
     inet_group = data["I"]
     del_group = data["D"]
 
     # remove delegation if we have inetnum records
+    country_categorized = False # a flag for indicating if inet_group or del_group
+                        # were categorized by country
     if inet_group and del_group:
+
+        country_categorized = True
 
         inet_group = group_records_by_country(inet_group)
         del_group = group_records_by_country(del_group)
@@ -645,44 +648,68 @@ def remove_duplicates_helper(group):
         else:
             del_group = []
 
-    elif inet_group:
-        data = group_records_by_status(inet_group)
+    if inet_group:
+        data = inet_group
 
-    elif del_group:
-        data = group_records_by_status(del_group)
+    if del_group:
+        data = del_group
 
-    # if inet_group:
-            
-    #     # make a flat list
-    #     data = [record for cc_list in inet_group.values()
-    #             for record in cc_list]
-        
-    #     # group records by status 
-    #     data = group_records_by_status(data)
-
-    # if del_group:
-        
-    #     # make a flat list
-    #     data = [record for cc_list in del_group.values()
-    #             for record in cc_list]
-
-    #     # group records by status 
-    #     data = group_records_by_status(data)
- 
-    # if we have only one status left then lets take any record
+    # if we have only one country left then lets take any record
     if len(data) == 1:
 
-        records_list = data[list(data.keys())[0]]
+        if country_categorized:
+            data = data[list(data.keys())[0]]
         
-        # @TODO 
+        record = data[0]
+
         # we can take one with longer description
         # proiority is low at the mean time ... 
-        return records_list[0]
+        return record
 
     # if we still have multiple countries we need to handle
     else:
+        
+        if not country_categorized:
 
-        records_list = data[list(data.keys())[0]][0]
+            data = group_records_by_country(data)
+
+        # if there is "EU" country -> delete this category key
+        if "EU" in data:
+            data.pop("EU")
+
+        # make a flat list
+        data = [record for cc_list in data.values()
+                    for record in cc_list]
+            
+        record = filter_records_by_status(data)
+
+        return record
+
+
+def filter_records_by_status(records):
+
+    # group records by status 
+    data = group_records_by_status(records)
+
+    # if there is only one status
+    # take based on date
+    if len(data) == 1:
+        
+        # returns record with newest record if exists,
+        # othwise simply the first one 
+        records_list = data[list(data.keys())[0]]
+        record = sorted(records_list, key=lambda x: (int(x[4])))[0]
+        
+        return record
+        
+    else:
+
+        pass
+        status_list = data.keys()
+        # if there are any assigned keys -> remove all allocated
+
+        # otherwise we're dealing with aloocated records
+        # follow described strategy ...
 
 
 def group_records_by_country(records):
@@ -727,7 +754,7 @@ def group_records_by_status(records):
     return data
 
 
-def group_records_by_source(records):
+def  group_records_by_type(records):
 
     data = {}
     inet_group = []
@@ -952,8 +979,8 @@ if __name__ == "__main__":
    
     t = [
         
-        [1,20,'TE','RIPE', '20161012', 'I', 'ASSIGNED PA', 'TELEX SRL'],
-        [1,20,'RE','RIPE', '20161012', 'D', 'ASSIGNED', 'TELEX SRL'],
+        [1,20,'DE','RIPE', '20161012', 'I', 'ALLOCATED PA', 'TELEX SRL'],
+        [1,20,'RE','RIPE', '20161012', 'I', 'ASSIGNED PA', 'TELEX SRL'],
         # [1,20,'EW','RIPE', '20161012', 'I', 'ASSIGNED', 'TELEX SRL'],
         # [1,30,'AU','RIPE', '20161012', 'I', 'TELEX SRL'],
         # [15,25,'NL','RIPE', '20161012', 'I', 'TELEX SRL'],
@@ -975,5 +1002,4 @@ if __name__ == "__main__":
 
     split_records()
     sort_file()
-    save_inetnum_conflicts()
     remove_duplicates()
