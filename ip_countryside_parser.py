@@ -3,6 +3,7 @@ import os
 import shutil
 import fileinput
 import ipaddress
+from socket import inet_aton
 import time
 from datetime import datetime
 import multiprocessing as mp
@@ -510,19 +511,12 @@ def save_inetnum_conflicts_helper(group):
     data = {}
     record = []
 
-    inet_group = []
-    del_group = []
-
-    for record in group:
-
-        if record[5] == "I":
-            inet_group.append(record)
-
-        elif record[5] == "D":
-            del_group.append(record)
-        
-        else: 
-            print("There may be records which doesn't have any registry assigned. Please check the data!")
+    # create dictionary with I and D as keys, 
+    # each key have records with the corresponding source
+    data = group_records_by_source(group)
+    inet_group = data["I"]
+    del_group = data["D"]
+    
 
     # remove delegation if we have inetnum records
     if inet_group and del_group:
@@ -627,21 +621,12 @@ def remove_duplicates_helper(group):
     
     # remove euql records
     data = {}
-    record = []
 
-    inet_group = []
-    del_group = []
-
-    for record in group:
-
-        if record[5] == "I":
-            inet_group.append(record)
-
-        elif record[5] == "D":
-            del_group.append(record)
-        
-        else: 
-            print("There may be records which doesn't have any registry assigned. Please check the data!")
+    # create dictionary with I and D as keys, 
+    # each key have records with the corresponding source
+    data = group_records_by_source(group)
+    inet_group = data["I"]
+    del_group = data["D"]
 
     # remove delegation if we have inetnum records
     if inet_group and del_group:
@@ -660,31 +645,31 @@ def remove_duplicates_helper(group):
         else:
             del_group = []
 
-        if inet_group:
-             
-            # make a flat list
-            data = [record for cc_list in inet_group.values()
-                    for record in cc_list]
-            
-            # group data by status 
-            data = group_records_by_status(data)
-
-        if del_group:
-            
-            # make a flat list
-            data = [record for cc_list in del_group.values()
-                    for record in cc_list]
-
-            # group data by status 
-            data = group_records_by_status(data)
-
     elif inet_group:
         data = group_records_by_status(inet_group)
 
     elif del_group:
         data = group_records_by_status(del_group)
 
-    # if we only have one status left then lets take any record
+    # if inet_group:
+            
+    #     # make a flat list
+    #     data = [record for cc_list in inet_group.values()
+    #             for record in cc_list]
+        
+    #     # group records by status 
+    #     data = group_records_by_status(data)
+
+    # if del_group:
+        
+    #     # make a flat list
+    #     data = [record for cc_list in del_group.values()
+    #             for record in cc_list]
+
+    #     # group records by status 
+    #     data = group_records_by_status(data)
+ 
+    # if we have only one status left then lets take any record
     if len(data) == 1:
 
         records_list = data[list(data.keys())[0]]
@@ -738,6 +723,30 @@ def group_records_by_status(records):
         else:
 
             data[record[6]].append(record)
+
+    return data
+
+
+def group_records_by_source(records):
+
+    data = {}
+    inet_group = []
+    del_group = []
+    
+    # categorize records by resource
+    for record in records:
+
+        if record[5] == "I":
+            inet_group.append(record)
+
+        elif record[5] == "D":
+            del_group.append(record)
+        
+        else: 
+            print("There may be records which doesn't have any registry assigned. Please check the data!")
+    
+    data["I"] = inet_group
+    data["D"] = del_group
 
     return data
 
