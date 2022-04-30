@@ -97,7 +97,7 @@ def parse_del_line(line):
     return [range_start, range_end, country, registry, date, record_type, status]
 
 # ==============================================================================
-# Inetnum Pars
+# Inetnum parsing methods
 
 # Parses merged_ine file and writes it into stripped_ine_file
 def parse_inet_files_single():
@@ -292,17 +292,16 @@ def parse_inet_group(entry):
                 # -> otherwise 5430 conflicts 
                 if key == "descr":
 
-                    if ("THIS NETWORK RANGE IS NOT ALLOCATED TO APNIC"   in value.strip().upper() or
-                        "NOT ALLOCATED BY APNIC"                         in value.strip().upper() or
-                        "IPV4 ADDRESS BLOCK NOT MANAGED BY THE RIPE NCC" in value.strip().upper() or
-                        "TRANSFERRED TO THE ARIN REGION"                 in value.strip().upper() or
-                        "TRANSFERRED TO THE RIPE REGION"                 in value.strip().upper() or
-                        "EARLY REGISTRATION ADDRESSES"                   in value.strip().upper() or
-                        "ASIA PACIFIC NETWORK INFORMATION CENTER"        in value.strip().upper() or
-                        "ASIA PACIFIC NETWORK INFORMATION CENTRE"        in value.strip().upper() ):
-
+                     if ("THIS NETWORK RANGE IS NOT ALLOCATED TO APNIC"    in value.strip().upper() or
+                         "NOT ALLOCATED BY APNIC"                          in value.strip().upper() or
+                         "IPV4 ADDRESS BLOCK NOT MANAGED BY THE RIPE NCC"  in value.strip().upper() or
+                         "TRANSFERRED TO THE ARIN REGION"                  in value.strip().upper() or                   
+                         "TRANSFERRED TO THE RIPE REGION"                  in value.strip().upper() or
+                         "EARLY REGISTRATION ADDRESSES"                    in value.strip().upper() or
+                         "ASIA PACIFIC NETWORK INFORMATION CENTER"         in value.strip().upper() or
+                         "ASIA PACIFIC NETWORK INFORMATION CENTRE"         in value.strip().upper() ):
                         return []
-                    
+
                 # if a country line has comment, remove the comment
                 if key == "country":
                     record[key] = value.split("#")[0]
@@ -343,7 +342,7 @@ def parse_inet_group(entry):
     registry      = record['source'].split("#")[0].upper()
     last_modified = ""
     descr         = "" 
-    status        = record['status'] 
+    status        = record['status'] .upper()
     record_type   = "I"
 
     if "last-modified" in record and record["last-modified"]:
@@ -466,7 +465,7 @@ def split_records_helper(records, record, f):
     status = records[idx][6]
     description = ""
 
-    if len(record)-1 > 6:
+    if record_type == "I":
         description = records[idx][7]
         
     for i in range(len(record[1])-1):
@@ -518,24 +517,31 @@ def save_inetnum_conflicts_helper(group):
 
         if record[5] == "I":
             inet_group.append(record)
+
         elif record[5] == "D":
             del_group.append(record)
+        
         else: 
             print("There may be records which doesn't have any registry assigned. Please check the data!")
 
     # remove delegation if we have inetnum records
     if inet_group and del_group:
-        del_group = []
 
-    if inet_group:
-        data = group_records_by_country(inet_group)
+        inet_group = group_records_by_country(inet_group)
+        del_group = group_records_by_country(del_group)
+        
+        # if inetnum have only one record with "EU" as country 
+        # process delegation and delete inetnum
+        if "EU" in inet_group and len(inet_group) == 1 and not "EU" in del_group:
+           inet_group = []
+           data = del_group
 
-    if del_group:
-        data = group_records_by_country(del_group)
-
-    # remove EU records if thery are not the only countries we have
-    if "EU" in data.keys() and len(data) > 1:
-        data.pop("EU")
+        # otherwise there is either no inetnum record with "EU" or there are 
+        # other inetnum records with more specific countries
+        # -> For both cases we remove the delegation ...  
+        else:
+            del_group = []
+            data = inet_group
 
     # if we only have conflicts in countries
     if len(data) > 1:
@@ -630,26 +636,55 @@ def remove_duplicates_helper(group):
 
         if record[5] == "I":
             inet_group.append(record)
+
         elif record[5] == "D":
             del_group.append(record)
+        
         else: 
             print("There may be records which doesn't have any registry assigned. Please check the data!")
 
     # remove delegation if we have inetnum records
     if inet_group and del_group:
-        del_group = []
 
-    if inet_group:
-        data = group_records_by_country(inet_group)
+        inet_group = group_records_by_country(inet_group)
+        del_group = group_records_by_country(del_group)
+        
+        # if inetnum have only one record with "EU" as country 
+        # remove this
+        if "EU" in inet_group and len(inet_group) == 1 and not "EU" in del_group:
+           inet_group = []
+        
+        # otherwise there is either no inetnum record with "EU" there are 
+        # other inetnum records with more specific information
+        # -> For both cases we remove the delegation ...  
+        else:
+            del_group = []
 
-    if del_group:
-        data = group_records_by_country(del_group)
+        if inet_group:
+             
+            # make a flat list
+            data = [record for cc_list in inet_group.values()
+                    for record in cc_list]
+            
+            # group data by status 
+            data = group_records_by_status(data)
 
-    # remove EU records if thery are not the only countries we have
-    if "EU" in data.keys() and len(data) > 1:
-        data.pop("EU")
+        if del_group:
+            
+            # make a flat list
+            data = [record for cc_list in del_group.values()
+                    for record in cc_list]
 
-    # if we only have one country left then lets take any record
+            # group data by status 
+            data = group_records_by_status(data)
+
+    elif inet_group:
+        data = group_records_by_status(inet_group)
+
+    elif del_group:
+        data = group_records_by_status(del_group)
+
+    # if we only have one status left then lets take any record
     if len(data) == 1:
 
         records_list = data[list(data.keys())[0]]
@@ -662,7 +697,7 @@ def remove_duplicates_helper(group):
     # if we still have multiple countries we need to handle
     else:
 
-        pass
+        records_list = data[list(data.keys())[0]][0]
 
 
 def group_records_by_country(records):
@@ -682,6 +717,27 @@ def group_records_by_country(records):
         else:
 
             data[record[2]].append(record)
+
+    return data
+
+
+def group_records_by_status(records):
+
+    data = {}
+
+    # categorize data based on country
+    for record in records:
+
+        # add record if country not in dict already 
+        if not record[2] in data:    
+            
+            # add status category 
+            data[record[6]] = [record]
+
+        # otherwise just append the record to the correspnding category
+        else:
+
+            data[record[6]].append(record)
 
     return data
 
@@ -887,29 +943,28 @@ if __name__ == "__main__":
    
     t = [
         
-        [1,20,'DE','RIPE', '20161012', 'I', 'TELEX SRL'],
-        [1,20,'RE','RIPE', '20161012', 'I', 'TELEX SRL'],
-        [1,20,'EU','RIPE', '20161012', 'I', 'TELEX SRL'],
-        [1,30,'AU','RIPE', '20161012', 'I', 'TELEX SRL'],
-        [15,25,'NL','RIPE', '20161012', 'I', 'TELEX SRL'],
-        [20,55,'BE','RIPE', '20161012', 'I', 'TELEX SRL'],
-        [40,60,'SY','RIPE', '20161012', 'I', 'TELEX SRL'],
-        [45,55,'AT','RIPE', '20161012', 'I', 'TELEX SRL'],
-        [60,100,'TE','RIPE', '20161012', 'I', 'TELEX SRL'],
-        [70,100,'TE','RIPE', '20161012', 'I', 'TELEX SRL'],
-        [40,100,'TE','RIPE', '20161012', 'I', 'TELEX SRL'],
+        [1,20,'TE','RIPE', '20161012', 'I', 'ASSIGNED PA', 'TELEX SRL'],
+        [1,20,'RE','RIPE', '20161012', 'D', 'ASSIGNED', 'TELEX SRL'],
+        # [1,20,'EW','RIPE', '20161012', 'I', 'ASSIGNED', 'TELEX SRL'],
+        # [1,30,'AU','RIPE', '20161012', 'I', 'TELEX SRL'],
+        # [15,25,'NL','RIPE', '20161012', 'I', 'TELEX SRL'],
+        # [20,55,'BE','RIPE', '20161012', 'I', 'TELEX SRL'],
+        # [40,60,'SY','RIPE', '20161012', 'I', 'TELEX SRL'],
+        # [45,55,'AT','RIPE', '20161012', 'I', 'TELEX SRL'],
+        # [60,100,'TE','RIPE', '20161012', 'I', 'TELEX SRL'],
+        # [70,100,'TE','RIPE', '20161012', 'I', 'TELEX SRL'],
+        # [40,100,'TE','RIPE', '20161012', 'I', 'TELEX SRL'],
 
     ]
-
-    # remove_duplicates()
 
     stripped_files = [
         os.path.join(STRIPPED_DEL_FILE), 
         os.path.join(STRIPPED_INET_FILE),
     ]
+
     merge_files(IP2COUNTRY_DB, stripped_files)
 
     split_records()
     sort_file()
-
     save_inetnum_conflicts()
+    remove_duplicates()
