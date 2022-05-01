@@ -342,7 +342,7 @@ def parse_inet_group(entry):
     registry      = record['source'].split("#")[0].upper()
     last_modified = ""
     descr         = "" 
-    status        = record['status'] .upper()
+    status        = re.sub(' +', ' ', record['status'] .upper())
     record_type   = "I"
 
     if "last-modified" in record and record["last-modified"]:
@@ -654,16 +654,14 @@ def remove_duplicates_helper(group):
     if del_group:
         data = del_group
 
-    # if we have only one country left then lets take any record
+    # if we have only one country then lets take any record
     if len(data) == 1:
 
         if country_categorized:
             data = data[list(data.keys())[0]]
         
-        record = data[0]
+        record = sorted(data, key=lambda x: -(int(x[4])))[0]
 
-        # we can take one with longer description
-        # proiority is low at the mean time ... 
         return record
 
     # if we still have multiple countries we need to handle
@@ -691,25 +689,79 @@ def filter_records_by_status(records):
     # group records by status 
     data = group_records_by_status(records)
 
-    # if there is only one status
-    # take based on date
+    assigned_groups = {key:value for key, value in data.items() if "ASSIGNED" in key}
+    allocated_groups = {key:value for key, value in data.items() if "ALLOCATED" in key}
+    partitioned_groups = {key:value for key, value in data.items() if "PARTITIONED" in key}
+    legacy_groups = {key:value for key, value in data.items() if "LEGACY" in key}
+    aggregated_groups = {key:value for key, value in data.items() if "AGGREGATED" in key}
+
+    # if there are any assigned keys -> remove all allocated
+    if assigned_groups and allocated_groups:
+        allocated_groups   = []
+        partitioned_groups = []
+        legacy_groups      = []
+        aggregated_groups  = []
+
+    if assigned_groups:
+        data = assigned_groups
+
+    # otherwise we're dealing with aloocated records
+    if allocated_groups:
+        data = allocated_groups
+
+    # simply list all cases first have most priority
+    if "ASSIGNED NON-PORTABLE" in data:         
+        data = data["ASSIGNED NON-PORTABLE"]
+    elif "ASSIGNED PI" in data:                 # ASSIGNED PI vs ALLOCATED PORTABLE
+        data = data["ASSIGNED PI"]
+    elif "ASSIGNED PORTABLE" in data:           # ASSIGNED PORTABLE vs ALLOCATED PORTABLE
+        data = data["ASSIGNED PORTABLE"] 
+    elif "ASSIGNED PA" in data:                 # ASSIGNED PA vs ALLOCATED PA vs LIR-PARTITIONED
+        data = data["ASSIGNED PA"] 
+    elif "ALLOCATED NON-PORTABLE" in data:      # ASSIGNED PA vs ALLOCATED NON-PORTABLE PA vs ALLOCATED PORTABLE
+        data = data["ALLOCATED NON-PORTABLE"] 
+    elif "SUB-ALLOCATED PA" in data:            # ASSIGNED PA vs ALLOCATED NON-PORTABLE PA vs ALLOCATED PORTABLE
+        data = data["SUB-ALLOCATED PA"]
+    elif "LEGACY" in data:                      # LEGACY vs LEGACY vs ALLOCATED PORTABLE
+        data = data["LEGACY"]
+    elif "ALLOCATED PORTABLE" in data:          # ALLOCATED PORTABLE vs  ?? (loses always)
+        data = data["ALLOCATED PORTABLE"] 
+    elif "ALLOCATED PA" in data:                # ALLOCATED PORTABLE vs  ?? (loses always)
+        data = data["ALLOCATED PA"]             
+    elif "UNSPECIFIED" in data:                 # NO CASES
+        data = data["UNSPECIFIED"]              
+    elif "ALLOCATED UNSPECIFIED" in data:       # NO CASES
+        data = data["ALLOCATED UNSPECIFIED"]
+    # ipv6
+    elif "ASSIGNED" in data: 
+        data = data["ASSIGNED"]
+    elif "ASSIGNED PI" in data:
+        data = data["ASSIGNED PI"]
+    elif "AGGREGATED-BY-LIR" in data:
+        data = data["AGGREGATED-BY-LIR"]
+    elif "ALLOCATED-BY-LIR" in data:
+        data = data["ALLOCATED-BY-LIR"]
+    elif "ALLOCATED-BY-RIR" in data:
+        data = data["ALLOCATED-BY-RIR"]
+    elif "ASSIGNED ANYCAST" in data:            
+        data = data["ASSIGNED ANYCAST"]
+    else:
+        print("Some cases weren't handled. Please contact the developsers.")
+
     if len(data) == 1:
-        
-        # returns record with newest record if exists,
-        # othwise simply the first one 
-        records_list = data[list(data.keys())[0]]
-        record = sorted(records_list, key=lambda x: (int(x[4])))[0]
-        
-        return record
+        return data[0]
         
     else:
 
-        pass
-        status_list = data.keys()
-        # if there are any assigned keys -> remove all allocated
+        # returns record with newest record if exists,
+        # othwise simply the first one 
+        if data:
 
-        # otherwise we're dealing with aloocated records
-        # follow described strategy ...
+            record = sorted(data, key=lambda x: -(int(x[4])))[0]
+
+            return record
+
+        return ["0", "0", "ZZ", "XXXX", "00000000", "X", "X", "unsolved conflicts"]
 
 
 def group_records_by_country(records):
@@ -740,8 +792,8 @@ def group_records_by_status(records):
     # categorize data based on country
     for record in records:
 
-        # add record if country not in dict already 
-        if not record[2] in data:    
+        # add record if status not in dict already 
+        if not record[6] in data:    
             
             # add status category 
             data[record[6]] = [record]
@@ -970,18 +1022,17 @@ if __name__ == "__main__":
 
      
     # @TODOs
-    # 01. sort method optimieren
+    # 04. remove_duplicates -> Testen 
     # 02. grenzen (split_files())
+    # 01. sort method optimieren
     # 03. mergen
-    # 04. remove_duplicates -> Wird nicht richtig gelöst 
-    #       1|10|RU|RIPE|20161012|I|TELEX SRL
-    #       1|10|DE|RIPE|20161012|D|TELEX SRL
    
     t = [
         
         [1,20,'DE','RIPE', '20161012', 'I', 'ALLOCATED PA', 'TELEX SRL'],
-        [1,20,'RE','RIPE', '20161012', 'I', 'ASSIGNED PA', 'TELEX SRL'],
-        # [1,20,'EW','RIPE', '20161012', 'I', 'ASSIGNED', 'TELEX SRL'],
+        [1,20,'RE','RIPE', '20161014', 'I', 'ASSIGNED', 'TELEX SRL'],
+        [1,20,'TE','RIPE', '20161013', 'I', 'ALLOCATED PA', 'TELEX SRL'],
+        [1,20,'EU','RIPE', '20161012', 'I', 'ALLOCATED NON-PORTABLE', 'TELEX SRL'],
         # [1,30,'AU','RIPE', '20161012', 'I', 'TELEX SRL'],
         # [15,25,'NL','RIPE', '20161012', 'I', 'TELEX SRL'],
         # [20,55,'BE','RIPE', '20161012', 'I', 'TELEX SRL'],
@@ -993,12 +1044,20 @@ if __name__ == "__main__":
 
     ]
 
+    parse_del_files()           
+
+
+    #print("parsing inetnum files ...")
+    #parse_inet_files_single()
+    parse_inet_files_multicore()
+
     stripped_files = [
         os.path.join(STRIPPED_DEL_FILE), 
         os.path.join(STRIPPED_INET_FILE),
     ]
 
     merge_files(IP2COUNTRY_DB, stripped_files)
+
 
     split_records()
     sort_file()
