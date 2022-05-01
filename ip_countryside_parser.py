@@ -339,10 +339,10 @@ def parse_inet_group(entry):
             return []
 
     country       = record['country']
-    registry      = record['source'].split("#")[0].upper()
+    registry      = record['source'].split("#")[0].upper().rstrip()
     last_modified = ""
     descr         = "" 
-    status        = re.sub(' +', ' ', record['status'] .upper())
+    status        = re.sub(' +', ' ', record['status'].split("#")[0].upper()).rstrip()
     record_type   = "I"
 
     if "last-modified" in record and record["last-modified"]:
@@ -641,7 +641,7 @@ def remove_duplicates_helper(group):
         # remove this
         if "EU" in inet_group and len(inet_group) == 1 and not "EU" in del_group:
            inet_group = []
-        
+
         # otherwise there is either no inetnum record with "EU" there are 
         # other inetnum records with more specific information
         # -> For both cases we remove the delegation ...  
@@ -654,7 +654,11 @@ def remove_duplicates_helper(group):
     if del_group:
         data = del_group
 
-    # if we have only one country then lets take any record
+    if not country_categorized:
+        data = group_records_by_country(data)
+        country_categorized = True
+
+    # if we have only one country then lets take record with newest date
     if len(data) == 1:
 
         if country_categorized:
@@ -667,10 +671,6 @@ def remove_duplicates_helper(group):
     # if we still have multiple countries we need to handle
     else:
         
-        if not country_categorized:
-
-            data = group_records_by_country(data)
-
         # if there is "EU" country -> delete this category key
         if "EU" in data:
             data.pop("EU")
@@ -678,7 +678,7 @@ def remove_duplicates_helper(group):
         # make a flat list
         data = [record for cc_list in data.values()
                     for record in cc_list]
-            
+        
         record = filter_records_by_status(data)
 
         return record
@@ -689,26 +689,6 @@ def filter_records_by_status(records):
     # group records by status 
     data = group_records_by_status(records)
 
-    assigned_groups = {key:value for key, value in data.items() if "ASSIGNED" in key}
-    allocated_groups = {key:value for key, value in data.items() if "ALLOCATED" in key}
-    partitioned_groups = {key:value for key, value in data.items() if "PARTITIONED" in key}
-    legacy_groups = {key:value for key, value in data.items() if "LEGACY" in key}
-    aggregated_groups = {key:value for key, value in data.items() if "AGGREGATED" in key}
-
-    # if there are any assigned keys -> remove all allocated
-    if assigned_groups and allocated_groups:
-        allocated_groups   = []
-        partitioned_groups = []
-        legacy_groups      = []
-        aggregated_groups  = []
-
-    if assigned_groups:
-        data = assigned_groups
-
-    # otherwise we're dealing with aloocated records
-    if allocated_groups:
-        data = allocated_groups
-
     # simply list all cases first have most priority
     if "ASSIGNED NON-PORTABLE" in data:         
         data = data["ASSIGNED NON-PORTABLE"]
@@ -718,8 +698,12 @@ def filter_records_by_status(records):
         data = data["ASSIGNED PORTABLE"] 
     elif "ASSIGNED PA" in data:                 # ASSIGNED PA vs ALLOCATED PA vs LIR-PARTITIONED
         data = data["ASSIGNED PA"] 
+    elif "ASSIGNED" in data: 
+        data = data["ASSIGNED"]
     elif "ALLOCATED NON-PORTABLE" in data:      # ASSIGNED PA vs ALLOCATED NON-PORTABLE PA vs ALLOCATED PORTABLE
         data = data["ALLOCATED NON-PORTABLE"] 
+    elif "LIR-PARTITIONED PA" in data:          # No duplicates at this point 
+        data = data["LIR-PARTITIONED PA"]
     elif "SUB-ALLOCATED PA" in data:            # ASSIGNED PA vs ALLOCATED NON-PORTABLE PA vs ALLOCATED PORTABLE
         data = data["SUB-ALLOCATED PA"]
     elif "LEGACY" in data:                      # LEGACY vs LEGACY vs ALLOCATED PORTABLE
@@ -732,35 +716,29 @@ def filter_records_by_status(records):
         data = data["UNSPECIFIED"]              
     elif "ALLOCATED UNSPECIFIED" in data:       # NO CASES
         data = data["ALLOCATED UNSPECIFIED"]
-    # ipv6
-    elif "ASSIGNED" in data: 
-        data = data["ASSIGNED"]
-    elif "ASSIGNED PI" in data:
-        data = data["ASSIGNED PI"]
     elif "AGGREGATED-BY-LIR" in data:
         data = data["AGGREGATED-BY-LIR"]
     elif "ALLOCATED-BY-LIR" in data:
         data = data["ALLOCATED-BY-LIR"]
     elif "ALLOCATED-BY-RIR" in data:
         data = data["ALLOCATED-BY-RIR"]
+    elif "ALLOCATED" in data:                   # delegation files ..
+        data = data["ALLOCATED"]
     elif "ASSIGNED ANYCAST" in data:            
         data = data["ASSIGNED ANYCAST"]
     else:
-        print("Some cases weren't handled. Please contact the developsers.")
+        print("Unvalid Data detected in filter_by_status() !")
 
     if len(data) == 1:
         return data[0]
-
+    
     else:
-
         # returns record with newest record if exists,
         # othwise simply the first one 
         if data:
-
             record = sorted(data, key=lambda x: -(int(x[4])))[0]
-
             return record
-
+        
         return ["0", "0", "ZZ", "XXXX", "00000000", "X", "X", "unsolved conflicts"]
 
 
@@ -789,7 +767,7 @@ def group_records_by_status(records):
 
     data = {}
 
-    # categorize data based on country
+    # categorize data based on status
     for record in records:
 
         # add record if status not in dict already 
@@ -953,7 +931,7 @@ def merge_successive(records):
     return records
 
 
-def run_parser(save_conflicts=False):
+def run_parser(save_conflicts_param=False):
 
     start_time = time.time()
     print("parsing started\n")
@@ -965,7 +943,7 @@ def run_parser(save_conflicts=False):
         os.path.join(DEL_FILES_DIR, APNIC['del_fname']), 
         os.path.join(DEL_FILES_DIR, RIPE['del_fname'])
     ]
-    #merge_files(MERGED_DEL_FILE, del_files)          
+    merge_files(MERGED_DEL_FILE, del_files)          
      
     
     inet_files = [
@@ -974,16 +952,16 @@ def run_parser(save_conflicts=False):
         os.path.join(DEL_FILES_DIR, APNIC['inet_fname_ipv6']),
         os.path.join(DEL_FILES_DIR, RIPE['inet_fname_ipv6'])
     ]
-    #merge_files(MERGED_INET_FILE, inet_files)          
+    merge_files(MERGED_INET_FILE, inet_files)          
 
 
     #print("parsing del files ...")
-    #parse_del_files()           
+    parse_del_files()           
 
 
     #print("parsing inetnum files ...")
     #parse_inet_files_single()
-    #parse_inet_files_multicore()
+    parse_inet_files_multicore()
 
 
     stripped_files = [
@@ -999,12 +977,12 @@ def run_parser(save_conflicts=False):
     # takes a lot of memory !!
     sort_file()
 
-    if(save_conflicts):
+    if(save_conflicts_param):
         save_conflicts()
 
     remove_duplicates()
 
-    #print(f"checking if there are stil any overlaps in final database ... -> {records_overlap()}")
+    print(f"checking if there are stil any overlaps in final database ... -> {records_overlap()}")
 
     #delete_temp_files()
     print("finished\n")
@@ -1018,7 +996,7 @@ def run_parser(save_conflicts=False):
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
 
-    #run_parser()
+    #run_parser(True)
 
      
     # @TODOs
@@ -1029,10 +1007,10 @@ if __name__ == "__main__":
    
     t = [
         
-        [1,20,'DE','RIPE', '20161012', 'I', 'ALLOCATED PA', 'TELEX SRL'],
-        [1,20,'RE','RIPE', '20161014', 'I', 'ASSIGNED', 'TELEX SRL'],
-        [1,20,'TE','RIPE', '20161013', 'I', 'ALLOCATED PA', 'TELEX SRL'],
-        [1,20,'EU','RIPE', '20161012', 'I', 'ALLOCATED NON-PORTABLE', 'TELEX SRL'],
+        # [1,20,'DE','RIPE', '20161012', 'I', 'ALLOCATED PA', 'TELEX SRL'],
+        # [1,20,'RE','RIPE', '20161014', 'I', 'ASSIGNED', 'TELEX SRL'],
+        # [1,20,'TE','RIPE', '20161013', 'I', 'ALLOCATED PA', 'TELEX SRL'],
+        # [1,20,'EU','RIPE', '20161012', 'I', 'ALLOCATED NON-PORTABLE', 'TELEX SRL'],
         # [1,30,'AU','RIPE', '20161012', 'I', 'TELEX SRL'],
         # [15,25,'NL','RIPE', '20161012', 'I', 'TELEX SRL'],
         # [20,55,'BE','RIPE', '20161012', 'I', 'TELEX SRL'],
@@ -1041,13 +1019,19 @@ if __name__ == "__main__":
         # [60,100,'TE','RIPE', '20161012', 'I', 'TELEX SRL'],
         # [70,100,'TE','RIPE', '20161012', 'I', 'TELEX SRL'],
         # [40,100,'TE','RIPE', '20161012', 'I', 'TELEX SRL'],
-
     ]
 
 
-    #run_parser(save_conflicts=True)
+    #run_parser(save_conflicts_param=True)
 
+    stripped_files = [
+        os.path.join(STRIPPED_DEL_FILE), 
+        os.path.join(STRIPPED_INET_FILE),
+    ]
+    merge_files(IP2COUNTRY_DB, stripped_files)
 
-    split_records(t)
-    sort_file()
-    remove_duplicates()
+    # split_records()
+    # sort_file()
+    # remove_duplicates() 
+    
+    print(f"checking if there are stil any overlaps in final database ... -> {records_overlap(read_db())}")
