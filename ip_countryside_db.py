@@ -80,6 +80,20 @@ def read_db_record(line):
     return []
 
 
+def sort_db(file=IP2COUNTRY_DB):
+
+    records = []
+
+    # get records from final db
+    records = read_db(file)
+
+    # sort this list
+    records.sort()
+
+    # write sorted list back into final db
+    write_db(records, file)
+
+
 def extract_as_json(file=IP2COUNTRY_DB):
     
     data = { }
