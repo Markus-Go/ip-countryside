@@ -7,6 +7,7 @@ from socket import inet_aton
 import time
 from datetime import datetime
 import multiprocessing as mp
+from xml.etree.ElementTree import QName
 from csvsort import csvsort
 import csv 
 
@@ -558,13 +559,21 @@ def remove_duplicates():
 
         # non overlaped records list
         records = []
-
+        
         # groups is a sequence of duplicate records    
         for group in get_dupplicate_group(f):
 
-            # solve this duplicate and append it to records
-            records.append(remove_duplicates_helper(group))
+            if len(group) > 1:
+
+                record = remove_duplicates_helper(group)
+                # solve this duplicate and append it to records
             
+            else:
+                
+                record = group[0]
+                
+            records.append(record)
+
     write_db(records)
 
 
@@ -618,6 +627,7 @@ def get_dupplicate_group(file):
 
 def remove_duplicates_helper(group):
     
+
     # remove euql records
     data = {}
 
@@ -647,7 +657,7 @@ def remove_duplicates_helper(group):
         # -> For both cases we remove the delegation ...  
         else:
             del_group = []
-
+        
     if inet_group:
         data = inet_group
 
@@ -664,7 +674,9 @@ def remove_duplicates_helper(group):
         if country_categorized:
             data = data[list(data.keys())[0]]
         
-        record = sorted(data, key=lambda x: -(int(x[4])))[0]
+        data = sorted(data, key=lambda x: -(int(x[4])))
+
+        record = data[0]
 
         return record
 
@@ -729,18 +741,11 @@ def filter_records_by_status(records):
     else:
         print("Unvalid Data detected in filter_by_status() !")
 
-    if len(data) == 1:
-        return data[0]
-    
-    else:
-        # returns record with newest record if exists,
-        # othwise simply the first one 
-        if data:
-            record = sorted(data, key=lambda x: -(int(x[4])))[0]
-            return record
+    # get record with newest record if exists, othwise the first one 
+    record = sorted(data, key=lambda x: -(int(x[4])))[0]
         
-        return ["0", "0", "ZZ", "XXXX", "00000000", "X", "X", "unsolved conflicts"]
-
+    return record
+        
 
 def group_records_by_country(records):
 
@@ -943,7 +948,7 @@ def run_parser(save_conflicts_param=False):
         os.path.join(DEL_FILES_DIR, APNIC['del_fname']), 
         os.path.join(DEL_FILES_DIR, RIPE['del_fname'])
     ]
-    merge_files(MERGED_DEL_FILE, del_files)          
+    #merge_files(MERGED_DEL_FILE, del_files)          
      
     
     inet_files = [
@@ -952,16 +957,16 @@ def run_parser(save_conflicts_param=False):
         os.path.join(DEL_FILES_DIR, APNIC['inet_fname_ipv6']),
         os.path.join(DEL_FILES_DIR, RIPE['inet_fname_ipv6'])
     ]
-    merge_files(MERGED_INET_FILE, inet_files)          
+    #merge_files(MERGED_INET_FILE, inet_files)          
 
 
     #print("parsing del files ...")
-    parse_del_files()           
+    #parse_del_files()           
 
 
     #print("parsing inetnum files ...")
     #parse_inet_files_single()
-    parse_inet_files_multicore()
+    #parse_inet_files_multicore()
 
 
     stripped_files = [
@@ -982,7 +987,7 @@ def run_parser(save_conflicts_param=False):
 
     remove_duplicates()
 
-    print(f"checking if there are stil any overlaps in final database ... -> {records_overlap()}")
+    #print(f"checking if there are stil any overlaps in final database ... -> {records_overlap(read_db())}")
 
     #delete_temp_files()
     print("finished\n")
@@ -996,7 +1001,7 @@ def run_parser(save_conflicts_param=False):
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
 
-    #run_parser(True)
+    run_parser()
 
      
     # @TODOs
@@ -1028,10 +1033,10 @@ if __name__ == "__main__":
         os.path.join(STRIPPED_DEL_FILE), 
         os.path.join(STRIPPED_INET_FILE),
     ]
-    merge_files(IP2COUNTRY_DB, stripped_files)
+    #merge_files(IP2COUNTRY_DB, stripped_files)
 
     # split_records()
     # sort_file()
     # remove_duplicates() 
     
-    print(f"checking if there are stil any overlaps in final database ... -> {records_overlap(read_db())}")
+    #print(f"checking if there are stil any overlaps in final database ... -> {records_overlap(read_db())}")
