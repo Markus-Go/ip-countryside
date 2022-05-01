@@ -480,14 +480,14 @@ def split_records_helper(records, record, f):
         f.write(line)
 
 
-def save_inetnum_conflicts():
+def save_conflicts():
 
     with open(IP2COUNTRY_DB, 'r', encoding='utf-8', errors='ignore') as f, open(INET_CONFLICTS, 'w', encoding='utf-8', errors='ignore') as output:
 
         # groups is a sequence of duplicate records    
         for group in get_dupplicate_group(f):
 
-            inetnum_country_conflicts = save_inetnum_conflicts_helper(group) 
+            inetnum_country_conflicts = save_conflicts_helper(group) 
 
             if inetnum_country_conflicts:
                 
@@ -504,7 +504,7 @@ def save_inetnum_conflicts():
                 output.write("<<<<<<<<<<<<<<<<<<<<<<<<<<<\n")
 
 
-def save_inetnum_conflicts_helper(group):
+def save_conflicts_helper(group):
 
     # remove euql records
     data = {}
@@ -750,7 +750,7 @@ def filter_records_by_status(records):
 
     if len(data) == 1:
         return data[0]
-        
+
     else:
 
         # returns record with newest record if exists,
@@ -953,7 +953,7 @@ def merge_successive(records):
     return records
 
 
-def run_parser(save_inet_conflicts=False):
+def run_parser(save_conflicts=False):
 
     start_time = time.time()
     print("parsing started\n")
@@ -999,8 +999,8 @@ def run_parser(save_inet_conflicts=False):
     # takes a lot of memory !!
     sort_file()
 
-    if(save_inet_conflicts):
-        save_inetnum_conflicts()
+    if(save_conflicts):
+        save_conflicts()
 
     remove_duplicates()
 
@@ -1044,21 +1044,10 @@ if __name__ == "__main__":
 
     ]
 
-    parse_del_files()           
+
+    #run_parser(save_conflicts=True)
 
 
-    #print("parsing inetnum files ...")
-    #parse_inet_files_single()
-    parse_inet_files_multicore()
-
-    stripped_files = [
-        os.path.join(STRIPPED_DEL_FILE), 
-        os.path.join(STRIPPED_INET_FILE),
-    ]
-
-    merge_files(IP2COUNTRY_DB, stripped_files)
-
-
-    split_records()
+    split_records(t)
     sort_file()
     remove_duplicates()
