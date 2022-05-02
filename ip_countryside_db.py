@@ -153,33 +153,50 @@ def extract_as_sqllite(file=IP2COUNTRY_DB):
     #ip_from|ip_to|country|ria|date|file|description
     
     query = """
-    CREATE TABLE IF NOT EXISTS ip2country (
-    ip_from INT,
-    ip_to INT,
+    CREATE TABLE ip2country (
+    ip_from VARCHAR(129),
+    ip_to VARCHAR(129),
     country varchar(3),
-    ria varchar(10),
-    date varchar(20),
-    file varchar(20),
-    description varchar(255),
+    registry VARCHAR(15), 
+    lastmodified VARCHAR(15), 
+    description VARCHAR(255),
     PRIMARY KEY (ip_from, ip_to)
     );"""
 
     cursor.execute(query)
+    connection.commit()
+    
+    
 
-    query = """
-    INSERT OR REPLACE INTO ip2country (ip_from, ip_to, country, ria, date, file, description)
-    VALUES (:ip_from, :ip_to, :country, :ria, :date, :file, :description)
-    """
 
-    with open(file, encoding='utf-8', errors='ignore') as csvfile:
-        csv_reader_object = csv.reader(csvfile, delimiter='|', quoting=csv.QUOTE_NONE)
+    with open(IP2COUNTRY_DB, 'r',  encoding='utf-8', errors='ignore') as db: 
+       
+        
+        database = []
+        for row in db:
+            row = row.split('|')
+            entry =   (bin(int(row[0]))[2:].zfill(128), bin(int(row[1]))[2:].zfill(128), row[2], row[3], row[4], row[6].strip('\n'))
+            database.append(entry)
+           
+          
+        query = """
+                INSERT INTO ip2country 
+                        VALUES (?,?,?,?,?,?)  
+                """    
+       
+ 
+        cursor.executemany(query, database)
+        connection.commit()
+        connection.close()
 
-        with sqlite3.connect("sql_lite.db") as connection:
-            cursor = connection.cursor()
-            try:
-                cursor.executemany(query, csv_reader_object)
-            except  Exception as e: 
-                print("Exception: ", e)
+
+        # To query transform ip into integer and integer to a fixed 128 bit value 
+
+
+
+
+
+
 
 
 
@@ -247,4 +264,28 @@ def getaddress(ip_from):
 #extract_as_mmdb()
 #print(read_mmdb("131.255.44.4"))
 #print(read_mmdb("2c0f:eca0::0001"))
+
+
+
+def extract_as_mysql(file=IP2COUNTRY_DB):
+
+    with open(IP2COUNTRY_DB_MYSQL, 'w',  encoding='utf-8', errors='ignore') as f, open(IP2COUNTRY_DB, 'r',  encoding='utf-8', errors='ignore') as db: 
+       
+        f.write("CREATE TABLE ip2country\n(ip_from VARCHAR(50), ip_to VARCHAR(50),country VARCHAR(2),registry VARCHAR(10), lastmodified VARCHAR(10), description VARCHAR(255), PRIMARY KEY(ip_from, ip_to));\n")
+        f.write("INSERT INTO ip2country (ip_from, ip_to, country, registry, lastmodified, description)\n")
+        f.write("VALUES\n")
+        
+        database = []
+        for row in db:
+            row = row.split('|')
+            database.append(row)
+
+        for row in database[:-1]:
+            line = "('%s', '%s', '%s', '%s', '%s' , '%s'),\n" % (str(ipaddress.ip_address(int(row[0]))), str(ipaddress.ip_address(int(row[1]))), row[2], row[3], row[4], row[6].strip('\n'))
+            f.write(line)
+        else:
+            line = "('%s', '%s', '%s', '%s', '%s' , '%s');" % (str(ipaddress.ip_address(int(row[0]))), str(ipaddress.ip_address(int(row[1]))), row[2], row[3], row[4], row[6].strip('\n'))
+            f.write(line)
+
+    # query with: Select country from ip2country where inet6_aton('41.31.255.254') >= inet6_aton(ip_to) and inet6_aton('41.31.255.254') <= inet6_aton(ip_to)
 
