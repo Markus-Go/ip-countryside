@@ -1,6 +1,7 @@
 from config import *;
 #from ip_countryside_parser import get_city
 import ipaddress
+import sqlite3
 
 # @TODO Method should call read_db() to get records in form of list     -> Aufwand 1
 # Use a filter instead  
@@ -41,3 +42,19 @@ def ip_in_range(ip, start, end):
     ip_int = int(ip)
 
     return start <= ip_int <= end 
+
+
+
+def get_record_by_ip_sqllite(ip):
+    ip = bin(int(ipaddress.ip_address(ip)))[2:].zfill(128)
+    connection = sqlite3.connect(IP2COUNTRY_DB_SQLLITE)
+    cursor = connection.cursor()
+    query = "SELECT country FROM ip2country WHERE ip_from <= '%s' and ip_to >= '%s'" % (ip,ip)
+    cursor.execute(query)
+    result = cursor.fetchall()
+    result = result[0][0]
+    
+    return COUNTRY_DICTIONARY[result], result
+
+
+

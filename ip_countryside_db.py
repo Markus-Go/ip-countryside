@@ -1,14 +1,15 @@
-from netaddr import IPSet
-from mmdb_writer import MMDBWriter
-import maxminddb
+#from netaddr import IPSet
+#from mmdb_writer import MMDBWriter
+#import maxminddb
 import ipaddress
 from ipaddress import ip_address, IPv4Address, IPv6Address, ip_interface
 import json
-import yaml
+#import yaml
 import math
 import sqlite3
 import csv
 from config import *;
+import pandas as pd
 
 
 # @TODO
@@ -147,7 +148,7 @@ def extract_as_yaml(file=IP2COUNTRY_DB):
 
 def extract_as_sqllite(file=IP2COUNTRY_DB):
     
-    connection = sqlite3.connect("sql_lite.db")
+    connection = sqlite3.connect(IP2COUNTRY_DB_SQLLITE)
     cursor = connection.cursor()
 
     #ip_from|ip_to|country|ria|date|file|description
@@ -161,8 +162,13 @@ def extract_as_sqllite(file=IP2COUNTRY_DB):
     lastmodified VARCHAR(15), 
     description VARCHAR(255),
     PRIMARY KEY (ip_from, ip_to)
-    );"""
+    );    
+    """
 
+    cursor.execute(query)
+    connection.commit()
+
+    query = "CREATE INDEX ip_range on ip2country (ip_from, ip_to);"
     cursor.execute(query)
     connection.commit()
     
@@ -193,6 +199,11 @@ def extract_as_sqllite(file=IP2COUNTRY_DB):
         # To query transform ip into integer and integer to a fixed 128 bit value 
 
 
+def extract_as_df(file=IP2COUNTRY_DB):
+
+    col_names = ["ip_from", "ip_to", "country", "registry", "last-modified", "record_type", "description"]
+    df = pd.read_csv(IP2COUNTRY_DB, delimiter="|", names=col_names, converters={'ip_from':int, 'ip_to':int, 'country':str, 'registry':str, 'last-modified':str, 'record_type':str, 'description':str  })
+    df.to_pickle(IP2COUNTRY_DB_DF)
 
 
 
@@ -289,3 +300,89 @@ def extract_as_mysql(file=IP2COUNTRY_DB):
 
     # query with: Select country from ip2country where inet6_aton('41.31.255.254') >= inet6_aton(ip_to) and inet6_aton('41.31.255.254') <= inet6_aton(ip_to)
 
+import random
+import time
+
+def testquery_sql_lite(nr_samples):
+    with open(IP2COUNTRY_DB, 'r',  encoding='utf-8', errors='ignore') as db: 
+       
+        database = []
+        for row in db:
+            row = row.split('|')
+            database.append(row)
+
+
+
+    sample_values = []
+    
+    for i in range(1,nr_samples):
+        sample_values.append(random.randint(0, len(database))) 
+
+            
+    query_values = []
+    for index in sample_values:
+        entry = database[index]
+        ip_from = int(entry[0])
+        ip_to = int(entry[1])
+        query_values.append([bin(ip_from)[2:].zfill(128), bin(ip_to)[2:].zfill(128)])
+
+   
+    
+    
+    #print(result)
+    
+    start_time = time.time()  
+    for value in query_values: 
+        connection = sqlite3.connect(IP2COUNTRY_DB_SQLLITE)
+        cursor = connection.cursor()
+        query = "SELECT country FROM ip2country WHERE ip_from <= '%s' and ip_to >= '%s'" % (value[0], value[0])
+        cursor.execute(query)
+        result = cursor.fetchall()
+        
+        
+
+    end_time = time.time()
+    print("total time needed was:", f'{end_time - start_time:.3f}', "s\n") 
+    print("Average time for one request: ", str((end_time - start_time) / nr_samples), "s")
+    connection.close() 
+        
+ 
+import random, time
+import pickle
+
+
+def testquery_df(nr_samples):
+    with open(IP2COUNTRY_DB, 'r',  encoding='utf-8', errors='ignore') as db: 
+       
+        database = []
+        for row in db:
+            row = row.split('|')
+            database.append(row)
+
+
+    sample_values = []
+    
+    for i in range(1,nr_samples):
+        sample_values.append(random.randint(0, len(database))) 
+
+            
+    query_values = []
+    for index in sample_values:
+        entry = database[index]
+        ip_from = int(entry[0])
+        ip_to = int(entry[1])
+        query_values.append([ip_from, ip_to])
+
+    start_time = time.time() 
+    
+    for value in query_values: 
+        df = pd.read_pickle(IP2COUNTRY_DB_DF)
+        record = df.loc[ ( (df['ip_from'] <= ip) & (df['ip_to'] >= ip) ) ].values
+        
+   
+    end_time = time.time()
+    print("total time needed was:", f'{end_time - start_time:.3f}', "s\n") 
+    print("Average time for one request: ", str((end_time - start_time) / nr_samples), "s")
+    
+#extract_as_sqllite()
+testquery_sql_lite(100)
