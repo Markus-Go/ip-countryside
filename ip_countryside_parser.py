@@ -3,11 +3,9 @@ import os
 import shutil
 import fileinput
 import ipaddress
-from socket import inet_aton
 import time
 from datetime import datetime
 import multiprocessing as mp
-from xml.etree.ElementTree import QName
 from csvsort import csvsort
 import csv 
 
@@ -363,7 +361,7 @@ def parse_inet_group(entry):
 
 
 # ==============================================================================
-# Help Methods used for all files ... 
+# Methods used for all files ... 
 
 
 def delete_temp_files():
@@ -397,39 +395,7 @@ def merge_files(output, input_files):
 ## Parser Entry Method 
 
 
-def merge_successive(records):
-    
-    i = 0
-    end = len(records)
-    
-    try : 
-        while i < end - 1:
-            temp_list = []
-            j = i
-            if records[i][1] + 1 == records[j+1][0] and records[i][2] == records[i + 1][2]:
-                while records[i][1] + 1 == records[j+1][0]:
-                    if  records[i][2] == records[i + 1][2]:
-                        entry = records.pop(j+1)
-                        temp_list.append(entry[1])
-                    else: 
-                        break
-                    if i < end - 1:
-                        break
-                newend = max(temp_list)
-                records[i][1] = newend
-                end = len(records)
-            else:
-                i += 1
-
-    except TypeError:
-        
-        print(records[i])
-
-
-    return records
-
-
-def run_parser(save_conflicts_param=True):
+def run_parser(save_conflicts_param=True, multicore=True):
 
     start_time = time.time()
     print("parsing started\n")
@@ -458,8 +424,10 @@ def run_parser(save_conflicts_param=True):
 
 
     #print("parsing inetnum files ...")
-    #parse_inet_files_single()
-    #parse_inet_files_multicore()
+    if multicore:
+        parse_inet_files_multicore()
+    else:
+        parse_inet_files_single()
 
 
     stripped_files = [
@@ -494,35 +462,25 @@ def run_parser(save_conflicts_param=True):
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
 
-    run_parser()
+    #run_parser()
  
     # @TODOs
     
     # 01. remove_duplicates -> Testen ,
-    #       [ ] Bug in save_conflicts_helper()
+    #       [X] Bug in save_conflicts_helper()
     #       [ ] Tabelle für Status Prioritäten erstellen
     #       [ ] Code wenn nötig updaten
     #       [ ] Document final anpassen 
     #       [ ] Diagram updaten in word
-    
     # 02. Branch dev/resolver und dev/mjarkas beide gegenseitig abgleichen
-    
     # 03. Komponenten Diagram erstellen für das Software
-
     # 03. Grenzen richtig abschneiden (split_files())
-
     # 04. Website Design anpassen
-
     # 05. Code aufräumen und Methods documentieren
-
     # 06. Spliting Records to find overlaps Strategy dokumentieren
-
     # 07. Update README.md
-
     # 08. Update run.ps1
-
     # 09. Optimize downloader script
-
     # 10. Abgleich mit anderen Branchen
 
 
@@ -540,7 +498,7 @@ if __name__ == "__main__":
         # [60,100,'TE','RIPE', '20161012', 'I', 'TELEX SRL'],
         # [70,100,'TE','RIPE', '20161012', 'I', 'TELEX SRL'],
         # [40,100,'TE','RIPE', '20161012', 'I', 'TELEX SRL'],
-
+        [ 17842175, 17986560, "KR", "APNIC", "20100512", "D", "ALLOCATED"]
     ]
 
 
@@ -550,10 +508,12 @@ if __name__ == "__main__":
         os.path.join(STRIPPED_DEL_FILE), 
         os.path.join(STRIPPED_INET_FILE),
     ]
-    #merge_files(IP2COUNTRY_DB, stripped_files)
+    merge_files(IP2COUNTRY_DB, stripped_files)
 
-    # split_records()
-    # sort_db()
-    # remove_duplicates() 
     
+    split_records()
+    sort_db()
+    save_conflicts()
+    #remove_duplicates() 
+
     #print(f"checking if there are stil any overlaps in final database ... -> {records_overlap(read_db())}")

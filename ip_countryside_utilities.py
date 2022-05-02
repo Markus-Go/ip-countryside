@@ -1,8 +1,8 @@
-from config import *;
 import ipaddress
 import math
-
 import pandas as pd
+
+from config import *;
 
 
 def get_record_by_ip(ip):

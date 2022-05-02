@@ -157,20 +157,21 @@ def save_conflicts_helper(group):
     data =  group_records_by_type(group)
     inet_group = data["I"]
     del_group = data["D"]
-    
     inet_group = group_records_by_country(inet_group)
     del_group = group_records_by_country(del_group)
-    
-    # if inetnum have only one record with "EU" as country 
-    # process delegation and delete inetnum
-    if "EU" in inet_group and len(inet_group) == 1 and not "EU" in del_group:
-        inet_group = []
         
-    # otherwise there is either no inetnum record with "EU" or there are 
-    # other inetnum records with more specific countries
-    # -> For both cases we remove the delegation ...  
-    else:
-        del_group = []
+    if inet_group and del_group:
+
+        # if inetnum have only one record with "EU" as country 
+        # process delegation and delete inetnum
+        if "EU" in inet_group and len(inet_group) == 1 and not "EU" in del_group:
+            inet_group = []
+            
+        # otherwise there is either no inetnum record with "EU" or there are 
+        # other inetnum records with more specific countries
+        # -> For both cases we remove the delegation ...  
+        else:
+            del_group = []
 
     if inet_group:
         data = inet_group
@@ -493,3 +494,34 @@ def records_overlap(records):
         
     return False
     
+
+def merge_successive(records):
+    
+    i = 0
+    end = len(records)
+    
+    try : 
+        while i < end - 1:
+            temp_list = []
+            j = i
+            if records[i][1] + 1 == records[j+1][0] and records[i][2] == records[i + 1][2]:
+                while records[i][1] + 1 == records[j+1][0]:
+                    if  records[i][2] == records[i + 1][2]:
+                        entry = records.pop(j+1)
+                        temp_list.append(entry[1])
+                    else: 
+                        break
+                    if i < end - 1:
+                        break
+                newend = max(temp_list)
+                records[i][1] = newend
+                end = len(records)
+            else:
+                i += 1
+
+    except TypeError:
+        
+        print(records[i])
+
+
+    return records
