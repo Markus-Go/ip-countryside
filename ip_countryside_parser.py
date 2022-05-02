@@ -424,10 +424,10 @@ def run_parser(save_conflicts_param=True, multicore=True):
 
 
     #print("parsing inetnum files ...")
-    if multicore:
-        parse_inet_files_multicore()
-    else:
-        parse_inet_files_single()
+    # if multicore:
+    #     parse_inet_files_multicore()
+    # else:
+    #     parse_inet_files_single()
 
 
     stripped_files = [
@@ -462,7 +462,7 @@ def run_parser(save_conflicts_param=True, multicore=True):
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
 
-    #run_parser()
+    run_parser()
  
     # @TODOs
     
@@ -508,12 +508,12 @@ if __name__ == "__main__":
         os.path.join(STRIPPED_DEL_FILE), 
         os.path.join(STRIPPED_INET_FILE),
     ]
-    merge_files(IP2COUNTRY_DB, stripped_files)
+    # merge_files(IP2COUNTRY_DB, stripped_files)
 
     
-    split_records()
-    sort_db()
-    save_conflicts()
+    # split_records()
+    # sort_db()
+    # save_conflicts()
     #remove_duplicates() 
 
     #print(f"checking if there are stil any overlaps in final database ... -> {records_overlap(read_db())}")

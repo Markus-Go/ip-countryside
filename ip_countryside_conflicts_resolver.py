@@ -344,40 +344,58 @@ def filter_records_by_status(records):
     # simply list all cases first have most priority
     if "ASSIGNED NON-PORTABLE" in data:         
         data = data["ASSIGNED NON-PORTABLE"]
+
     elif "ASSIGNED PI" in data:                 # ASSIGNED PI vs ALLOCATED PORTABLE
         data = data["ASSIGNED PI"]
-    elif "ASSIGNED PORTABLE" in data:           # ASSIGNED PORTABLE vs ALLOCATED PORTABLE
-        data = data["ASSIGNED PORTABLE"] 
-    elif "ASSIGNED PA" in data:                 # ASSIGNED PA vs ALLOCATED PA vs LIR-PARTITIONED
-        data = data["ASSIGNED PA"] 
+
     elif "ASSIGNED" in data: 
         data = data["ASSIGNED"]
+
+    elif "ASSIGNED PORTABLE" in data:           # ASSIGNED PORTABLE vs ALLOCATED PORTABLE
+        data = data["ASSIGNED PORTABLE"] 
+
+    elif "ASSIGNED PA" in data:                 # ASSIGNED PA vs ALLOCATED PA vs LIR-PARTITIONED
+        data = data["ASSIGNED PA"] 
+
     elif "ALLOCATED NON-PORTABLE" in data:      # ASSIGNED PA vs ALLOCATED NON-PORTABLE PA vs ALLOCATED PORTABLE
         data = data["ALLOCATED NON-PORTABLE"] 
-    elif "LIR-PARTITIONED PA" in data:          # No duplicates at this point 
-        data = data["LIR-PARTITIONED PA"]
+
     elif "SUB-ALLOCATED PA" in data:            # ASSIGNED PA vs ALLOCATED NON-PORTABLE PA vs ALLOCATED PORTABLE
         data = data["SUB-ALLOCATED PA"]
-    elif "LEGACY" in data:                      # LEGACY vs LEGACY vs ALLOCATED PORTABLE
-        data = data["LEGACY"]
-    elif "ALLOCATED PORTABLE" in data:          # ALLOCATED PORTABLE vs  ?? (loses always)
-        data = data["ALLOCATED PORTABLE"] 
-    elif "ALLOCATED PA" in data:                # ALLOCATED PORTABLE vs  ?? (loses always)
-        data = data["ALLOCATED PA"]             
-    elif "UNSPECIFIED" in data:                 # NO CASES
-        data = data["UNSPECIFIED"]              
-    elif "ALLOCATED UNSPECIFIED" in data:       # NO CASES
-        data = data["ALLOCATED UNSPECIFIED"]
+
     elif "AGGREGATED-BY-LIR" in data:
         data = data["AGGREGATED-BY-LIR"]
-    elif "ALLOCATED-BY-LIR" in data:
-        data = data["ALLOCATED-BY-LIR"]
-    elif "ALLOCATED-BY-RIR" in data:  
-        data = data["ALLOCATED-BY-RIR"]
+
     elif "ALLOCATED" in data:                   # delegation files ..
         data = data["ALLOCATED"]
+
+    elif "LIR-PARTITIONED PA" in data:          # No duplicates at this point 
+        data = data["LIR-PARTITIONED PA"]
+    
+    elif "AGGREGATED-BY-LIR" in data:
+        data = data["ALLOCATED-BY-LIR"]
+    
+    elif "ALLOCATED PORTABLE" in data:          # ALLOCATED PORTABLE vs  ?? (loses always)
+        data = data["ALLOCATED PORTABLE"] 
+    
+    elif "ALLOCATED-BY-RIR" in data:  
+        data = data["ALLOCATED-BY-RIR"]
+    
+    elif "ALLOCATED PA" in data:                # ALLOCATED PORTABLE vs  ?? (loses always)
+        data = data["ALLOCATED PA"]             
+    
+    elif "LEGACY" in data:                      # LEGACY vs LEGACY vs ALLOCATED PORTABLE
+        data = data["LEGACY"]
+    
     elif "ASSIGNED ANYCAST" in data:            
         data = data["ASSIGNED ANYCAST"]
+    
+    elif "UNSPECIFIED" in data:                 # NO CASES
+        data = data["UNSPECIFIED"]              
+    
+    elif "ALLOCATED UNSPECIFIED" in data:       # NO CASES
+        data = data["ALLOCATED UNSPECIFIED"]
+    
     else:
         print("Unvalid Data detected in filter_by_status() !")
 
