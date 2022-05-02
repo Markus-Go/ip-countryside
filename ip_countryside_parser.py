@@ -201,14 +201,9 @@ def parse_inet_files_multicore(kb = 5):
                 s = fh.readline()
                 while s != '\n' and s != "":    
                     s = fh.readline()
-                    #print("Chunk: ", chunk , fh.tell(), '\n', s)           
-
-
+                               
                 # get current file location
                 end = fh.tell()
-
-                # print("Chunksize for chunk ",chunk,  str(end - cursor))
-
 
                 # add chunk to process pool, save reference to get results
                 proc = pool.apply_async(parse_inet_chunk, [MERGED_INET_FILE, cursor, end])
@@ -218,12 +213,6 @@ def parse_inet_files_multicore(kb = 5):
                 if split_size > end - cursor:
                     break
  
-
-                #Debug
-                #fh.seek(cursor)
-                #lines = fh.readlines(end - cursor)  
-                #print(*lines, '\n----------------------------------------\n')
-
                 # setup next chunk
                 cursor = end
                
@@ -233,7 +222,8 @@ def parse_inet_files_multicore(kb = 5):
         pool.join()
 
         with open(STRIPPED_INET_FILE, 'w', encoding='utf-8', errors='ignore') as parsed:
-            for proc in results:
+           # write parsed lines to file
+           for proc in results:
                 chunk_result = proc.get()
                 for entry in chunk_result:
                     entry_string = '|'.join(map(str, entry))
@@ -630,6 +620,7 @@ def delete_temp_files():
     os.remove(STRIPPED_DEL_FILE)
     os.remove(MERGED_INET_FILE)
     os.remove(STRIPPED_INET_FILE)
+    # @TODO add files that aren't needed 
 
 
 def merge_files(output, files):
@@ -644,7 +635,6 @@ def merge_files(output, files):
                 with open(del_file, "rb") as source:
 
                     shutil.copyfileobj(source, f)
-
                     #f.write(os.linesep.encode())
     
     except IOError as e:
@@ -657,37 +647,41 @@ def merge_files(output, files):
 
 
 def merge_successive(records):
-    
+    # merge contiguous entries from the same source and country
+    # [[1,2,'DE'], [3,4,'DE']] -> [1,4,'DE']
     i = 0
     end = len(records)
-    
-    try : 
-        while i < end - 1:
-            temp_list = []
-            if records[i][1] + 1 == records[i+1][0] and records[i][2] == records[i + 1][2] and records[i][5] == records[i+1][5]:
-                while records[i][1] + 1 == records[i+1][0]:
-                    if  records[i][2] == records[i + 1][2] and records[i][5] == records[i+1][5]:
-                        entry = records.pop(i+1)
-                        temp_list.append(entry[1])
-                    else: 
-                        break
-                    if i < end - 1:
-                        break
-                newend = max(temp_list)
-                records[i][1] = newend
-                end = len(records)
-            else:
-                i += 1
-
-    except TypeError:
-        
-        print(records[i])
+    while i < end - 1:
+        temp_list = []
+        # If current records end + 1 is start of next record and from same source (D,D or I,I) and is same country
+        if records[i][1] + 1 == records[i+1][0] and records[i][2] == records[i + 1][2] and records[i][5] == records[i+1][5]:
+            # loop to find records with same start but different end 
+            while records[i][1] + 1 == records[i+1][0]:
+                if  records[i][2] == records[i + 1][2] and records[i][5] == records[i+1][5]:
+                    # delete entry and save the ip_to value of it
+                    entry = records.pop(i+1)
+                    temp_list.append(entry[1])
+                # break if different country
+                else: 
+                    break
+                # break if end of list was reached
+                if i < end - 1:
+                    break
+            # find new end of the entry out of list
+            newend = max(temp_list)
+            records[i][1] = newend
+            end = len(records)
+        else:
+            # increment counter value
+            i += 1
 
     return records
 
 
 def merge(records):
- 
+    # merge all overlapping entries
+    # is only called when list of overlaps consists of only the same country  
+
     # if list is empty return
     if not records:
         return
@@ -696,12 +690,12 @@ def merge(records):
  
     merged = []
     for record in records:
-        # Wenn merged nicht leer ist oder der letzte ZU eintrag von merged kleiner ist als der VON vom aktuellen 
-        # Füge den aktuellen zu merged hinzu
+        # If merged is not empty or the last TO entry of merged is smaller than the FROM of the current one 
+        # Add the current record to merged
         if not merged or merged[-1][1] < record[0]:
             merged.append(record)
         else:
-        # Ersetze den ZU eintrag von merged mit dem max value aus dem letzen ZU von merged und dem aktuellen ZU 
+        # Replace the TO entry of merged with the max value from the last TO of merged and the current TO
             merged[-1][1] = max(merged[-1][1], record[1])
  
     return merged
@@ -1016,7 +1010,7 @@ def handle_overlaps(records=[]):
 
 
 def sameCountry(record):
-    
+    # iterate through an overlap record to return if everything is same country
     country = record[0][2]
     
     for r in record:
@@ -1223,8 +1217,6 @@ def run_parser():
     return 0
 
 
-def restoreNetmasks(file = IP2COUNTRY_DB):
-    pass
 
 
 
@@ -1240,4 +1232,4 @@ if __name__ == "__main__":
     #    print(r)
     
     #write_db(converttoNetwork(read_db()))
-    
+    pass

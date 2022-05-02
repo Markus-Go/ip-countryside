@@ -112,14 +112,15 @@ def getPowers(x):
 
 
 def traceIP(ip_addr):
-    
+    # returns a list of all entries in unmodified databse that contain a certain ip
+
     ip = int(ipaddress.ip_address(ip_addr))
     return_list = []
 
     with open(TRACE_FILE, 'r', encoding='utf-8', errors='ignore') as f:
         i = 0
         for line in f:
-            # not sure if is needed 
+            # in case there is still newlines in the database
             if line != '\n':
                 entry = line.split('|')
                 ip_from = int(entry[0])
