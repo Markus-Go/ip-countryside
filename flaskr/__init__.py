@@ -5,6 +5,7 @@ from sys import flags
 from warnings import catch_warnings
 import ipaddress
 from datetime import datetime
+import math
 
 from flask import Flask, request
 from flask import render_template
@@ -104,7 +105,7 @@ def create_app(test_config=None):
                     country     = COUNTRY_DICTIONARY[temp[2]] 
                     registry    = temp[3]
                     date        = datetime.strptime(str(temp[4]), '%Y%m%d').strftime('%Y.%m.%d')
-                    comment     = temp[7]
+                    comment     =  temp[7] if  not math.isnan(temp[7]) else "-"
                     isValid     = True
                     flag        = temp[2]
                     
@@ -131,7 +132,7 @@ def create_app(test_config=None):
                     country     = COUNTRY_DICTIONARY[temp[2]] 
                     registry    = temp[3]
                     date        = datetime.strptime(str(temp[4]), '%Y%m%d').strftime('%Y.%m.%d')
-                    comment     = temp[7]
+                    comment     =  temp[7] if  not math.isnan(temp[7]) else "-"
                     isValid     = True
                     flag        = temp[2]
 
@@ -159,7 +160,7 @@ def create_app(test_config=None):
                 country     = COUNTRY_DICTIONARY[temp[2]] 
                 registry    = temp[3]
                 date        = datetime.strptime(str(temp[4]), '%Y%m%d').strftime('%Y.%m.%d')
-                comment     = temp[7]
+                comment     =  temp[7] if  not math.isnan(temp[7]) else "-"
                 isValid     = True
                 flag        = temp[2]
 
