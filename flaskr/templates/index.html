@@ -3,9 +3,7 @@
 {% block content %}
 <div class="d-flex flex-row flex-wrap">
 	
-	<div class="col col-12 col-md-6">
-		{% include 'components/table.html' %}
-	</div>
+	{% include 'components/table.html' %}
 
 	<div class="col col-12 col-md-6">
 		
@@ -29,7 +27,12 @@
 
 </div>
 
-<div class="col col-12 col-md-6">
+<div class="col col-12 col-md-6 pb-3">
 	<button type="button" class="btn btn-outline-success">Dowanload Database</button>
 </div>
+
+
+<!-- {% include 'components/about.html' %} -->
+	
+
 {% endblock %}

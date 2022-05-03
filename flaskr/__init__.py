@@ -105,13 +105,13 @@ def create_app(test_config=None):
                     country     = COUNTRY_DICTIONARY[temp[2]] 
                     registry    = temp[3]
                     date        = datetime.strptime(str(temp[4]), '%Y%m%d').strftime('%Y.%m.%d')
-                    comment     =  temp[7] if  not math.isnan(temp[7]) else "-"
+                    comment     = temp[7] if temp[7]  else "-"
                     isValid     = True
                     flag        = temp[2]
                     
                 try:
                     geolocator = Nominatim(user_agent="Your_Name")
-                    location = geolocator.geocode(ip_from)
+                    location = geolocator.geocode(country)
                     lat = location.latitude
                     lon = location.longitude
 
@@ -132,7 +132,7 @@ def create_app(test_config=None):
                     country     = COUNTRY_DICTIONARY[temp[2]] 
                     registry    = temp[3]
                     date        = datetime.strptime(str(temp[4]), '%Y%m%d').strftime('%Y.%m.%d')
-                    comment     =  temp[7] if  not math.isnan(temp[7]) else "-"
+                    comment     = temp[7] if temp[7]  else "-"
                     isValid     = True
                     flag        = temp[2]
 
@@ -151,22 +151,20 @@ def create_app(test_config=None):
            
             ip_address = os.popen('curl -s ifconfig.me').readline()
             temp = get_record_by_ip(ip_address)
-
-            
+            print("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS")
             if temp:
-
                 ip_from     = ipaddress.ip_address(temp[0])
                 ip_to       = ipaddress.ip_address(temp[1])
                 country     = COUNTRY_DICTIONARY[temp[2]] 
                 registry    = temp[3]
                 date        = datetime.strptime(str(temp[4]), '%Y%m%d').strftime('%Y.%m.%d')
-                comment     =  temp[7] if  not math.isnan(temp[7]) else "-"
+                comment     = temp[7] if temp[7]  else "-"
                 isValid     = True
                 flag        = temp[2]
-
+                
             try:
                 geolocator = Nominatim(user_agent="Your_Name")
-                location = geolocator.geocode(ip_from)
+                location = geolocator.geocode(country)
                 lat = location.latitude
                 lon = location.longitude
                 
