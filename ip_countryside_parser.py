@@ -395,7 +395,7 @@ def merge_files(output, input_files):
 ## Parser Entry Method 
 
 
-def run_parser(save_conflicts_param=True, multicore=True):
+def run_parser(save_conflicts_param=False, multicore=True):
 
     start_time = time.time()
     print("parsing started\n")
@@ -424,29 +424,26 @@ def run_parser(save_conflicts_param=True, multicore=True):
 
 
     #print("parsing inetnum files ...")
-    if multicore:
-        parse_inet_files_multicore()
-    else:
-        parse_inet_files_single()
+    # if multicore:
+    #     parse_inet_files_multicore()
+    # else:
+    #     parse_inet_files_single()
 
 
     stripped_files = [
         os.path.join(STRIPPED_DEL_FILE), 
         os.path.join(STRIPPED_INET_FILE),
     ]
-    merge_files(IP2COUNTRY_DB, stripped_files)
+    #merge_files(IP2COUNTRY_DB, stripped_files)
 
-    split_records()
+    #split_records()
 
-    # @TODO Error in Encoding 
-    # csvsort(IP2COUNTRY_DB,  [0], delimiter="|", max_size=1000, has_header=False, quoting=csv.QUOTE_ALL, show_progress=True, encoding="utf-8") 
-    # takes a lot of memory !!
-    sort_db()
+    #sort_db()
 
-    if(save_conflicts_param):
-        save_conflicts()
+    # if(save_conflicts_param):
+    #     save_conflicts()
 
-    remove_duplicates()
+    # remove_duplicates()
 
     #print(f"checking if there are stil any overlaps in final database ... -> {records_overlap(read_db())}")
 
@@ -462,11 +459,8 @@ def run_parser(save_conflicts_param=True, multicore=True):
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
 
-    #run_parser()
  
     # @TODOs
-    # 02. Branch dev/resolver und dev/mjarkas beide gegenseitig abgleichen
-    # 03. Komponenten Diagram erstellen für das Software
     # 03. Grenzen richtig abschneiden (split_files())
     # 04. Website Design anpassen
     # 05. Code aufräumen und Methods documentieren
@@ -476,37 +470,19 @@ if __name__ == "__main__":
     # 09. Optimize downloader script
     # 10. Abgleich mit anderen Branchen
 
-
     t = [
         
-        # [1,20,'DE','RIPE', '20161012', 'I', 'ALLOCATED PA', 'TELEX SRL'],
-        # [1,20,'RE','RIPE', '20161014', 'I', 'ASSIGNED', 'TELEX SRL'],
-        # [1,20,'TE','RIPE', '20161013', 'I', 'ALLOCATED PA', 'TELEX SRL'],
-        # [1,20,'EU','RIPE', '20161012', 'I', 'ALLOCATED NON-PORTABLE', 'TELEX SRL'],
-        # [1,30,'AU','RIPE', '20161012', 'I', 'TELEX SRL'],
-        # [15,25,'NL','RIPE', '20161012', 'I', 'TELEX SRL'],
+        [1,20,'DE','RIPE', '20161012', 'I', 'ALLOCATED PA', 'TELEX SRL'],
+        [15,25,'NL','RIPE', '20161012', 'I', 'TELEX SRL'],
         # [20,55,'BE','RIPE', '20161012', 'I', 'TELEX SRL'],
         # [40,60,'SY','RIPE', '20161012', 'I', 'TELEX SRL'],
         # [45,55,'AT','RIPE', '20161012', 'I', 'TELEX SRL'],
         # [60,100,'TE','RIPE', '20161012', 'I', 'TELEX SRL'],
         # [70,100,'TE','RIPE', '20161012', 'I', 'TELEX SRL'],
         # [40,100,'TE','RIPE', '20161012', 'I', 'TELEX SRL'],
-        [ 17842175, 17986560, "KR", "APNIC", "20100512", "D", "ALLOCATED"]
+        # [ 17842175, 17986560, "KR", "APNIC", "20100512", "D", "ALLOCATED"]
     ]
 
-
-    #run_parser(save_conflicts_param=True)
-
-    stripped_files = [
-        os.path.join(STRIPPED_DEL_FILE), 
-        os.path.join(STRIPPED_INET_FILE),
-    ]
-    merge_files(IP2COUNTRY_DB, stripped_files)
-
-    
-    split_records()
-    sort_db()
-    save_conflicts()
-    #remove_duplicates() 
+    run_parser(multicore=True)
 
     #print(f"checking if there are stil any overlaps in final database ... -> {records_overlap(read_db())}")
