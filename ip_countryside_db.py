@@ -1,15 +1,16 @@
 import json
+import pandas as pd
 
 from config import *;
 
-
-# @TODO
-# Implement an exctract to YAML method      -> Aufwand 5
+# record index:    0       1   2    3           4            5          6       7
+# record format: ip_from|ip_to|cc|registry|last-modified|record_type|status|description
 
 
 def read_db(file=IP2COUNTRY_DB):
 
     records = []
+    
     try:
         # save all records into a list
         with open(file, "r", encoding='utf-8', errors='ignore') as f:
@@ -57,9 +58,6 @@ def write_db(records, file=IP2COUNTRY_DB):
 
 def read_db_record(line):
     
-    # record index:    0       1   2    3           4            5          6
-    # record format: ip_from|ip_to|cc|registry|last-modified|record_type|description
-
     if line.startswith("\n"):
         return []
 
@@ -70,17 +68,32 @@ def read_db_record(line):
         ip_from         = int(line[0]) 
         ip_to           = int(line[1]) 
         country         = line[2].upper()
-        registry        = line[3].rstrip('\n').upper()
+        registry        = line[3].upper()
         last_modified   = line[4]
-        record_type     = line[5].rstrip("\n")
+        record_type     = line[5]
+        status          = line[6].rstrip("\n")
         descr           = ""
         
-        if len(line) > 6:
-            descr = line[6].rstrip("\n")
+        if record_type == "I":
+            descr = line[7].rstrip("\n")
 
-        return [ip_from, ip_to, country, registry, last_modified, record_type, descr]
+        return [ip_from, ip_to, country, registry, last_modified, record_type, status, descr]
 
     return []
+
+
+def sort_db(file=IP2COUNTRY_DB):
+
+    records = []
+
+    # get records from final db
+    records = read_db(file)
+
+    # sort this list
+    records.sort()
+
+    # write sorted list back into final db
+    write_db(records, file)
 
 
 def extract_as_json(file=IP2COUNTRY_DB):
@@ -104,7 +117,8 @@ def extract_as_json(file=IP2COUNTRY_DB):
                     'Registry':      record[3],
                     'LastModified':  record[4],
                     'RecordType':    record[5],
-                    'Description':   record[6],
+                    'Status':        record[6],
+                    'Description':   record[7],
                 }
 
                 f.write(json.dumps(data, indent=4))

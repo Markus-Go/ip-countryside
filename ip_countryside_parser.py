@@ -8,16 +8,14 @@ import ipaddress
 import time
 from datetime import datetime
 import multiprocessing as mp
+from csvsort import csvsort
+import csv 
 
 from config import *;
 from ip_countryside_db import *;
 from ip_countryside_utilities import *;
+from ip_countryside_conflicts_resolver import *; 
 
-import pandas as pd
-import dask.dataframe as dd
-import numpy as np
-import dask.array as da 
-import csv 
 
 # ==============================================================================
 # Delegation parsing methods 
@@ -63,7 +61,7 @@ def parse_del_line(line):
     network_ip  = record[3]
     mask        = record[4]
     date        = record[5]
-    status      = record[6]
+    status      = record[6].rstrip("\n").upper()
     record_type = "D"
 
     # calculate int value of network ip
@@ -94,19 +92,19 @@ def parse_del_line(line):
         registry = "RIPE"
 
     # if line doesn't have any country
-    if status == 'reserved' or status == "available":
+    if status == 'RESERVED' or status == "AVAILABLE":
         country = "ZZ"
     
     if not date:
         date = "19700101"
 
-    return [range_start, range_end, country, registry, date, record_type]
+    return [range_start, range_end, country, registry, date, record_type, status]
 
 
 # ==============================================================================
 # Inetnum parsing methods
 
-# Parses merged_ine file and writes it into stripped_ine_file
+# Parses merged_inet file and writes it into stripped_inet_file
 def parse_inet_files_single():
     
     with open(MERGED_INET_FILE, 'r', encoding='utf-8', errors='ignore') as merged, open (STRIPPED_INET_FILE, 'w', encoding='utf-8', errors='ignore') as stripped:
@@ -116,6 +114,7 @@ def parse_inet_files_single():
             record = parse_inet_group(group)
             
             if record:
+                
                 line = "|".join(map(str, record))
                 line = line + '\n'
                 stripped.write(line)
@@ -141,7 +140,7 @@ def get_inet_group(seq, group_by):
         if (line.startswith(group_by[0]) or line.startswith(group_by[1]) or data) and not line.startswith("\n"):
             
             # don't remove spaces from description lines
-            if line.startswith('descr'):
+            if line.startswith("descr") or line.startswith("status"):
                 
                 line = line.replace("\n", "")
             
@@ -270,7 +269,6 @@ def parse_inet_group(entry):
             # Warum ? -> parser-bug ? investigate ... 
             if(len(item) > 1):
                 
-
                 key = item[0]
                 value = item[1].strip()
                 
@@ -285,20 +283,18 @@ def parse_inet_group(entry):
                 # for example: in ripe.db.inetnum some ip ranges with the description 
                 # "IPV4 ADDRESS BLOCK NOT MANAGED BY THE RIPE NCC" may appear -> these 
                 # don't need to be parsed at all.
-                # -> otherwise 5430 conflicts 
                 if key == "descr":
 
-                    if ("THIS NETWORK RANGE IS NOT ALLOCATED TO APNIC"   in value.strip().upper() or
-                        "NOT ALLOCATED BY APNIC"                         in value.strip().upper() or
-                        "IPV4 ADDRESS BLOCK NOT MANAGED BY THE RIPE NCC" in value.strip().upper() or
-                        "TRANSFERRED TO THE ARIN REGION"                 in value.strip().upper() or
-                        "TRANSFERRED TO THE RIPE REGION"                 in value.strip().upper() or
-                        "EARLY REGISTRATION ADDRESSES"                   in value.strip().upper() or
-                        "ASIA PACIFIC NETWORK INFORMATION CENTER"        in value.strip().upper() or
-                        "ASIA PACIFIC NETWORK INFORMATION CENTRE"        in value.strip().upper() ):
-
+                     if ("THIS NETWORK RANGE IS NOT ALLOCATED TO APNIC"    in value.strip().upper() or
+                         "NOT ALLOCATED BY APNIC"                          in value.strip().upper() or
+                         "IPV4 ADDRESS BLOCK NOT MANAGED BY THE RIPE NCC"  in value.strip().upper() or
+                         "TRANSFERRED TO THE ARIN REGION"                  in value.strip().upper() or                   
+                         "TRANSFERRED TO THE RIPE REGION"                  in value.strip().upper() or
+                         "EARLY REGISTRATION ADDRESSES"                    in value.strip().upper() or
+                         "ASIA PACIFIC NETWORK INFORMATION CENTER"         in value.strip().upper() or
+                         "ASIA PACIFIC NETWORK INFORMATION CENTRE"         in value.strip().upper() ):
                         return []
-                    
+
                 # if a country line has comment, remove the comment
                 if key == "country":
                     record[key] = value.split("#")[0]
@@ -320,10 +316,7 @@ def parse_inet_group(entry):
 
         net = ipaddress.IPv6Network(range[0] + '/' + range[1], False)
         range_end = int(net.broadcast_address)
-        
-
-   
-    
+      
     if re.match(IPV4_PATTERN, range[0]):
         
         # check if ranges are not reserved
@@ -338,13 +331,11 @@ def parse_inet_group(entry):
         if is_reserved:
             return []
 
-
-    
-    
     country       = record['country']
-    registry      = record['source'].split("#")[0]
+    registry      = record['source'].split("#")[0].upper().rstrip()
     last_modified = ""
     descr         = "" 
+    status        = re.sub(' +', ' ', record['status'].split("#")[0].upper()).rstrip()
     record_type   = "I"
 
     if "last-modified" in record and record["last-modified"]:
@@ -357,263 +348,12 @@ def parse_inet_group(entry):
     if "descr" in record:
         descr = record["descr"]
 
-    return [range_start, range_end, country, registry, last_modified, record_type, descr]
+
+    return [range_start, range_end, country, registry, last_modified, record_type, status, descr]
 
 
 # ==============================================================================
-# Methods used for resolving conflicts/overlaps ... 
-
-
-def remove_duplicates(records=[]):
-
-    if not records:
-        records = read_db()
-
-    duplicate_indicies = get_duplicate_indicies(records)
-    
-    records = empty_entry_by_idx(records, duplicate_indicies)
-
-    return records
-
-
-def get_duplicate_indicies(records):
-
-    # if list is empty return
-    if not records:
-        return 
-      
-    P = [] 
-
-    for i in range(len(records)):
-        P.append([ records[i][0], "L", records[i][2], i ])
-        P.append([ records[i][1], "R", records[i][2], i ])
-        
-    P.sort()
-
-    duplicate_dict = {}
-    duplicate_indicies = []
-    added = False
-
-    dict_L = {}
-    dict_R = {}
-    current = -1
-
-    for i in range(len(P)-1):
-        
-        # L: if both have same ip start and same country 
-        if (P[i][0] == P[i+1][0] and P[i][1] == P[i+1][1] == "L" ):
-
-            if not added:
-                dict_L[P[i][3]] = [P[i][3]]
-                added = True
-                current = P[i][3]
-
-            dict_L[current].append(P[i+1][3])
-
-        # R: if both have same ip end and same country
-        # correct keys in dict_R
-        elif (P[i][0] == P[i+1][0] and P[i][1] == P[i+1][1] == "R" ):
-
-            if not added:
-                dict_R[P[i][3]] = [P[i][3]]
-                added = True
-                current = P[i][3]
-
-            dict_R[current].append(P[i+1][3])
-
-        else:
-            current = -1
-            added = False
-    
-    # iterate over only the intersection of both dictionaries
-    # Since that two records may have same start but not necessarily
-    # the same end
-    
-    for key in dict_L.keys() & dict_R.keys():
-
-        # keep last record always
-        duplicate_dict[key] = list(set(dict_L[key]).intersection(dict_R[key])) 
-
-
-    for key, value in duplicate_dict.items():
-        
-        for i in range(len(value)):
-            
-            # take inetnum and not EU if exists
-            if records[value[i]][2] != "EU" and records[value[i]][5] != "D":
-
-                duplicate_dict[key].pop(i)
-                break
-            
-            # otherwise take inetnum
-            elif records[value[i]][5] != "D":
-
-                duplicate_dict[key].pop(i)
-                break
-            
-            # if all are delegation take first one
-            else:
-                duplicate_dict[key].pop()
-                break
-            
-        # join indexes of current duplicate sequence
-        duplicate_indicies.extend(duplicate_dict[key])  
-
-
-    return duplicate_indicies
-
-
-def get_overlaps(records):
-    """
-    Search for all overlaps in a list of RIA records and returns list 
-    (overlaps) of overlap lists (overlap_seq). The Algorithm has a 
-    complexity of O(n log(n)) known as Sweep-Line Algorithm.
-    More Info: https://www.baeldung.com/cs/finding-all-overlapping-intervals    
-
-    Arguments
-    ----------
-    records: list 
-        List of RIA entries with the follwoing format:
-        [ 
-          ...
-          [ip_from, ip_to, cc, registry, last-modified, record_type, description],
-          ...
-        ]
-
-    Returns
-    ----------
-    overlaps: list
-        List of lists. Each child list contains a list of RIA records
-        which are involed in an overlap case 
-        Each entry of overlap_seq have the following format: 
-            [ ...
-            ,[ 
-              ...
-              [ip_from, ip_to, cc, ....]
-              ...
-            ],
-            ...
-            ]
-
-        indicies: list
-            contains all indicies of records involved in overlap cases
-
-    """
-
-    # if list is empty return 
-    if not records:
-        return 
-
-    P = [] 
-    currentOpen = -1
-    added = False
-    overlap_seq = []
-    overlap_indicies = []
-    overlaps = []
-    overlaps_nr = 0
-
-    for i in range(len(records)):
-        P.append([records[i][0], "L", i])
-        P.append([records[i][1], "R", i])
-
-    P.sort()
-
-    for i in range(len(P)):
-    
-        if P[i][1] == "L":
-            if currentOpen == -1:
-                currentOpen = P[i][2]
-                added = False
-            else:
-                index = P[i][2]
-                overlap_seq.append(records[index])
-                overlap_indicies.append(index)
-                overlaps_nr = overlaps_nr + 1
-                if not added:
-                    overlap_seq.append(records[currentOpen])
-                    overlap_indicies.append(currentOpen)
-                    added = True
-                    overlaps_nr = overlaps_nr + 1
-                if records[index][1] > records[currentOpen][1]:
-                    currentOpen = index
-                    added = True
-        else:
-            if P[i][2] == currentOpen:
-                currentOpen = -1
-                added = False
-                overlaps.append(overlap_seq)
-                overlap_seq = []
-
-    # remove empty sequences
-    overlaps = [overlap_seq for overlap_seq in overlaps if overlap_seq] 
-    
-    # sort sublists by their length
-    overlaps.sort(key=lambda seq: len(seq))
-
-    print(f"overlaps found {overlaps_nr}\n")
-
-    return [overlaps, overlap_indicies]
-
-
-def records_overlap(records):
-    """
-    Checks if any two records overlaps in the given list of RIA records 
-    Note that complexity  O(n log(n))
-
-    Arguments
-    ----------
-    records: list 
-        List of RIA entries with the follwoing format:
-        [ 
-          ...
-          [ip_from, ip_to, ...],
-          ...
-        ]
-
-    Returns
-    ----------
-    boolean value
-        if there is any overlap in the given list
-
-    """
-
-    # if list is empty return
-    if not records:
-        return 
-      
-    P = [] 
-
-    for i in range(len(records)):
-        P.append([records[i][0], "L", i])
-        P.append([records[i][1], "R", i])
-        
-    P.sort()
-
-    for i in range(len(P)-1):
-    
-        if P[i][1] == "L" and P[i+1][1] != "R":
-            return True
-        
-    return False
-
-
-# ==============================================================================
-# Help Methods used for all files ... 
-
-
-def sort_file(file=IP2COUNTRY_DB):
-
-    records = []
-
-    # get records from final db
-    records = read_db(file)
-
-    # sort this list
-    records.sort()
-
-    # write sorted list back into final db
-    write_db(records, file)
-
+# Methods used for all files ... 
 
 def delete_temp_files():
     os.remove(MERGED_DEL_FILE)
@@ -643,503 +383,8 @@ def merge_files(output, files):
 
 
 ## ==============================================================================
-## Parser Entry Method 
-
-
-def merge_successive(records):
-    # merge contiguous entries from the same source and country
-    # [[1,2,'DE'], [3,4,'DE']] -> [1,4,'DE']
-    i = 0
-    end = len(records)
-    while i < end - 1:
-        temp_list = []
-        # If current records end + 1 is start of next record and from same source (D,D or I,I) and is same country
-        if records[i][1] + 1 == records[i+1][0] and records[i][2] == records[i + 1][2] and records[i][5] == records[i+1][5]:
-            # loop to find records with same start but different end 
-            while records[i][1] + 1 == records[i+1][0]:
-                if  records[i][2] == records[i + 1][2] and records[i][5] == records[i+1][5]:
-                    # delete entry and save the ip_to value of it
-                    entry = records.pop(i+1)
-                    temp_list.append(entry[1])
-                # break if different country
-                else: 
-                    break
-                # break if end of list was reached
-                if i < end - 1:
-                    break
-            # find new end of the entry out of list
-            newend = max(temp_list)
-            records[i][1] = newend
-            end = len(records)
-        else:
-            # increment counter value
-            i += 1
-
-    return records
-
-
-def merge(records):
-    # merge all overlapping entries
-    # is only called when list of overlaps consists of only the same country  
-
-    # if list is empty return
-    if not records:
-        return
-
-    records.sort(key=lambda x: x[0])
+## Parser Entry Method
  
-    merged = []
-    for record in records:
-        # If merged is not empty or the last TO entry of merged is smaller than the FROM of the current one 
-        # Add the current record to merged
-        if not merged or merged[-1][1] < record[0]:
-            merged.append(record)
-        else:
-        # Replace the TO entry of merged with the max value from the last TO of merged and the current TO
-            merged[-1][1] = max(merged[-1][1], record[1])
- 
-    return merged
-
-
-class MultiSet(object):
-   
-    def __init__(self, intervals):
-        self.intervals = intervals
-        self.events = None
-
-    def split_ranges(self):
-        self.events = []
-        for start, stop, symbol, registry, host, file, description in self.intervals:
-            self.events.append((start, True, stop, symbol, host, file, description))
-            self.events.append((stop, False, start, symbol, host, file, description))
-
-        def event_key(event):
-            key_endpoint, key_is_start, key_other, host, file, description, _ = event
-            key_order = 0 if key_is_start else 1
-            return key_endpoint, key_order, key_other, host, file, description
-
-        self.events.sort(key=event_key)
-
-        current_set = set()
-        ranges = []
-        current_start = -1
-
-        for endpoint, is_start, other, symbol, host, file, description in self.events:
-            if is_start:
-                if current_start != -1 and endpoint != current_start and \
-                       endpoint - 1 >= current_start:
-                    for s in current_set:
-                        ranges.append([current_start, endpoint - 1, s[0], s[1], s[2], s[3], s[4]])
-                current_set.add((symbol, registry, host, file, description))
-                current_start = endpoint
-            else:
-                if current_start != -1 and endpoint >= current_start:
-                    for s in current_set:
-                        ranges.append([current_start, endpoint, s[0], s[1], s[2], s[3], s[4]])
-                if not current_set == set():
-                    try:
-                        
-                        current_set.remove((symbol, registry, host, file, description))
-
-                    except KeyError:
-                        
-                        pass
-
-                current_start = endpoint + 1
-
-        return ranges
-
-              
-def handle_overlaps(records=[]):
-    
-    # get db records
-    if not records:
-        records = read_db()
-   
-    print(f"Nr. of records before overlaps deletion {len(records)}")
-    
-    # get all records which overlap and their corresponding indicies
-    [overlaps_temp, indicies] = get_overlaps(records)
-    
-    records = empty_entry_by_idx(records, indicies)
-    overlaps = []
-
-    print(f"number of records after overlaps deletion {len(records)}")
-
-    length = 0
-    with open("overlaping", 'w', encoding='utf-8', errors='ignore') as f:
-   
-        for item in overlaps_temp:
-
-            f.write("[\n")
-
-            for subitem in item:
-
-                length += 1
-                line = "|".join(map(str, subitem))
-                line = line + '\n'
-                f.write(line)
-                    
-
-            f.write("]\n")
-            
-
-    print(f"number of overlaps before {length}")
-
-    print("\nFor a total of: ", str(length + len(records)))
-
-    
-
-    first_merge_top_before = 0
-    first_merge_top_after = 0
-    first_dup_top_after = 0
-
-    same_country_merge_before = 0
-    same_country_merge_after = 0
-
-    dif_country_split_before = 0
-    dif_country_split_split_after = 0
-    dif_country_split_dup_after = 0
-    dif_country_split_after = 0
-
-    bottom_one_entry = 0
-
-
-    
-    
-
-    
-
-    with open("overlapping_split", 'w', encoding='utf-8', errors='ignore') as f, open("overlapping_top", 'w', encoding='utf-8', errors='ignore') as b: 
-    
-
-            with open("overlapping_same_country", 'w', encoding='utf-8', errors='ignore') as m:
-
-
-                for overlap_seq in overlaps_temp:
-        
-                    b.write("/////////////////////////////////////////////\n\nBefore merge_successive\n")
-                    for lap in overlap_seq:
-                        b.write(str(lap))
-                        b.write("\n")
-                   
-
-           
-                    for item in overlap_seq:
-                        first_merge_top_before += 1
-
-                    ######################################
-                    overlap_seq = merge_successive(overlap_seq)
-                    ######################################
-
-                    b.write("\n----------------------------------------\nBefore remove_duplicates\n")
-                    for lap in overlap_seq:
-                        b.write(str(lap))
-                        b.write("\n")
-
-
-                    for item in overlap_seq:
-                        first_merge_top_after += 1
-
-
-                    ######################################
-                    overlap_seq = remove_duplicates(overlap_seq)
-                    ######################################
-
-                    first_dup_top_after += len(overlap_seq)
-
-                    b.write("\n----------------------------------------\n")
-                    for lap in overlap_seq:
-                        b.write(str(lap))
-                        b.write("\n")
-
-                    b.write("\n\n")
-
-                
-                    if len(overlap_seq) > 1:
-            
-
-                
-
-                        if sameCountry(overlap_seq):
-
-
-                            for item in overlap_seq:
-                                same_country_merge_before += 1
-
-
-                            m.write("//////////////////////////////////////\n\nBefore merge\n")
-                            for lap in overlap_seq:
-                                m.write(str(lap))
-                                m.write("\n")
-                            
-
-                            ######################################
-                            overlap_seq = merge(overlap_seq)
-                            ######################################
-
-                            m.write("\n----------------------------------------\nAfter merge\n")
-                            for lap in overlap_seq:
-                                m.write(str(lap))
-                                m.write("\n")
-
-                            m.write("\n\n")
-
-
-                            same_country_merge_after += len(overlap_seq)
-                    
-                            ######################################
-                            records.extend(overlap_seq)
-                            ######################################
-
-                        else:
-
-                            for item in overlap_seq:
-                                dif_country_split_before += 1
-
-
-
-                            f.write("///////////////////////////////////////////////\n\nBefore split\n")
-                            for lap in overlap_seq:
-                                f.write(str(lap))
-                                f.write("\n")
-                            
-                            f.write("\n----------------------------------------\nAfter split\n")
-
-
-
-
-
-                
-                            ######################################
-                            overlap_seq = split_records(overlap_seq)
-                            ######################################
-
-                            
-                            for lap in overlap_seq:
-                                f.write(str(lap))
-                                f.write("\n")
-                            
-
-                            f.write("\n----------------------------------------\nAfter remove_duplicate\n")
-
-                            dif_country_split_split_after += len(overlap_seq)
-
-                            ######################################
-                            overlap_seq = remove_duplicates(overlap_seq)
-                            ######################################
-
-                            for lap in overlap_seq:
-                                f.write(str(lap))
-                                f.write("\n")
-                            
-
-                            f.write("\n----------------------------------------\nAfter merge_successive\n")
-                            
-
-
-
-                            dif_country_split_dup_after += len(overlap_seq)
-
-                            ######################################
-                            overlap_seq = merge_successive(overlap_seq)
-                            ######################################
-                            for lap in overlap_seq:
-                                f.write(str(lap))
-                                f.write("\n")
-                            
-                            
-
-                            f.write("\n\n")
-
-                            dif_country_split_after += len(overlap_seq)
-
-                            ######################################
-                            overlaps.extend(overlap_seq)
-                            ######################################
-
-
-                    else:
-                        bottom_one_entry += 1
-                        ######################################
-                        records.append(overlap_seq[0])
-                        ######################################
-
-
-
-    print(f"first_merge_top_before number of overlaps going into handle {first_merge_top_before}")
-    print(f"first_merge_top_after number of overlaps AFTER top merge_successive {first_merge_top_after}")
-    print(f"first_dup_top_after number of overlaps AFTER top duplicate removal {first_dup_top_after}")
-
-
-    print('\n\n')
-
-    print(f"same_country_merge_before number of overlaps going into same country merge dumb {same_country_merge_before}")
-    print(f"same_country_merge_after number of overlaps AFTER going into same country merge dumb {same_country_merge_after}")
-
-    print('\n\n')
-
-    print(f"dif_country_split_before number of overlaps going into the split method {dif_country_split_before}")
-    print(f"dif_country_split_split_after number of overlaps AFTER split method  {dif_country_split_split_after}")
-    print(f"dif_country_split_dup_after number of overlaps AFTER duplicate method {dif_country_split_dup_after}")
-    print(f"dif_country_split_after number of overlaps AFTER merge_successive {dif_country_split_after}")
-    
-    print('\n\n')
-
-    print(f"bottom_one_entry number of overlaps that are not more than one bottom {bottom_one_entry}")
-
-
-    print('\n\n')
-
-    print("A total number of records in: ", str())
-
-
-
-
-
-    print(f"len(records) number of records after handling {len(records)}")
-
-    print(f"len(overlaps) number of solved overlaps after handling {len(overlaps)}")
-
-    print("len(records) + len(overlaps) Number of final records: ", str(len(records) + len(overlaps)))
-
-    
-
-
-    return [records, overlaps]
-
-
-def sameCountry(record):
-    # iterate through an overlap record to return if everything is same country
-    country = record[0][2]
-    
-    for r in record:
-    
-        if not country == r[2]:
-    
-            return False
-    
-    return True
-
-
-def split_records(records=[]):
-
-    if not records:
-        records = read_db()
-
-    P = []
-    data = {}
-    queue = set()
-    
-    # generate start and end edges for each record
-    for i in range(len(records)):
-        
-        P.append( (records[i][0], "L", i) )
-        P.append( (records[i][1], "R", i) )
-    
-
-    P = sorted(
-        P, 
-        key=lambda x:
-            (
-                x[0], x[1], x[2]) 
-                if (x[1] == "L") 
-                else (x[0], x[1], -x[2])
-            )
-
-
-    record_split = []
-
-    for i in range(len(P)):
-        
-        current = P[i]
-
-        # if current index is not in dictionary
-        # then this is a new record to be processed
-        if not current[2] in data: 
-
-            # save index of the record in dict
-            data[current[2]] = set()
-            data[current[2]].add(current[0])
-
-            # if loop at first record save its index to the queue 
-            # and jump to next item in P 
-            if i == 0:
-                queue.add(current[2])
-                continue
-        
-            else:
-                
-                # -> for each record's index in the queue
-                # -> save a left edge (current[0]) 
-                #    to split the affected records at this point later
-                # worst case -> queue = [1,2,3,4,5,6,7,8,9, ...]
-                # meaning records are nested successively (wount be the case)
-                for idx in queue:
-
-                    data[idx].add(current[0])
-
-                queue.add(current[2])
-
-        # if current index is in dictionary
-        # then we arrived the right edge of a record
-        else:
-
-            # -> for each record's index in the queue
-            # -> save right edge (current[0]) 
-            #    to split the affected records at this point later
-            # worst case -> queue = [1,2,3,4,5,6,7,8,9, ...]
-            # meaning records are nested successively (wount be the case)
-            for idx in queue:
-
-                data[idx].add(current[0])
-
-            # if we arrived at the right edge of current then 
-            # we processed all overlap edges within this record 
-            if current[1] == "R" and current[2] in data and current[2] in queue :
-                
-                # remove record index from queue
-                queue.remove(current[2])
-
-                # add right edge for current element before deleting 
-                data[current[2]].add(records[current[2]][1])
-                
-                # split a db record by given list of edges 
-                record_split.extend(split_records_helper(records, [current[2], list(data[current[2]])]))
-                
-                # delete this record from data to save memory
-                data.pop(current[2])
-
-    record_split.sort()
-    return record_split
-
-
-def split_records_helper(records, record):
-
-    idx = int(record[0])
-
-    # sort start and end points ... 
-    record[1].sort()
-
-    cc = records[idx][2]
-    registry = records[idx][3]
-    last_modified = records[idx][4]
-    record_type = records[idx][5]
-    description = records[idx][6]
-       
-    ret_value = list()
-    for i in range(len(record[1])-1):
-
-        start = record[1][i]
-        end = record[1][i+1]
-        
-        new_record = [start, end, cc, registry, last_modified, record_type, description]
-
-        ret_value.append(new_record)
-        
-    
-    return ret_value
-
 def splitdb(records):
 
     ipv4 = []
@@ -1156,7 +401,8 @@ def splitdb(records):
     
     return
 
-def run_parser():
+
+def run_parser(save_conflicts_param=True, multicore=True):
 
     start_time = time.time()
     print("parsing started\n")
@@ -1183,8 +429,12 @@ def run_parser():
     #parse_del_files()           
 
     #print("parsing inetnum files ...")
-    ##parse_inet_files_single()
-    #parse_inet_files_multicore()
+
+    if multicore:
+        parse_inet_files_multicore()
+    else:
+        parse_inet_files_single()
+
 
     stripped_files = [
         os.path.join(STRIPPED_DEL_FILE), 
@@ -1192,9 +442,7 @@ def run_parser():
     ]
     merge_files(IP2COUNTRY_DB, stripped_files)
 
-
     #shutil.copyfile(IP2COUNTRY_DB, TRACE_FILE)
-
 
     records = remove_duplicates()
 
@@ -1202,7 +450,7 @@ def run_parser():
 
     records.extend(overlaps)
 
-    splitdb(records)
+    #splitdb(records)
 
     print(f"checking if there are stil any overlaps in final database ... -> {records_overlap(records)}")
     
@@ -1217,14 +465,11 @@ def run_parser():
     return 0
 
 
-
-
-
-
 # Needed if for multiprocessing not to crash
 if __name__ == "__main__":   
 
-    run_parser()
+
+    run_parser(multicore=True)
 
     #result = traceIP("2.59.10.0")
 
@@ -1232,4 +477,16 @@ if __name__ == "__main__":
     #    print(r)
     
     #write_db(converttoNetwork(read_db()))
-    pass
+
+ 
+    # @TODOs
+    # 03. Komponenten Diagram erstellen für das Software
+    # 03. Grenzen richtig abschneiden (split_files())
+    # 04. Website Design anpassen
+    # 05. Code aufräumen und Methods documentieren
+    # 06. Spliting Records to find overlaps Strategy dokumentieren
+    # 07. Update README.md
+    # 08. Update run.ps1
+    # 09. Optimize downloader script
+    # 10. Abgleich mit anderen Branchen
+    

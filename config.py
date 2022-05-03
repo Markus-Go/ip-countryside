@@ -16,6 +16,8 @@ IP2COUNTRY_MM          = os.path.join(DEL_FILES_DIR, "ip2country_mm_extended.db"
 IP2COUNTRY_DB_JSON     = os.path.join(DEL_FILES_DIR, "db.json")
 IP2COUNTRY_DB_YAML     = os.path.join(DEL_FILES_DIR, "db.yaml")
 
+INET_CONFLICTS         = os.path.join(DEL_FILES_DIR, "ip2country_conflicts")
+
 APNIC_DB_IRT           = os.path.join(DEL_FILES_DIR, "apnic.db.irt")
 APNIC_IRT              = os.path.join(DEL_FILES_DIR, "apnic.irt")
 IRTTOADDRESS           = os.path.join(DEL_FILES_DIR, "irtToAddress.py")
@@ -54,37 +56,37 @@ ARIN = {
 }
 
 APNIC = {
-    'host':           "ftp.apnic.net",
-    'del_cwd':        "pub/stats/apnic/",
-    'del_fname':      "delegated-apnic-latest",
-    'del_md5':        "delegated-apnic-latest.md5",
-    'del_timestamp':  "delegated-apnic-latest.timestamp",
-    'inet_cwd':       "/apnic/whois/",
-    'inet_fname_gz':  "apnic.db.inetnum.gz",
-    'inet_fname':     "apnic.db.inetnum",
-    'inet_timestamp': "apnic.db.inetnum.timestamp",
-    'inet_fname_ipv6_gz':  "apnic.db.inet6num.gz",
-    'inet_fname_ipv6':     "apnic.db.inet6num",
-    'inet_ipv6_timestamp': "apnic.db.inet6num.timestamp",
-    'irt_fname_gz':   "apnic.db.irt.gz",
-    'irt_timestamp':  "apnic.db.irt.timestamp"
+    'host':                 "ftp.apnic.net",
+    'del_cwd':              "pub/stats/apnic/",
+    'del_fname':            "delegated-apnic-latest",
+    'del_md5':              "delegated-apnic-latest.md5",
+    'del_timestamp':        "delegated-apnic-latest.timestamp",
+    'inet_cwd':             "/apnic/whois/",
+    'inet_fname_gz':        "apnic.db.inetnum.gz",
+    'inet_fname':           "apnic.db.inetnum",
+    'inet_timestamp':       "apnic.db.inetnum.timestamp",
+    'inet_fname_ipv6_gz':   "apnic.db.inet6num.gz",
+    'inet_fname_ipv6':      "apnic.db.inet6num",
+    'inet_ipv6_timestamp':  "apnic.db.inet6num.timestamp",
+    'irt_fname_gz':         "apnic.db.irt.gz",
+    'irt_timestamp':        "apnic.db.irt.timestamp"
 }
 
 RIPE = {
-    'host':           "ftp.ripe.net",
-    'del_cwd':        "ripe/stats/",
-    'del_fname':      "delegated-ripencc-latest",
-    'del_md5':        "delegated-ripencc-latest.md5",
-    'del_timestamp':  "delegated-ripencc-latest.timestamp",
-    'inet_cwd':       "/ripe/dbase/split/",
-    'inet_fname_gz':  "ripe.db.inetnum.gz",
-    'inet_fname':     "ripe.db.inetnum",
-    'inet_timestamp': "ripe.db.inetnum.timestamp",
-    'inet_fname_ipv6_gz':  "ripe.db.inet6num.gz",
-    'inet_fname_ipv6':     "ripe.db.inet6num",
-    'inet_ipv6_timestamp': "ripe.db.inet6num.timestamp",
-    'irt_fname_gz':   "ripe.db.irt.gz",
-    'irt_timestamp':  "ripe.db.irt.timestamp"
+    'host':                 "ftp.ripe.net",
+    'del_cwd':              "ripe/stats/",
+    'del_fname':            "delegated-ripencc-latest",
+    'del_md5':              "delegated-ripencc-latest.md5",
+    'del_timestamp':        "delegated-ripencc-latest.timestamp",
+    'inet_cwd':             "/ripe/dbase/split/",
+    'inet_fname_gz':        "ripe.db.inetnum.gz",
+    'inet_fname':           "ripe.db.inetnum",
+    'inet_timestamp':       "ripe.db.inetnum.timestamp",
+    'inet_fname_ipv6_gz':   "ripe.db.inet6num.gz",
+    'inet_fname_ipv6':      "ripe.db.inet6num",
+    'inet_ipv6_timestamp':  "ripe.db.inet6num.timestamp",
+    'irt_fname_gz':         "ripe.db.irt.gz",
+    'irt_timestamp':        "ripe.db.irt.timestamp"
 }
 
 

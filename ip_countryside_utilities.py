@@ -1,13 +1,14 @@
-from config import *;
 import ipaddress
 import math
+import pandas as pd
 
-#import pandas as pd
+
+from config import *;
 
 
 def get_record_by_ip(ip):
     
-    col_names = ["ip_from", "ip_to", "cc", "registry", "last-modified", "record_type", "description"]
+    col_names = ["ip_from", "ip_to", "cc", "registry", "last-modified", "record_type", "status", "description"]
 
     df = pd.read_csv(IP2COUNTRY_DB, delimiter="|", names=col_names, converters={'ip_from':int, 'ip_to':int})
 
@@ -136,10 +137,6 @@ def traceIP(ip_addr):
 
 
     return return_list
-
-
-
-
 
 
 #print(get_record_by_ip("2003:EF:DF13:DCE9:F897:5C93:DA97:4722"))
