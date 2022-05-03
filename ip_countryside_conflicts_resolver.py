@@ -363,8 +363,8 @@ def filter_records_by_status(records):
     elif "SUB-ALLOCATED PA" in data:            # ASSIGNED PA vs ALLOCATED NON-PORTABLE PA vs ALLOCATED PORTABLE
         data = data["SUB-ALLOCATED PA"]
 
-    elif "AGGREGATED-BY-LIR" in data:
-        data = data["AGGREGATED-BY-LIR"]
+    elif "ALLOCATED-BY-LIR" in data:
+        data = data["ALLOCATED-BY-LIR"]
 
     elif "ALLOCATED" in data:                   # delegation files ..
         data = data["ALLOCATED"]
@@ -373,7 +373,7 @@ def filter_records_by_status(records):
         data = data["LIR-PARTITIONED PA"]
     
     elif "AGGREGATED-BY-LIR" in data:
-        data = data["ALLOCATED-BY-LIR"]
+        data = data["AGGREGATED-BY-LIR"]
     
     elif "ALLOCATED PORTABLE" in data:          # ALLOCATED PORTABLE vs  ?? (loses always)
         data = data["ALLOCATED PORTABLE"] 
@@ -512,34 +512,3 @@ def records_overlap(records):
         
     return False
     
-
-def merge_successive(records):
-    
-    i = 0
-    end = len(records)
-    
-    try : 
-        while i < end - 1:
-            temp_list = []
-            j = i
-            if records[i][1] + 1 == records[j+1][0] and records[i][2] == records[i + 1][2]:
-                while records[i][1] + 1 == records[j+1][0]:
-                    if  records[i][2] == records[i + 1][2]:
-                        entry = records.pop(j+1)
-                        temp_list.append(entry[1])
-                    else: 
-                        break
-                    if i < end - 1:
-                        break
-                newend = max(temp_list)
-                records[i][1] = newend
-                end = len(records)
-            else:
-                i += 1
-
-    except TypeError:
-        
-        print(records[i])
-
-
-    return records
