@@ -114,7 +114,7 @@ def split_records_helper(records, record, f):
     for i in range(len(record[1])-1):
 
         start = record[1][i]
-        end = record[1][i+1]
+        end = record[1][i+1] 
         
         new_record = [start, end, cc, registry, last_modified, record_type, status, description]
 

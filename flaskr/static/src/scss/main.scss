@@ -1,8 +1,5 @@
 @import "../../node_modules/bootstrap/scss/bootstrap";
 
-@import "navbar";
-@import "footer";
-
 $background: #1a1e21;
 
 body {
@@ -12,18 +9,67 @@ body {
    min-height: 100vh;
 
    .wrapper {
-        background-color: $background;
+
+        position: relative;
         flex: 1 0 auto;
         color: $primary;
+        overflow: hidden;
 
+        .container {
+            position: relative;
+            z-index: 1;
+        }
+       
+        
    }
 
    .main {
-
+        
         margin: 2em;
 
+
+    }
+
+}
+
+.banner {
+    position: relative;
+    min-height: 550px;
+
+   
+
+    &__image {
+        position:absolute;
+        height:100%;
+        width: 100%;
+        background-size: cover;
+        background-repeat: no-repeat; 
         
-   }
+        &:before{
+            position: absolute;
+            content: '';
+            height: 100%;
+            width: 100%;
+            background-color: rgba(0,0,0,.4);
+            z-index: 2;
+        }
+
+    }
+
+    &__block {
+
+        z-index: 3;
+
+
+        form {
+            
+            .form-control, .btn {
+                border-radius: 0 !important;
+            }
+
+        }
+
+    }
 
 }
 
@@ -45,19 +91,28 @@ body {
     }
 }
 
-.navbar {
-    
+// Navbar
+.navbar-custom {
+
     padding: 1em;
+    background-color: fade-out($black, 0.3);
 
     .navbar-brand {
-
+        font-size: 1rem;
+        font-weight: 700;
     }
 
+    
     .collapse.navbar-collapse {
 
         flex-direction: row-reverse;
 
         .navbar-nav {
+
+            .nav-item {
+
+
+            }
 
         }
     
@@ -65,11 +120,13 @@ body {
 
 }
 
+
 footer {
     
     margin-top: auto;
 
     .copyright {
+        color: $gray-500;
         background-color: rgba(0, 0, 0, 0.2);
     }
 

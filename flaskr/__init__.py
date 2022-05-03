@@ -120,8 +120,8 @@ def create_app(test_config=None):
                         comment = "Karte aktuell Leider nicht Verfügbar"
         else:
             ipaddress = os.popen('curl -s ifconfig.me').readline()
-            temp = get_record_by_ip(ipaddress)
-
+            #temp = get_record_by_ip(ipaddress)
+            temp = ""
             if temp:
                 country = temp[0] 
                 flag = temp[1]

@@ -140,6 +140,7 @@ def get_inet_group(seq, group_by):
             if line.startswith("descr") or line.startswith("status"):
                 
                 line = line.replace("\n", "")
+                line = line.replace("|", "")
             
             else :
                 
@@ -391,6 +392,82 @@ def merge_files(output, input_files):
         print(e)
 
 
+def merge_successive():
+
+    with ( open(IP2COUNTRY_DB, "r", encoding='utf-8', errors='ignore') as input, 
+        open(os.path.join(DEL_FILES_DIR, "ip2country_temp.db"), "w", encoding='utf-8', errors='ignore') as output ):
+
+        for group in get_successive_group(input):
+            
+            if len(group) > 1:
+
+                ip_from     = group[0][0]
+                ip_to       = group[-1][1]
+                cc          = group[0][2]
+                registry    = group[0][3]
+                date        = group[0][4]
+                type        = group[0][5]
+                status      = group[0][6]
+                descr       = ""
+
+                if type == "I":
+                    descr = group[0][7]
+
+                record = [ip_from, ip_to, cc, registry, date, type, status, descr]
+                
+            else:
+
+                record = group[0]
+
+            if record:
+                    
+                    line = "|".join(map(str, record))
+                    line = line + '\n'
+                    output.write(line)
+                    
+    os.remove(IP2COUNTRY_DB)
+    os.rename(os.path.join(DEL_FILES_DIR, "ip2country_temp.db"), IP2COUNTRY_DB)
+
+
+def get_successive_group(file):
+
+    data = []
+
+    for line in file:
+
+        record = read_db_record(line)
+
+         # if data array is empty then append current record
+        if len(data) == 0:
+
+            data.append(record)
+            continue
+
+        elif (record[0] == data[-1][1] or record[0]-1 == data[-1][1]) and record[2] == data[-1][2]:
+            
+            data.append(record)
+
+        else:
+ 
+            temp = record
+
+            # retrun current duplicate sequence to be proccessed
+            yield data
+
+            # clean data to begin with next duplicates group
+            data = []
+
+            # write the record which ends a duplicates sequence
+            data.append(temp)
+
+    # if we finished the file we still may have record in data 
+    # return this one also 
+    if data:
+
+        yield data
+        data = []
+
+
 ## ==============================================================================
 ## Parser Entry Method 
 
@@ -419,33 +496,38 @@ def run_parser(save_conflicts_param=False, multicore=True):
     #merge_files(MERGED_INET_FILE, inet_files)          
 
 
-    #print("parsing del files ...")
+    print("parsing del files ...")
     #parse_del_files()           
 
 
-    #print("parsing inetnum files ...")
+    print("parsing inetnum files ...")
     # if multicore:
-    #     parse_inet_files_multicore()
+    #      parse_inet_files_multicore()
     # else:
-    #     parse_inet_files_single()
+    #      parse_inet_files_single()
 
 
     stripped_files = [
         os.path.join(STRIPPED_DEL_FILE), 
         os.path.join(STRIPPED_INET_FILE),
     ]
-    #merge_files(IP2COUNTRY_DB, stripped_files)
+    # merge_files(IP2COUNTRY_DB, stripped_files)
 
-    #split_records()
+    # print("splitting")
+    # split_records()
 
+    #print("sorting")
     #sort_db()
 
     # if(save_conflicts_param):
     #     save_conflicts()
 
+    # print("removing duplicates")
     # remove_duplicates()
 
-    #print(f"checking if there are stil any overlaps in final database ... -> {records_overlap(read_db())}")
+    #merge_successive()
+
+    print(f"checking if there are stil any overlaps in final database ... -> {records_overlap(read_db())}")
 
     #delete_temp_files()
     print("finished\n")
@@ -472,8 +554,10 @@ if __name__ == "__main__":
 
     t = [
         
-        [1,20,'DE','RIPE', '20161012', 'I', 'ALLOCATED PA', 'TELEX SRL'],
-        [15,25,'NL','RIPE', '20161012', 'I', 'TELEX SRL'],
+        [1,50,'DE','RIPE', '20161012', 'I', 'ALLOCATED PA', 'TELEX SRL'],
+        [10,20,'ES','RIPE', '20161012', 'I', 'ASSIGNED', 'TELEX SRL'],
+        [50,60,'DE','RIPE', '20161012', 'I', 'ASSIGNED', 'TELEX SRL'],
+
         # [20,55,'BE','RIPE', '20161012', 'I', 'TELEX SRL'],
         # [40,60,'SY','RIPE', '20161012', 'I', 'TELEX SRL'],
         # [45,55,'AT','RIPE', '20161012', 'I', 'TELEX SRL'],
@@ -484,5 +568,3 @@ if __name__ == "__main__":
     ]
 
     run_parser(multicore=True)
-
-    #print(f"checking if there are stil any overlaps in final database ... -> {records_overlap(read_db())}")
