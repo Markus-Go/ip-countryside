@@ -373,6 +373,8 @@ def testquery_df(nr_samples):
         ip_to = int(entry[1])
         query_values.append([ip_from, ip_to])
 
+    
+
     start_time = time.time() 
     
     for value in query_values: 
@@ -385,4 +387,65 @@ def testquery_df(nr_samples):
     print("Average time for one request: ", str((end_time - start_time) / nr_samples), "s")
     
 #extract_as_sqllite()
-testquery_sql_lite(100)
+#testquery_sql_lite(100)
+
+def comparedbs():
+
+    with open("ipc.db", 'r') as cdb:
+
+        c_db = []
+        for entry in cdb:
+            c_db.append(entry.split(" "))
+
+
+    with open(IP2COUNTRY_DB, 'r',  encoding='utf-8', errors='ignore') as db: 
+       
+        database = []
+        for row in db:
+            row = row.split('|')
+            database.append(row)
+
+    col_names = ["ip_from", "ip_to", "country", "registry", "last-modified", "record_type", "description"]
+    df = pd.read_csv(IP2COUNTRY_DB, delimiter="|", names=col_names, converters={'ip_from':int, 'ip_to':int })
+
+    start_time = time.time() 
+
+    i = 1
+    no_match = 0
+    for entry in c_db:
+        ip = int(entry[0])
+        country = entry[2].strip('\n')
+
+        record = df.loc[ ( (df['ip_from'] <= ip) & (df['ip_to'] >= ip) ) ].values
+        result = record[0][2]
+        print("%s: Country from C database %s, country from result %s" % (i,country, result))
+        if result != country:
+            no_match += 1
+
+        i += 1
+
+        if i > 5000: 
+            break
+
+        
+
+    print("\nTotal entries looked at: %s" % i)
+    print("No match cases: %s" % no_match)
+    matching = (1 - (no_match / i)) * 100
+    print("Old database matches new database to %s%%\n" % matching)
+
+    end_time = time.time()
+    print("total time needed was:", f'{end_time - start_time:.3f}', "s\n") 
+
+
+comparedbs()
+
+
+
+
+
+
+
+
+
+
