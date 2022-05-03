@@ -3,24 +3,30 @@
     <tbody>
 
         <tr >
-            <th scope="row">IP-Adresse:</th>
-            <td class=" ">{{ip}}</td>            
+            <th scope="row">IP adresse space:</th>
+            <td class="d-flex justify-content-between"><p class="m-0">{{ip_from}} - {{ip_to}}</p>
+            <p class="m-0"><img src="{{url_for('static', filename='src/img/flags/')}}{{flag}}.gif" alt ="" width="16px" height="11px"></td>
+            </p>
         </tr>
     
         <tr>
-            <th scope="row">Countryflag:</th>
-            <td class=""><img src="{{url_for('static', filename='src/img/flags/')}}{{flag}}.gif" alt ="" width="16px" height="11px"></td>
-        </tr>
-        <tr>
-            <th scope="row">Country Code:</th>
-            <td class=" ">{{flag}}</td>
-        </tr>
-        <tr>
             <th scope="row">Country:</th>
-            <td class="">{{country}}</td>
+            <td class=" ">{{country}}</td>
         </tr>
+
+
         <tr>
-            <th scope="row">Comment:</th>
+            <th scope="row">Registry:</th>
+            <td class="">{{registry}}</td>
+        </tr>
+        
+        <tr>
+            <th scope="row">Last-Modified:</th>
+            <td class="">{{date}}</td>
+        </tr>
+
+        <tr>
+            <th class="align-top" scope="row">Comments:</th>
             <td class="">{{comment}}</td>
         </tr>
 

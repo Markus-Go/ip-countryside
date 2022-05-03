@@ -18,13 +18,14 @@ def get_record_by_ip(ip):
     # this is actually not 100% correct. If the Database is clean,
     # there should only be one record returned !
     record = df.loc[ ( (df['ip_from'] <= ip_int) & (df['ip_to'] >= ip_int) ) ].values[0]
-    cc = record[2]
 
-    if cc:
-        return COUNTRY_DICTIONARY[cc], cc
+    record = record.tolist()
+
+    if  record:
+
+        return record
 
     return False
-    
 
 def converttoNetwork(records):
   

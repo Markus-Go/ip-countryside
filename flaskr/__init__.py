@@ -3,12 +3,15 @@ import os
 from pickle import TRUE
 from sys import flags
 from warnings import catch_warnings
+import ipaddress
+from datetime import datetime
 
 from flask import Flask, request
 from flask import render_template
 from flask_assets import Bundle, Environment
 
 from geopy.geocoders import Nominatim
+from config import COUNTRY_DICTIONARY
 
 
 from ip_countryside_utilities import get_record_by_ip;
@@ -68,91 +71,126 @@ def create_app(test_config=None):
     # Remove when not developing !!!!!!!!!!
     js.build()
     scss.build()
-
+   
+    
     @app.route('/', methods=['GET'])
     def index():
 
+         
+        ip_from     = "-"
+        ip_to       = "-"
+        country     = "-" 
+        registry    = ""
+        date        = "-"
+        flag        = "Arrr"
+        comment     = "No Valid IP-Adress"
+        lat         = 0
+        lon         = 0
+        isValid     = False
+
         if request.method == 'GET' and request.args.get('ip') is not None:
-            ipaddress = request.args.get('ip')
-            if ipaddress == "":
-                ipaddress = os.popen('curl -s ifconfig.me').readline()
-                temp = get_record_by_ip(ipaddress)
-                country = temp[0] 
-                flag = temp[1]
-                address = temp[0]
-                isValid = True
-                comment = "-"
+            
+            ip_address = request.args.get('ip')
+            
+            if not ip_address:
+
+                ip_address = os.popen('curl -s ifconfig.me').readline()
+                temp = get_record_by_ip(ip_address)
+
+                if temp:
+
+                    ip_from     = ipaddress.ip_address(temp[0])
+                    ip_to       = ipaddress.ip_address(temp[1])
+                    country     = COUNTRY_DICTIONARY[temp[2]] 
+                    registry    = temp[3]
+                    date        = datetime.strptime(str(temp[4]), '%Y%m%d').strftime('%Y.%m.%d')
+                    comment     = temp[7]
+                    isValid     = True
+                    flag        = temp[2]
+                    
                 try:
                     geolocator = Nominatim(user_agent="Your_Name")
-                    location = geolocator.geocode(address)
+                    location = geolocator.geocode(ip_from)
                     lat = location.latitude
                     lon = location.longitude
+
                 except:
                     isValid = False
                     lat = 0
                     lon = 0
                     comment = "Karte aktuell Leider nicht Verfügbar"
+
             else:
-                temp = get_record_by_ip(ipaddress)
-                if temp == False:
-                    country = "-" 
-                    flag = "Arrr"
-                    comment = "No Valid IP-Adress"
+                
+                temp = get_record_by_ip(ip_address)
+
+                if temp:
+
+                    ip_from     = ipaddress.ip_address(temp[0])
+                    ip_to       = ipaddress.ip_address(temp[1])
+                    country     = COUNTRY_DICTIONARY[temp[2]] 
+                    registry    = temp[3]
+                    date        = datetime.strptime(str(temp[4]), '%Y%m%d').strftime('%Y.%m.%d')
+                    comment     = temp[7]
+                    isValid     = True
+                    flag        = temp[2]
+
+                try:
+
+                    [lat, lon]  = get_geolocation(country)
+
+                except:
+
                     lat = 0
                     lon = 0
-                    address = "-"
                     isValid = False
-                else:
-                    country = temp[0] 
-                    flag = temp[1]
-                    address = temp[0]
-                    isValid = True
-                    comment = "-"
-                    try:
-                        geolocator = Nominatim(user_agent="Your_Name")
-                        location = geolocator.geocode(address)
-                        lat = location.latitude
-                        lon = location.longitude
-                    except:
-                        isValid = False
-                        lat = 0
-                        lon = 0
-                        comment = "Karte aktuell Leider nicht Verfügbar"
+                    comment = "Karte aktuell Leider nicht Verfügbar"
+                 
         else:
-            ipaddress = os.popen('curl -s ifconfig.me').readline()
-            #temp = get_record_by_ip(ipaddress)
-            temp = ""
+           
+            ip_address = os.popen('curl -s ifconfig.me').readline()
+            temp = get_record_by_ip(ip_address)
+
+            
             if temp:
-                country = temp[0] 
-                flag = temp[1]
-                address = temp[0]
-                comment = "-"
-                isValid = True
 
-            else:
-                country = "-" 
-                flag = "Arrr"
-                comment = "No Valid IP-Adress"
-                lat = 0
-                lon = 0
-                address = "-"
-                isValid = False
-
+                ip_from     = ipaddress.ip_address(temp[0])
+                ip_to       = ipaddress.ip_address(temp[1])
+                country     = COUNTRY_DICTIONARY[temp[2]] 
+                registry    = temp[3]
+                date        = datetime.strptime(str(temp[4]), '%Y%m%d').strftime('%Y.%m.%d')
+                comment     = temp[7]
+                isValid     = True
+                flag        = temp[2]
 
             try:
                 geolocator = Nominatim(user_agent="Your_Name")
-                location = geolocator.geocode(address)
+                location = geolocator.geocode(ip_from)
                 lat = location.latitude
                 lon = location.longitude
                 
             except:
+
                 isValid = False
                 lat = 0
                 lon = 0
                 comment = "Karte aktuell Leider nicht Verfügbar"
 
-        output = render_template('index.html', ip=ipaddress, lat=lat, lon=lon, add=address, flag=flag, country=country, comment=comment, isValid=isValid) 
+        output = render_template('index.html', ip_from=ip_from, ip_to=ip_to, lat=lat, lon=lon, flag=flag, country=country, registry=registry, comment=comment, date=date, isValid=isValid) 
         
         return output 
 
     return app
+
+
+def get_geolocation(address):
+
+    geolocator = Nominatim(user_agent="Your_Name")
+    location = geolocator.geocode(address)
+    lat = location.latitude
+    lon = location.longitude
+        
+    return [lat, lon]
+
+def validate_record(record):
+    pass
