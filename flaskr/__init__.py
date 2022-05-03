@@ -6,12 +6,15 @@ from warnings import catch_warnings
 
 from flask import Flask, request
 from flask import render_template
+from flask import request, jsonify
 from flask_assets import Bundle, Environment
 
 from geopy.geocoders import Nominatim
 
 
 from ip_countryside_utilities import get_record_by_ip;
+from ip_countryside_db import read_mmdb, read_db_record
+import json
 
 def create_app(test_config=None):
 
@@ -152,6 +155,16 @@ def create_app(test_config=None):
 
         output = render_template('index.html', ip=ipaddress, lat=lat, lon=lon, add=address, flag=flag, country=country, comment=comment, isValid=isValid, city=city) 
         
-        return output 
+        return output
+
+    @app.route('/api/ip', methods=['GET'])
+    def api_id():
+
+        if 'id' in request.args:
+            id = request.args['id']
+            return jsonify(read_mmdb(id))
+
+        else:
+            return "No id field provided. Please specify an id."
 
     return app
