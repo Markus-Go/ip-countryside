@@ -1,35 +1,47 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="d-flex flex-row flex-wrap">
+<div class="d-flex flex-row flex-wrap p-3">
 	
-	<div class="col col-12 col-md-6">
+	{% if isValid %}
+
 		{% include 'components/table.html' %}
-	</div>
 
-	<div class="col col-12 col-md-6">
-		
-		<div id="map"></div>
-				
-		<script>
-
-			if ("{{isValid}}" == "True") {
-				
+		<div class="col col-12 col-md-6">
+			
+			<div id="map"></div>
+					
+			<script>
+					
 				lat = "{{lat}}"
 				lon = "{{lon}}"
-				ip  = "{{ip}}"
+				ip  = "{{ip_from}}"
 
 				init_map(MAP, lat, lon, ip)
-				
-			}
-	
-		</script>
+		
+			</script>
 
-	</div>
+		</div>
+
+	{% else %}
+
+		<div class="alert alert-danger w-100" role="alert">
+			
+			We couldn't find any record for this ip
+	  
+		</div>
+
+	{% endif %}
+
 
 </div>
 
-<div class="col col-12 col-md-6">
+<div class="col col-12 col-md-6 pb-3">
 	<button type="button" class="btn btn-outline-success">Dowanload Database</button>
 </div>
+
+
+<!-- {% include 'components/about.html' %} -->
+	
+
 {% endblock %}
