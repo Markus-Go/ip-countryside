@@ -96,7 +96,6 @@ def sort_db(file=IP2COUNTRY_DB):
     os.rename(os.path.join(DEL_FILES_DIR, "ip2country_temp.db"), IP2COUNTRY_DB)
 
 
-
 def extract_as_json(file=IP2COUNTRY_DB):
     
     data = { }
