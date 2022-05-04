@@ -1,6 +1,6 @@
-<div class="col col-12 col-md-6 d-flex flex-column pb-3">
+<div class="download_form col col-12 col-md-6 pb-3">
 	
-    <form class="col-12 col-sm-9 m-auto" method="GET" action="/download">
+    <form class="d-flex flex-row" method="GET" action="/download">
 
         <div class="input-group mb-3">
         
@@ -11,14 +11,6 @@
                 <option value="{{url_for('download_file', filename='ip2country_2.db')}}"> 
                     CSV 
                 </option>
-
-                <option value="{{ url_for('download_file', filename='db.json') }}">
-                    JSON
-                </option>
-                
-                <option value="{{ url_for('download_file', filename='db.yaml') }}">
-                    YAML
-                </option>
                 
                 <option value="{{ url_for('download_file', filename='db4.mmdb') }}">
                     MMD IPv6
@@ -28,21 +20,27 @@
                     MMD IPv4
                 </option>
                 
+
+                <option value="{{ url_for('download_file', filename='db.json') }}">
+                    JSON
+                </option>
+                
+                <option value="{{ url_for('download_file', filename='db.yaml') }}">
+                    YAML
+                </option>
+                
                 <option value="{{ url_for('download_file', filename='db.sql') }}">
                     SQL
                 </option>
                 
                 <option value="{{ url_for('download_file', filename='sql_lite.db') }}">
                     SQLITE
-                </option>
+                </option> 
             
             </select>
-        
-        </div>
-    
-    <!-- 
-        <div class="pb-3">
-                
+            
+            <div class="input-group-append">
+
                 <button type="button" class="btn btn-outline-success">
 
                     <svg viewBox="0 0 24 24">
@@ -52,9 +50,11 @@
                     </svg>
 
                 </button>
+            
+            </div>
 
         </div>
-    -->
+      
 
     </form>
 

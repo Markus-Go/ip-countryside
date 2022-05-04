@@ -432,16 +432,10 @@ def run_parser(save_conflicts_param=False, multicore=True):
     print("removing duplicates")
     remove_duplicates()
 
-    print("merging successive records")
-    sort_db()
-    merge_successive()
-
-    print("correcting edges")
     sort_db()
     correct_edges()
 
     print(f"checking if there are stil any overlaps in final database ... -> {records_overlap(read_db())}")
-
 
     #delete_temp_files()
     print("finished\n")
@@ -472,5 +466,15 @@ if __name__ == "__main__":
         
     ]
 
-    run_parser(multicore=True)
+    #run_parser(multicore=True)
 
+    split_records(t)
+
+    # print("sorting")
+    # sort_db()
+
+    # print("removing duplicates")
+    # remove_duplicates()
+
+    # sort_db()
+    # correct_edges()

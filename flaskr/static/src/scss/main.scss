@@ -1,7 +1,10 @@
 @import "../../node_modules/bootstrap/scss/bootstrap";
 
+$primary: #ed7d31;;
+
 $background: #1a1e21;
 $boxshadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+
 
 $font-family: "PT Sans", "Open Sans", "sans-serif";
 
@@ -34,7 +37,6 @@ body {
         
         margin: 2em;
 
-
     }
 
 }
@@ -43,7 +45,7 @@ body {
 .banner {
     position: relative;
     min-height: 600px;
-
+    
    
 
     &__image {
@@ -107,6 +109,13 @@ body {
 
 }
 
+// Download Form 
+.download_form {
+
+    svg {
+        width: 20px;
+    }
+}
 
 // about 
 .about {
@@ -157,6 +166,16 @@ body {
     
     }
 
+}
+
+// No Map Block
+.nomap {
+
+    &__svg {
+
+        max-height: 150px;
+
+    }
 }
 
 

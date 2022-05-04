@@ -9,25 +9,33 @@
 
 		<div class="col col-12 col-md-6">
 			
-			<div id="map"></div>
-					
-			<script>
-					
-				lat = "{{lat}}"
-				lon = "{{lon}}"
-				ip  = "{{ip_from}}"
+			{% if hasLocation %}
 
-				init_map(MAP, lat, lon, ip)
-		
-			</script>
+				<div id="map"></div>
 
+				<script>
+						
+					lat = "{{lat}}"
+					lon = "{{lon}}"
+					ip  = "{{ip_from}}"
+
+					init_map(MAP, lat, lon, ip)
+			
+				</script>
+			
+			{% else %}
+
+				{% include 'components/no_map_block.html' %}
+				
+			{% endif %}
+			
 		</div>
 
 	{% else %}
 
 		<div class="alert alert-danger w-100" role="alert">
 			
-			We couldn't find any record for this ip
+			Unvalid Input
 	  
 		</div>
 

@@ -1,5 +1,4 @@
 import json
-import pandas as pd
 
 from operator import itemgetter
 from sort import large_sort

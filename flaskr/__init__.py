@@ -6,6 +6,7 @@ from warnings import catch_warnings
 import ipaddress
 from datetime import datetime
 import math
+from click import command
 
 from flask import Flask, request, send_from_directory
 from flask import render_template
@@ -82,13 +83,12 @@ def create_app(test_config=None):
         ip_from     = " "
         ip_to       = " "
         country     = "-" 
-        registry    = "-"
-        date        = "-"
         flag        = "-"
-        comment     = "-"
         lat         = 0
         lon         = 0
+        comment     = "-"
         isValid     = False
+        hasLocation = False
 
         if request.method == 'GET':
             
@@ -100,7 +100,8 @@ def create_app(test_config=None):
                 record = get_record_by_ip(ip_address)
 
             else:
-    
+                
+                ip_address = ip_address.strip()
                 record = get_record_by_ip(ip_address)
 
             if record:
@@ -108,29 +109,26 @@ def create_app(test_config=None):
                 ip_from     = ipaddress.ip_address(record[0])
                 ip_to       = ipaddress.ip_address(record[1])
                 country     = COUNTRY_DICTIONARY[record[2]] 
-                registry    = record[3]
-                date        = datetime.strptime(str(record[4]), '%Y%m%d').strftime('%Y.%m.%d')
                 status      = record[6]
-                comment     = record[7] if record[7]  else "-"
                 isValid     = True
                 flag        = record[2]
                
                 if record[2] == "ZZ":
-
+                    
                     comment = status
                     lat = 0
                     lon = 0
 
                 else: 
         
-                    [lat, lon, isValid]  = get_geolocation(country)
+                    [lat, lon, isValid, hasLocation]  = get_geolocation(country)
              
             else:
 
                 isValid = False
 
 
-        output = render_template('index.html', ip_from=ip_from, ip_to=ip_to, lat=lat, lon=lon, flag=flag, country=country, registry=registry, comment=comment, date=date, isValid=isValid) 
+        output = render_template('index.html', ip_from=ip_from, ip_to=ip_to, lat=lat, lon=lon, flag=flag, country=country, isValid=isValid, hasLocation=hasLocation, ip=ip_address, comment=comment) 
         
         return output 
 
@@ -151,11 +149,13 @@ def get_geolocation(address):
         lat = location.latitude
         lon = location.longitude
         isValid = True
+        hasLocation = True
 
     except:
         
         lat = 0
         lon = 0
         isValid = False
+        hasLocation = False
 
-    return [lat, lon, isValid]
+    return [lat, lon, isValid, hasLocation]
