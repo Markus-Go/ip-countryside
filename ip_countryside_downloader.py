@@ -61,6 +61,7 @@ def get_timestamp(host, cwd, delFileName, localfile):
         print("younger than one week\n")
         return False
 
+
 def download_del_files_needed(host, cwd, delFileName):
     
     ftp = ftplib.FTP(host)
@@ -165,6 +166,12 @@ def download_del_files(force = False):
       download_del_file(APNIC["host"],   APNIC["inet_cwd"],  APNIC["inet_fname_gz"], True)
    if(force or get_timestamp(RIPE["host"],    RIPE["inet_cwd"],   RIPE["inet_fname_gz"], RIPE["inet_timestamp"])):  
       download_del_file(RIPE["host"],    RIPE["inet_cwd"],   RIPE["inet_fname_gz"], True)
+
+    #zip files ipv6
+   if(get_timestamp(APNIC["host"],   APNIC["inet_cwd"],  APNIC["inet_fname_ipv6_gz"], APNIC["inet_ipv6_timestamp"])):
+      download_del_file(APNIC["host"],   APNIC["inet_cwd"],  APNIC["inet_fname_ipv6_gz"], True)
+   if(get_timestamp(RIPE["host"],    RIPE["inet_cwd"],   RIPE["inet_fname_ipv6_gz"], RIPE["inet_ipv6_timestamp"])):  
+      download_del_file(RIPE["host"],    RIPE["inet_cwd"],   RIPE["inet_fname_ipv6_gz"], True)
    
    if os.path.exists('temp'):
        os.remove(os.path.join(DEL_FILES_DIR, 'temp'))

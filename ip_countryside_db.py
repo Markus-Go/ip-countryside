@@ -11,27 +11,57 @@ import csv
 from config import *;
 import pandas as pd
 
+from operator import itemgetter
+from sort import large_sort
 
-# @TODO
-# Implement an exctract to YAML method      -> Aufwand 5
+from config import *
+
+# record index:    0       1   2    3           4            5          6       7
+# record format: ip_from|ip_to|cc|registry|last-modified|record_type|status|description
 
 
 def read_db(file=IP2COUNTRY_DB):
 
     records = []
+    
     try:
-
         # save all records into a list
         with open(file, "r", encoding='utf-8', errors='ignore') as f:
             
-            for line in f:
+            for line in f :
                 
-                record = read_db_record(line)
+                if not line in ['\n', '\r\n']:
+
+                    record = read_db_record(line)
+                    
+                    if record:
+                        
+                        records.append(record)
+                
+    except IOError as e:
+        
+        print(e)
+
+    return records
+
+
+def write_db(records, file=IP2COUNTRY_DB):
+    
+    if not records:
+        return
+
+    try:
+
+        with open(file, "w", encoding='utf-8', errors='ignore') as f:
+            
+            for record in records:
                 
                 if record:
                     
-                    records.append(record)
-
+                    line = "|".join(map(str, record))
+                    line = line + '\n'
+                    f.write(line)
+                    
     except IOError as e:
         
         print(e)
@@ -41,9 +71,6 @@ def read_db(file=IP2COUNTRY_DB):
 
 def read_db_record(line):
     
-    # record index:    0       1   2    3           4            5          
-    # record format: ip_from|ip_to|cc|registry|last-modified|description
-
     if line.startswith("\n"):
         return []
 
@@ -54,19 +81,28 @@ def read_db_record(line):
         ip_from         = int(line[0]) 
         ip_to           = int(line[1]) 
         country         = line[2].upper()
-        registry        = line[3].rstrip('\n').upper()
-        last_modified   = ""
+        registry        = line[3].upper()
+        last_modified   = line[4]
+        record_type     = line[5]
+        status          = line[6].rstrip("\n")
         descr           = ""
+        
+        if record_type == "I":
+            descr = line[7].rstrip("\n")
 
-        if len(line) >= 5:
-            last_modified = line[4].rstrip("\n")
-
-        if len(line) >= 6:
-            descr = line[5].rstrip("\n")
-
-        return [ip_from, ip_to, country, registry, last_modified, descr]
+        return [ip_from, ip_to, country, registry, last_modified, record_type, status, descr]
 
     return []
+
+
+def sort_db(file=IP2COUNTRY_DB):
+
+    with (open(file, "r", encoding='utf-8', errors='ignore')) as input, open(os.path.join(DEL_FILES_DIR, "ip2country_temp.db"), "w", encoding='utf-8', errors='ignore') as output:
+
+        large_sort(input, output, itemgetter(1,2), False)
+
+    os.remove(IP2COUNTRY_DB)
+    os.rename(os.path.join(DEL_FILES_DIR, "ip2country_temp.db"), IP2COUNTRY_DB)
 
 
 def extract_as_json(file=IP2COUNTRY_DB):
@@ -81,15 +117,17 @@ def extract_as_json(file=IP2COUNTRY_DB):
             
             f.write("[\n")
           
-            for recod in records:
+            for record in records:
                 
                 data = {
-                    'IpFrom':        recod[0],
-                    'IpTo':          recod[1],
-                    'CountryCode':   recod[2],
-                    'Registry':      recod[3],
-                    'LastModified':  recod[4],
-                    'Description':   recod[5],
+                    'IpFrom':        record[0],
+                    'IpTo':          record[1],
+                    'CountryCode':   record[2],
+                    'Registry':      record[3],
+                    'LastModified':  record[4],
+                    'RecordType':    record[5],
+                    'Status':        record[6],
+                    'Description':   record[7],
                 }
 
                 f.write(json.dumps(data, indent=4))
@@ -389,7 +427,7 @@ def testquery_df(nr_samples):
 #extract_as_sqllite()
 #testquery_sql_lite(100)
 
-def comparedbs():
+def comparedbs(nr_samples):
 
     with open("ipc.db", 'r') as cdb:
 
@@ -405,27 +443,43 @@ def comparedbs():
             row = row.split('|')
             database.append(row)
 
-    col_names = ["ip_from", "ip_to", "country", "registry", "last-modified", "record_type", "description"]
+
+
+    sample_values = []
+    
+    for i in range(1,nr_samples):
+        sample_values.append(random.randint(0, len(c_db))) 
+
+            
+    query_values = []
+    for index in sample_values:
+        entry = c_db[index]
+        ip_from = int(entry[0])
+        ip_to = int(entry[1])
+        country = entry[2]
+        query_values.append([ip_from, ip_to, country])
+
+
+    col_names = ["ip_from", "ip_to", "country", "registry", "last-modified", "record_type", "status",  "description"]
     df = pd.read_csv(IP2COUNTRY_DB, delimiter="|", names=col_names, converters={'ip_from':int, 'ip_to':int })
 
     start_time = time.time() 
 
-    i = 1
+    i = 0
     no_match = 0
-    for entry in c_db:
-        ip = int(entry[0])
+    for entry in query_values:
+        ip = int(entry[0]) +1
         country = entry[2].strip('\n')
 
         record = df.loc[ ( (df['ip_from'] <= ip) & (df['ip_to'] >= ip) ) ].values
         result = record[0][2]
-        print("%s: Country from C database %s, country from result %s" % (i,country, result))
+        #print("%s: Country from C database %s, country from result %s" % (i,country, result))
         if result != country:
             no_match += 1
+            print("%s: Country from C database %s with ip: %s, country from result %s" % (i,country, str(ipaddress.ip_address(ip)), result))
 
         i += 1
 
-        if i > 5000: 
-            break
 
         
 
@@ -438,14 +492,5 @@ def comparedbs():
     print("total time needed was:", f'{end_time - start_time:.3f}', "s\n") 
 
 
-comparedbs()
-
-
-
-
-
-
-
-
-
+comparedbs(100)
 
