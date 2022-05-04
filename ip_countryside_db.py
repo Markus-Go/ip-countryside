@@ -8,6 +8,7 @@ import json
 import math
 import sqlite3
 import csv
+import random
 from config import *;
 
 from operator import itemgetter
@@ -17,7 +18,6 @@ from config import *
 
 # record index:    0       1   2    3           4            5          6       7
 # record format: ip_from|ip_to|cc|registry|last-modified|record_type|status|description
-
 
 def read_db(file=IP2COUNTRY_DB):
 
@@ -42,7 +42,6 @@ def read_db(file=IP2COUNTRY_DB):
         print(e)
 
     return records
-
 
 def write_db(records, file=IP2COUNTRY_DB):
     
@@ -146,7 +145,6 @@ def extract_as_yaml(file=IP2COUNTRY_DB):
     
     data = { }
     
-    
     records = read_db(file)
     
     try :
@@ -155,8 +153,7 @@ def extract_as_yaml(file=IP2COUNTRY_DB):
             
             f.write("---\n")
           
-            for record in records:
-                
+            for record in records:            
              
                 f.write("- IpFrom: " )
                 f.write(str(record[0]))
@@ -172,16 +169,11 @@ def extract_as_yaml(file=IP2COUNTRY_DB):
                 f.write(record[5])
                 f.write("\n")
 
-
-           
-
     except IOError as e:
 
         print(e)
-                
-
+       
     return 0
-
 
 def extract_as_sqllite(file=IP2COUNTRY_DB):
     
@@ -208,12 +200,8 @@ def extract_as_sqllite(file=IP2COUNTRY_DB):
     query = "CREATE INDEX ip_range on ip2country (ip_from, ip_to);"
     cursor.execute(query)
     connection.commit()
-    
-    
-
 
     with open(IP2COUNTRY_DB, 'r',  encoding='utf-8', errors='ignore') as db: 
-       
         
         database = []
         for row in db:
@@ -221,32 +209,22 @@ def extract_as_sqllite(file=IP2COUNTRY_DB):
             entry =   (bin(int(row[0]))[2:].zfill(128), bin(int(row[1]))[2:].zfill(128), row[2], row[3], row[4], row[6].strip('\n'))
             database.append(entry)
            
-          
         query = """
                 INSERT INTO ip2country 
                         VALUES (?,?,?,?,?,?)  
                 """    
        
- 
         cursor.executemany(query, database)
         connection.commit()
         connection.close()
 
-
         # To query transform ip into integer and integer to a fixed 128 bit value 
-
 
 def extract_as_df(file=IP2COUNTRY_DB):
 
     col_names = ["ip_from", "ip_to", "country", "registry", "last-modified", "record_type", "description"]
     df = pd.read_csv(IP2COUNTRY_DB, delimiter="|", names=col_names, converters={'ip_from':int, 'ip_to':int, 'country':str, 'registry':str, 'last-modified':str, 'record_type':str, 'description':str  })
     df.to_pickle(IP2COUNTRY_DB_DF)
-
-
-
-
-
-
 
 def extract_as_mmdb(file=IP2COUNTRY_DB):
     data = {}
@@ -313,8 +291,6 @@ def getaddress(ip_from):
 #print(read_mmdb("131.255.44.4"))
 #print(read_mmdb("2c0f:eca0::0001"))
 
-
-
 def extract_as_mysql(file=IP2COUNTRY_DB):
 
     with open(IP2COUNTRY_DB_MYSQL, 'w',  encoding='utf-8', errors='ignore') as f, open(IP2COUNTRY_DB, 'r',  encoding='utf-8', errors='ignore') as db: 
@@ -337,9 +313,6 @@ def extract_as_mysql(file=IP2COUNTRY_DB):
 
     # query with: Select country from ip2country where inet6_aton('41.31.255.254') >= inet6_aton(ip_to) and inet6_aton('41.31.255.254') <= inet6_aton(ip_to)
 
-import random
-import time
-
 def testquery_sql_lite(nr_samples):
     with open(IP2COUNTRY_DB, 'r',  encoding='utf-8', errors='ignore') as db: 
        
@@ -347,8 +320,6 @@ def testquery_sql_lite(nr_samples):
         for row in db:
             row = row.split('|')
             database.append(row)
-
-
 
     sample_values = []
     
@@ -363,9 +334,6 @@ def testquery_sql_lite(nr_samples):
         ip_to = int(entry[1])
         query_values.append([bin(ip_from)[2:].zfill(128), bin(ip_to)[2:].zfill(128)])
 
-   
-    
-    
     #print(result)
     
     start_time = time.time()  
@@ -376,17 +344,10 @@ def testquery_sql_lite(nr_samples):
         cursor.execute(query)
         result = cursor.fetchall()
         
-        
-
     end_time = time.time()
     print("total time needed was:", f'{end_time - start_time:.3f}', "s\n") 
     print("Average time for one request: ", str((end_time - start_time) / nr_samples), "s")
-    connection.close() 
-        
- 
-import random, time
-import pickle
-
+    connection.close()     
 
 def testquery_df(nr_samples):
     with open(IP2COUNTRY_DB, 'r',  encoding='utf-8', errors='ignore') as db: 
@@ -396,12 +357,10 @@ def testquery_df(nr_samples):
             row = row.split('|')
             database.append(row)
 
-
     sample_values = []
     
     for i in range(1,nr_samples):
         sample_values.append(random.randint(0, len(database))) 
-
             
     query_values = []
     for index in sample_values:
@@ -410,14 +369,11 @@ def testquery_df(nr_samples):
         ip_to = int(entry[1])
         query_values.append([ip_from, ip_to])
 
-    
-
     start_time = time.time() 
     
     for value in query_values: 
         df = pd.read_pickle(IP2COUNTRY_DB_DF)
-        record = df.loc[ ( (df['ip_from'] <= ip) & (df['ip_to'] >= ip) ) ].values
-        
+        record = df.loc[ ( (df['ip_from'] <= ip) & (df['ip_to'] >= ip) ) ].values 
    
     end_time = time.time()
     print("total time needed was:", f'{end_time - start_time:.3f}', "s\n") 
@@ -434,7 +390,6 @@ def comparedbs(nr_samples):
         for entry in cdb:
             c_db.append(entry.split(" "))
 
-
     with open(IP2COUNTRY_DB, 'r',  encoding='utf-8', errors='ignore') as db: 
        
         database = []
@@ -442,13 +397,10 @@ def comparedbs(nr_samples):
             row = row.split('|')
             database.append(row)
 
-
-
     sample_values = []
     
     for i in range(1,nr_samples):
         sample_values.append(random.randint(0, len(c_db))) 
-
             
     query_values = []
     for index in sample_values:
@@ -457,7 +409,6 @@ def comparedbs(nr_samples):
         ip_to = int(entry[1])
         country = entry[2]
         query_values.append([ip_from, ip_to, country])
-
 
     col_names = ["ip_from", "ip_to", "country", "registry", "last-modified", "record_type", "status",  "description"]
     df = pd.read_csv(IP2COUNTRY_DB, delimiter="|", names=col_names, converters={'ip_from':int, 'ip_to':int })
@@ -478,9 +429,6 @@ def comparedbs(nr_samples):
             print("%s: Country from C database %s with ip: %s, country from result %s" % (i,country, str(ipaddress.ip_address(ip)), result))
 
         i += 1
-
-
-        
 
     print("\nTotal entries looked at: %s" % i)
     print("No match cases: %s" % no_match)

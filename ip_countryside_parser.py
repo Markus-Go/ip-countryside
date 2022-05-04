@@ -519,6 +519,7 @@ def run_parser(save_conflicts_param=False, multicore=True):
     ]
     merge_files(IP2COUNTRY_DB, stripped_files)
 
+    shutil.copyfile(IP2COUNTRY_DB, TRACE_FILE)
 
     print("splitting")
     split_records()
