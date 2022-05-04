@@ -1,6 +1,6 @@
-#from netaddr import IPSet
-#from mmdb_writer import MMDBWriter
-#import maxminddb
+from netaddr import IPSet
+from mmdb_writer import MMDBWriter
+import maxminddb
 import ipaddress
 from ipaddress import ip_address, IPv4Address, IPv6Address, ip_interface
 import json
@@ -9,10 +9,9 @@ import math
 import sqlite3
 import csv
 from config import *;
-import pandas as pd
 
 from operator import itemgetter
-from sort import large_sort
+#from sort import large_sort
 
 from config import *
 
@@ -490,7 +489,4 @@ def comparedbs(nr_samples):
 
     end_time = time.time()
     print("total time needed was:", f'{end_time - start_time:.3f}', "s\n") 
-
-
-comparedbs(100)
 

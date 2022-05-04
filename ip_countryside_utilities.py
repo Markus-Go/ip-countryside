@@ -4,7 +4,6 @@ from ip_countryside_parser import *
 import ipaddress
 import sqlite3
 import math
-import pandas as pd
 
 from config import *;
 
