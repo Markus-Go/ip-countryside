@@ -346,5 +346,5 @@ COUNTRY_DICTIONARY = {
     'YU':"YUGOSLAVIA",
     'ZM':"ZAMBIA",
     'ZW':"ZIMBABWE",
-    'ZZ':'Unkown'
+    'ZZ':'UNKNOWN'
 }

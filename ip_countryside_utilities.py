@@ -2,6 +2,8 @@ import ipaddress
 import math
 import pandas as pd
 
+from config import *;
+
 
 from config import *;
 
@@ -19,14 +21,15 @@ def get_record_by_ip(ip):
     # this is actually not 100% correct. If the Database is clean,
     # there should only be one record returned !
     record = df.loc[ ( (df['ip_from'] <= ip_int) & (df['ip_to'] >= ip_int) ) ].values
-    
+
     if len(record) > 0:
-        record = record[0]
-    
-        cc = record[2]
-        if cc:
-            return COUNTRY_DICTIONARY[cc], cc
-    
+
+        record = record[0].tolist()
+        return record
+
+    return False
+
+
 
 def empty_entry_by_idx(records, indicies):
     """

@@ -1,31 +1,83 @@
 @import "../../node_modules/bootstrap/scss/bootstrap";
 
-@import "navbar";
-@import "footer";
-
 $background: #1a1e21;
+$boxshadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+
+html {   
+scroll-behavior: smooth;
+}
 
 body {
-   
    display:flex; 
    flex-direction:column; 
    min-height: 100vh;
 
    .wrapper {
-        background-color: $background;
+
+        position: relative;
         flex: 1 0 auto;
         color: $primary;
+        overflow: hidden;
 
-   }
-
-   .main {
-
-        margin: 2em;
-
+        .container {
+            position: relative;
+            z-index: 1;
+        }
+       
         
    }
 
+   .main {
+        
+        margin: 2em;
+
+
+    }
+
 }
+
+// Banner
+.banner {
+    position: relative;
+    min-height: 600px;
+
+   
+
+    &__image {
+        position:absolute;
+        height:100%;
+        width: 100%;
+        background-size: cover;
+        background-repeat: no-repeat; 
+        
+        &:before{
+            position: absolute;
+            content: '';
+            height: 100%;
+            width: 100%;
+            background-color: rgba(0,0,0,.4);
+            z-index: 2;
+        }
+
+    }
+
+    &__block {
+
+        z-index: 3;
+
+
+        form {
+            
+            .form-control, .btn {
+                border-radius: 0 !important;
+            }
+
+        }
+
+    }
+
+}
+
 
 .col {
     padding: 1em;
@@ -35,29 +87,68 @@ body {
     height: 100%;
     width: 100%;
     min-height: 281px;
-
+    box-shadow: $boxshadow; 
 } 
 
-.table {
-    
-    th {
-        vertical-align: middle;
+.ip_info {
+
+    overflow: auto;
+    overflow-y: hidden;
+
+    .table {
+        
+        th {
+            vertical-align: middle;
+        }
+    }
+
+}
+
+
+// about 
+.about {
+
+    .card {
+        height: 100%;
+        color: #212529;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+        transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+
+        .card-title {
+            color: $primary;
+        }
+
+        &:hover {
+            box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+            cursor: pointer;
+        }
+
     }
 }
 
-.navbar {
-    
+
+// Navbar
+.navbar-custom {
+
     padding: 1em;
+    background-color: fade-out($black, 0.3);
 
     .navbar-brand {
-
+        font-size: 1rem;
+        font-weight: 700;
     }
 
+    
     .collapse.navbar-collapse {
 
         flex-direction: row-reverse;
 
         .navbar-nav {
+
+            .nav-item {
+
+
+            }
 
         }
     
@@ -65,11 +156,13 @@ body {
 
 }
 
+
 footer {
     
     margin-top: auto;
 
     .copyright {
+        color: $gray-500;
         background-color: rgba(0, 0, 0, 0.2);
     }
 

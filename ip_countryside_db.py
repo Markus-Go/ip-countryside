@@ -1,7 +1,10 @@
 import json
 import pandas as pd
 
-from config import *;
+from operator import itemgetter
+from sort import large_sort
+
+from config import *
 
 # record index:    0       1   2    3           4            5          6       7
 # record format: ip_from|ip_to|cc|registry|last-modified|record_type|status|description
@@ -84,16 +87,14 @@ def read_db_record(line):
 
 def sort_db(file=IP2COUNTRY_DB):
 
-    records = []
+    with ( open(file, "r", encoding='utf-8', errors='ignore') as input, 
+        open(os.path.join(DEL_FILES_DIR, "ip2country_temp.db"), "w", encoding='utf-8', errors='ignore') as output ):
 
-    # get records from final db
-    records = read_db(file)
+        large_sort(input, output, itemgetter(1,2), False)
 
-    # sort this list
-    records.sort()
+    os.remove(IP2COUNTRY_DB)
+    os.rename(os.path.join(DEL_FILES_DIR, "ip2country_temp.db"), IP2COUNTRY_DB)
 
-    # write sorted list back into final db
-    write_db(records, file)
 
 
 def extract_as_json(file=IP2COUNTRY_DB):
