@@ -14,6 +14,9 @@ if ($null -ne $i) {
     # pip install Flask-Assets libsass
     # pip install jsmin 
     # pip install md5hash
+    # pip install netaddr
+    # pip install -U git+https://github.com/VimT/MaxMind-DB-Writer-python
+    # pip install maxminddb
     
     # $npm_path = $PSScriptRoot.ToString() + "\flaskr\static"
     # Write-Host $npm_path
