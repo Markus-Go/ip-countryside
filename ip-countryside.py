@@ -10,9 +10,6 @@ def main():
     isExitCmd = bool(1)
 
     while isExitCmd:
-        if False:
-            download_del_files()
-
         command = input("Type in your command:\n\n")
         command
         isExitCmd = interpreter(command)

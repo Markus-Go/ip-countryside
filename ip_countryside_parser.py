@@ -514,6 +514,19 @@ def run_parser(save_conflicts_param=False, multicore=True):
     else:
         parse_inet_files_single()
 
+def get_city(string, countryCode):
+
+    place_entity = locationtagger.find_locations(text = string)
+   
+    # getting all country cities
+    print("The countries cities in text : ")
+    print(place_entity.country_cities)
+
+    for c in place_entity.country_cities:
+        if c.upper() == COUNTRY_DICTIONARY[countryCode]:
+            #print(place_entity.country_cities[c], "is in",COUNTRY_DICTIONARY[countryCode])
+            return place_entity.country_cities[c][0]  
+    return "No City information"      
 
     stripped_files = [
         os.path.join(STRIPPED_DEL_FILE), 

@@ -1,5 +1,3 @@
-from del_files_downloader import *
-from del_files_parser import *
 from Constants import *
 from Console_Selector import *
 
