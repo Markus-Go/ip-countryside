@@ -384,8 +384,7 @@ def merge_files(output, files):
 
 def merge_successive():
 
-    with ( open(IP2COUNTRY_DB, "r", encoding='utf-8', errors='ignore') as input, 
-        open(os.path.join(DEL_FILES_DIR, "ip2country_temp.db"), "w", encoding='utf-8', errors='ignore') as output ):
+    with open(IP2COUNTRY_DB, "r", encoding='utf-8', errors='ignore') as input, open(os.path.join(DEL_FILES_DIR, "ip2country_temp.db"), "w", encoding='utf-8', errors='ignore') as output:
 
         for group in get_successive_group(input):
             
@@ -550,6 +549,7 @@ def run_parser(save_conflicts_param=False, multicore=True):
 
 
 # Needed if for multiprocessing not to crash
+# 
 if __name__ == "__main__":   
 
  
