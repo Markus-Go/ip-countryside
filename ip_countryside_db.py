@@ -87,8 +87,7 @@ def read_db_record(line):
 
 def sort_db(file=IP2COUNTRY_DB):
 
-    with ( open(file, "r", encoding='utf-8', errors='ignore') as input, 
-        open(os.path.join(DEL_FILES_DIR, "ip2country_temp.db"), "w", encoding='utf-8', errors='ignore') as output ):
+    with (open(file, "r", encoding='utf-8', errors='ignore')) as input, open(os.path.join(DEL_FILES_DIR, "ip2country_temp.db"), "w", encoding='utf-8', errors='ignore') as output:
 
         large_sort(input, output, itemgetter(1,2), False)
 
