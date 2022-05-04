@@ -484,7 +484,7 @@ def run_parser(save_conflicts_param=False, multicore=True):
         os.path.join(DEL_FILES_DIR, APNIC['del_fname']), 
         os.path.join(DEL_FILES_DIR, RIPE['del_fname'])
     ]
-    #merge_files(MERGED_DEL_FILE, del_files)          
+    merge_files(MERGED_DEL_FILE, del_files)          
      
     
     inet_files = [
@@ -493,39 +493,39 @@ def run_parser(save_conflicts_param=False, multicore=True):
         os.path.join(DEL_FILES_DIR, APNIC['inet_fname_ipv6']),
         os.path.join(DEL_FILES_DIR, RIPE['inet_fname_ipv6'])
     ]
-    #merge_files(MERGED_INET_FILE, inet_files)          
+    merge_files(MERGED_INET_FILE, inet_files)          
 
 
     print("parsing del files ...")
-    #parse_del_files()           
+    parse_del_files()           
 
 
     print("parsing inetnum files ...")
-    # if multicore:
-    #      parse_inet_files_multicore()
-    # else:
-    #      parse_inet_files_single()
+    if multicore:
+          parse_inet_files_multicore()
+    else:
+        parse_inet_files_single()
 
 
     stripped_files = [
         os.path.join(STRIPPED_DEL_FILE), 
         os.path.join(STRIPPED_INET_FILE),
     ]
-    # merge_files(IP2COUNTRY_DB, stripped_files)
+    merge_files(IP2COUNTRY_DB, stripped_files)
 
-    # print("splitting")
-    # split_records()
+    print("splitting")
+    split_records()
 
-    #print("sorting")
-    #sort_db()
+    print("sorting")
+    sort_db()
 
-    # if(save_conflicts_param):
-    #     save_conflicts()
+    if(save_conflicts_param):
+        save_conflicts()
 
-    # print("removing duplicates")
-    # remove_duplicates()
+    print("removing duplicates")
+    remove_duplicates()
 
-    #merge_successive()
+    merge_successive()
 
     print(f"checking if there are stil any overlaps in final database ... -> {records_overlap(read_db())}")
 
@@ -543,14 +543,13 @@ if __name__ == "__main__":
 
  
     # @TODOs
-    # 03. Grenzen richtig abschneiden (split_files())
-    # 04. Website Design anpassen
+    # 10. Abgleich mit anderen Branchen
     # 05. Code aufräumen und Methods documentieren
     # 06. Spliting Records to find overlaps Strategy dokumentieren
+    # 03. Grenzen richtig abschneiden (split_files())
     # 07. Update README.md
     # 08. Update run.ps1
     # 09. Optimize downloader script
-    # 10. Abgleich mit anderen Branchen
 
     t = [
         

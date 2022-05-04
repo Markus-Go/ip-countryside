@@ -511,4 +511,3 @@ def records_overlap(records):
             return True
         
     return False
-    

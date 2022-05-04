@@ -7,7 +7,7 @@ import ipaddress
 from datetime import datetime
 import math
 
-from flask import Flask, request
+from flask import Flask, request, redirect
 from flask import render_template
 from flask_assets import Bundle, Environment
 
@@ -16,6 +16,7 @@ from config import COUNTRY_DICTIONARY
 
 
 from ip_countryside_utilities import get_record_by_ip;
+
 
 def create_app(test_config=None):
 
@@ -77,103 +78,57 @@ def create_app(test_config=None):
     @app.route('/', methods=['GET'])
     def index():
 
-         
-        ip_from     = "-"
-        ip_to       = "-"
+        record = []
+        ip_from     = " "
+        ip_to       = " "
         country     = "-" 
-        registry    = ""
+        registry    = "-"
         date        = "-"
-        flag        = "Arrr"
-        comment     = "No Valid IP-Adress"
+        flag        = "-"
+        comment     = "-"
         lat         = 0
         lon         = 0
         isValid     = False
 
-        if request.method == 'GET' and request.args.get('ip') is not None:
+        if request.method == 'GET':
             
-            ip_address = request.args.get('ip')
-            
-            if not ip_address:
+            ip_address = request.args.get('ip', None)
+
+            if ip_address is None or ip_address == "":
 
                 ip_address = os.popen('curl -s ifconfig.me').readline()
-                temp = get_record_by_ip(ip_address)
-
-                if temp:
-
-                    ip_from     = ipaddress.ip_address(temp[0])
-                    ip_to       = ipaddress.ip_address(temp[1])
-                    country     = COUNTRY_DICTIONARY[temp[2]] 
-                    registry    = temp[3]
-                    date        = datetime.strptime(str(temp[4]), '%Y%m%d').strftime('%Y.%m.%d')
-                    comment     = temp[7] if temp[7]  else "-"
-                    isValid     = True
-                    flag        = temp[2]
-                    
-                try:
-                    geolocator = Nominatim(user_agent="Your_Name")
-                    location = geolocator.geocode(country)
-                    lat = location.latitude
-                    lon = location.longitude
-
-                except:
-                    isValid = False
-                    lat = 0
-                    lon = 0
-                    comment = "Karte aktuell Leider nicht Verfügbar"
+                record = get_record_by_ip(ip_address)
 
             else:
-                
-                temp = get_record_by_ip(ip_address)
+    
+                record = get_record_by_ip(ip_address)
 
-                if temp:
+            if record:
 
-                    ip_from     = ipaddress.ip_address(temp[0])
-                    ip_to       = ipaddress.ip_address(temp[1])
-                    country     = COUNTRY_DICTIONARY[temp[2]] 
-                    registry    = temp[3]
-                    date        = datetime.strptime(str(temp[4]), '%Y%m%d').strftime('%Y.%m.%d')
-                    comment     = temp[7] if temp[7]  else "-"
-                    isValid     = True
-                    flag        = temp[2]
+                ip_from     = ipaddress.ip_address(record[0])
+                ip_to       = ipaddress.ip_address(record[1])
+                country     = COUNTRY_DICTIONARY[record[2]] 
+                registry    = record[3]
+                date        = datetime.strptime(str(record[4]), '%Y%m%d').strftime('%Y.%m.%d')
+                status      = record[6]
+                comment     = record[7] if record[7]  else "-"
+                isValid     = True
+                flag        = record[2]
+               
+                if record[2] == "ZZ":
 
-                try:
-
-                    [lat, lon]  = get_geolocation(country)
-
-                except:
-
+                    comment = status
                     lat = 0
                     lon = 0
-                    isValid = False
-                    comment = "Karte aktuell Leider nicht Verfügbar"
-                 
-        else:
-           
-            ip_address = os.popen('curl -s ifconfig.me').readline()
-            temp = get_record_by_ip(ip_address)
-            print("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS")
-            if temp:
-                ip_from     = ipaddress.ip_address(temp[0])
-                ip_to       = ipaddress.ip_address(temp[1])
-                country     = COUNTRY_DICTIONARY[temp[2]] 
-                registry    = temp[3]
-                date        = datetime.strptime(str(temp[4]), '%Y%m%d').strftime('%Y.%m.%d')
-                comment     = temp[7] if temp[7]  else "-"
-                isValid     = True
-                flag        = temp[2]
-                
-            try:
-                geolocator = Nominatim(user_agent="Your_Name")
-                location = geolocator.geocode(country)
-                lat = location.latitude
-                lon = location.longitude
-                
-            except:
+
+                else: 
+        
+                    [lat, lon, isValid]  = get_geolocation(country)
+             
+            else:
 
                 isValid = False
-                lat = 0
-                lon = 0
-                comment = "Karte aktuell Leider nicht Verfügbar"
+
 
         output = render_template('index.html', ip_from=ip_from, ip_to=ip_to, lat=lat, lon=lon, flag=flag, country=country, registry=registry, comment=comment, date=date, isValid=isValid) 
         
@@ -184,12 +139,18 @@ def create_app(test_config=None):
 
 def get_geolocation(address):
 
-    geolocator = Nominatim(user_agent="Your_Name")
-    location = geolocator.geocode(address)
-    lat = location.latitude
-    lon = location.longitude
-        
-    return [lat, lon]
+    try:
 
-def validate_record(record):
-    pass
+        geolocator = Nominatim(user_agent="Your_Name")
+        location = geolocator.geocode(address)
+        lat = location.latitude
+        lon = location.longitude
+        isValid = True
+
+    except:
+        
+        lat = 0
+        lon = 0
+        isValid = False
+
+    return [lat, lon, isValid]

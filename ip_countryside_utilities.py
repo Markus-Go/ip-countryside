@@ -17,15 +17,15 @@ def get_record_by_ip(ip):
     
     # this is actually not 100% correct. If the Database is clean,
     # there should only be one record returned !
-    record = df.loc[ ( (df['ip_from'] <= ip_int) & (df['ip_to'] >= ip_int) ) ].values[0]
+    record = df.loc[ ( (df['ip_from'] <= ip_int) & (df['ip_to'] >= ip_int) ) ].values
 
-    record = record.tolist()
+    if len(record) > 0:
 
-    if  record:
-
+        record = record[0].tolist()
         return record
 
     return False
+
 
 def converttoNetwork(records):
   
