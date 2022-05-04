@@ -15,9 +15,11 @@ def get_record_by_ip(ip):
     query = "SELECT country FROM ip2country WHERE ip_from <= '%s' and ip_to >= '%s'" % (ip,ip)
     cursor.execute(query)
     result = cursor.fetchall()
-    result = result[0][0]
-    
-    return COUNTRY_DICTIONARY[result], result
+    if result:
+        result = result[0][0]
+        return COUNTRY_DICTIONARY[result], result
+    else: 
+        return []
    
 def empty_entry_by_idx(records, indicies):
     """
