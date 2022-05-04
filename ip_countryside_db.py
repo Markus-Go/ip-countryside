@@ -389,7 +389,7 @@ def testquery_df(nr_samples):
 #extract_as_sqllite()
 #testquery_sql_lite(100)
 
-def comparedbs():
+def comparedbs(nr_samples):
 
     with open("ipc.db", 'r') as cdb:
 
@@ -405,27 +405,43 @@ def comparedbs():
             row = row.split('|')
             database.append(row)
 
-    col_names = ["ip_from", "ip_to", "country", "registry", "last-modified", "record_type", "description"]
+
+
+    sample_values = []
+    
+    for i in range(1,nr_samples):
+        sample_values.append(random.randint(0, len(c_db))) 
+
+            
+    query_values = []
+    for index in sample_values:
+        entry = c_db[index]
+        ip_from = int(entry[0])
+        ip_to = int(entry[1])
+        country = entry[2]
+        query_values.append([ip_from, ip_to, country])
+
+
+    col_names = ["ip_from", "ip_to", "country", "registry", "last-modified", "record_type", "status",  "description"]
     df = pd.read_csv(IP2COUNTRY_DB, delimiter="|", names=col_names, converters={'ip_from':int, 'ip_to':int })
 
     start_time = time.time() 
 
-    i = 1
+    i = 0
     no_match = 0
-    for entry in c_db:
-        ip = int(entry[0])
+    for entry in query_values:
+        ip = int(entry[0]) +1
         country = entry[2].strip('\n')
 
         record = df.loc[ ( (df['ip_from'] <= ip) & (df['ip_to'] >= ip) ) ].values
         result = record[0][2]
-        print("%s: Country from C database %s, country from result %s" % (i,country, result))
+        #print("%s: Country from C database %s, country from result %s" % (i,country, result))
         if result != country:
             no_match += 1
+            print("%s: Country from C database %s with ip: %s, country from result %s" % (i,country, str(ipaddress.ip_address(ip)), result))
 
         i += 1
 
-        if i > 5000: 
-            break
 
         
 
@@ -438,7 +454,7 @@ def comparedbs():
     print("total time needed was:", f'{end_time - start_time:.3f}', "s\n") 
 
 
-comparedbs()
+comparedbs(100)
 
 
 
