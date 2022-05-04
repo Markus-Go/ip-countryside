@@ -43,6 +43,7 @@ def EvaluateCommand(input):
     elif(input[LOC_CMD] == CMD_PARSE):
         print("Parse Input")
         EvaluateParseCommand(input)
+        CallParse("1.2.3.4")
     else:
         print("Invalid Command")
 
