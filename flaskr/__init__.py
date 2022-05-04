@@ -7,12 +7,12 @@ import ipaddress
 from datetime import datetime
 import math
 
-from flask import Flask, request, redirect
+from flask import Flask, request, send_from_directory
 from flask import render_template
 from flask_assets import Bundle, Environment
 
 from geopy.geocoders import Nominatim
-from config import COUNTRY_DICTIONARY
+from config import COUNTRY_DICTIONARY, DEL_FILES_DIR, ROOT_DIR
 
 
 from ip_countryside_utilities import get_record_by_ip;
@@ -133,7 +133,12 @@ def create_app(test_config=None):
         output = render_template('index.html', ip_from=ip_from, ip_to=ip_to, lat=lat, lon=lon, flag=flag, country=country, registry=registry, comment=comment, date=date, isValid=isValid) 
         
         return output 
-    
+
+    @app.route('/download/<filename>')
+    def download_file(filename):
+        return send_from_directory(DEL_FILES_DIR, filename, as_attachment=True)
+
+
     return app
 
 

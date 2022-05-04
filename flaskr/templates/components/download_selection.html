@@ -1,0 +1,62 @@
+<div class="col col-12 col-md-6 d-flex flex-column pb-3">
+	
+    <form class="col-12 col-sm-9 m-auto" method="GET" action="/download">
+
+        <div class="input-group mb-3">
+        
+            <select class="custom-select" id="inputGroupSelect01" onchange="location = this.value != '0' ? this.value : '/';">
+
+                <option selected value="0">Download database as...</option>
+
+                <option value="{{url_for('download_file', filename='ip2country_2.db')}}"> 
+                    CSV 
+                </option>
+
+                <option value="{{ url_for('download_file', filename='db.json') }}">
+                    JSON
+                </option>
+                
+                <option value="{{ url_for('download_file', filename='db.yaml') }}">
+                    YAML
+                </option>
+                
+                <option value="{{ url_for('download_file', filename='db4.mmdb') }}">
+                    MMD IPv6
+                </option>
+                
+                <option value="{{ url_for('download_file', filename='db6.mmdb') }}">
+                    MMD IPv4
+                </option>
+                
+                <option value="{{ url_for('download_file', filename='db.sql') }}">
+                    SQL
+                </option>
+                
+                <option value="{{ url_for('download_file', filename='sql_lite.db') }}">
+                    SQLITE
+                </option>
+            
+            </select>
+        
+        </div>
+    
+    <!-- 
+        <div class="pb-3">
+                
+                <button type="button" class="btn btn-outline-success">
+
+                    <svg viewBox="0 0 24 24">
+
+                        <path fill="currentColor" d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z" />
+                    
+                    </svg>
+
+                </button>
+
+        </div>
+    -->
+
+    </form>
+
+</div>
+
