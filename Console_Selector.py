@@ -2,6 +2,7 @@
 
 from ip_countryside_downloader import *
 from ip_countryside_utilities import *
+from ip_countryside_parser import *
 
 
 def CallUpdate(forced=False):
@@ -11,6 +12,7 @@ def CallUpdate(forced=False):
     else:
         print("Check if files are old enough for update.")
         #download_del_files()
+    run_parser(multicore=True)
 
 def CallParse(ip):
     return get_record_by_ip(ip)

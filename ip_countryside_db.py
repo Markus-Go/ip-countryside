@@ -4,7 +4,7 @@ import maxminddb
 import ipaddress
 from ipaddress import ip_address, IPv4Address, IPv6Address, ip_interface
 import json
-import yaml
+#import yaml
 import math
 import sqlite3
 import csv

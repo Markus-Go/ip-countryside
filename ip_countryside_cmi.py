@@ -22,6 +22,7 @@ def update(force, multicore, output, split):
     click.echo('\nSplit IP = ' + str(split))
     click.echo('\nOutput options:')
     click.echo('\n'.join(output))
+    CallUpdate(force)
 
 @cli.command(name='trace', help='tracing IP')
 @click.argument('IP')
@@ -29,7 +30,7 @@ def trace(ip):
     if(checkIp(ip)):
         click.echo('tracing ' + ip)
         result = CallTrace(ip)
-        click.eco(result)
+        click.echo(result)
     else:
         pass
 
