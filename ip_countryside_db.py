@@ -77,7 +77,7 @@ def read_db_record(line):
         status          = line[6].rstrip("\n")
         descr           = ""
         
-        if record_type == "I":
+        if record_type == "I" and len(line) > 6:
             descr = line[7].rstrip("\n")
 
         return [ip_from, ip_to, country, registry, last_modified, record_type, status, descr]
@@ -95,6 +95,24 @@ def sort_db(file=IP2COUNTRY_DB):
     os.rename(os.path.join(DEL_FILES_DIR, "ip2country_temp.db"), IP2COUNTRY_DB)
 
 
+def splitdb(records):
+
+    ipv4 = []
+    ipv6 = []
+
+
+    for entry in records:
+        if len(str(entry[0])) < 11:
+            ipv4.append(entry)
+        else:
+            ipv6.append(entry)
+
+    write_db(ipv4, IP2COUNTRY_DB_IPV4)
+    write_db(ipv6, IP2COUNTRY_DB_IPV6)
+    
+    return
+
+    
 def extract_as_json(file=IP2COUNTRY_DB):
     
     data = { }

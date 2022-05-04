@@ -133,7 +133,7 @@ def create_app(test_config=None):
         output = render_template('index.html', ip_from=ip_from, ip_to=ip_to, lat=lat, lon=lon, flag=flag, country=country, registry=registry, comment=comment, date=date, isValid=isValid) 
         
         return output 
-
+    
     return app
 
 
