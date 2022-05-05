@@ -1,3 +1,4 @@
+from fileinput import filename
 from operator import ge, truediv
 import os
 from pickle import TRUE
@@ -6,14 +7,15 @@ from warnings import catch_warnings
 import ipaddress
 from datetime import datetime
 import math
+from click import command
 
-from flask import Flask, request, redirect
+from flask import Flask, request, send_from_directory
 from flask import render_template
 from flask import request, jsonify
 from flask_assets import Bundle, Environment
 
 from geopy.geocoders import Nominatim
-from config import COUNTRY_DICTIONARY
+from config import *
 
 
 from ip_countryside_utilities import get_record_by_ip;
@@ -85,25 +87,26 @@ def create_app(test_config=None):
         ip_from     = " "
         ip_to       = " "
         country     = "-" 
-        registry    = "-"
-        date        = "-"
         flag        = "-"
-        comment     = "-"
         lat         = 0
         lon         = 0
+        comment     = "-"
         isValid     = False
+        hasLocation = False
 
+        # process ip search request
         if request.method == 'GET':
             
             ip_address = request.args.get('ip', None)
-
+           
             if ip_address is None or ip_address == "":
 
                 ip_address = os.popen('curl -s ifconfig.me').readline()
                 record = get_record_by_ip(ip_address)
 
             else:
-    
+                
+                ip_address = ip_address.strip()
                 record = get_record_by_ip(ip_address)
 
             if record:
@@ -111,29 +114,28 @@ def create_app(test_config=None):
                 ip_from     = ipaddress.ip_address(record[0])
                 ip_to       = ipaddress.ip_address(record[1])
                 country     = COUNTRY_DICTIONARY[record[2]] 
-                registry    = record[3]
-                date        = datetime.strptime(str(record[4]), '%Y%m%d').strftime('%Y.%m.%d')
                 status      = record[6]
-                comment     = record[7] if record[7]  else "-"
                 isValid     = True
                 flag        = record[2]
                
                 if record[2] == "ZZ":
-
+                    
                     comment = status
                     lat = 0
                     lon = 0
 
                 else: 
         
-                    [lat, lon, isValid]  = get_geolocation(country)
+                    [lat, lon, isValid, hasLocation]  = get_geolocation(country)
              
             else:
 
                 isValid = False
 
-
-        output = render_template('index.html', ip_from=ip_from, ip_to=ip_to, lat=lat, lon=lon, flag=flag, country=country, registry=registry, comment=comment, date=date, isValid=isValid) 
+        # get download files data for templates
+        db_files = get_db_files()
+        
+        output = render_template('index.html', ip_from=ip_from, ip_to=ip_to, lat=lat, lon=lon, flag=flag, country=country, isValid=isValid, hasLocation=hasLocation, ip=ip_address, comment=comment, db_files=db_files) 
         
         return output
 
@@ -147,6 +149,14 @@ def create_app(test_config=None):
         else:
             return "No id field provided. Please specify an id."
 
+    @app.route('/download')
+    def download_db_file():
+         
+        fname = request.args.get('fname', None)
+
+        return send_from_directory(DEL_FILES_DIR, fname, as_attachment=True)
+
+
     return app
 
 
@@ -159,11 +169,38 @@ def get_geolocation(address):
         lat = location.latitude
         lon = location.longitude
         isValid = True
+        hasLocation = True
 
     except:
         
         lat = 0
         lon = 0
         isValid = False
+        hasLocation = False
 
-    return [lat, lon, isValid]
+    return [lat, lon, isValid, hasLocation]
+
+
+def get_db_files():
+
+    db_files = [
+        IP2COUNTRY_DB          ,
+        IP2COUNTRY_DB_IPV4     ,
+        IP2COUNTRY_DB_IPV6     ,
+        IP2COUNTRY_DB_JSON     ,   
+        IP2COUNTRY_DB_YAML     ,  
+        IP2COUNTRY_DB_MYSQL    ,
+        IP2COUNTRY_DB_SQLLITE  ,
+        IP2COUNTRY_DB_MMDB_V4  ,  
+        IP2COUNTRY_DB_MMDB_V6  ,   
+    ]
+
+    data = []
+
+    for file in db_files:
+
+        if os.path.exists(file):
+            
+            data.append(os.path.basename(file))
+            
+    return data

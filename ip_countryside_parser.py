@@ -1,5 +1,3 @@
-from copy import copy
-from multiprocessing.reduction import duplicate
 import re
 import os
 import shutil
@@ -8,7 +6,7 @@ import ipaddress
 import time
 from datetime import datetime
 import multiprocessing as mp
-import csv 
+
 
 from config import *;
 from ip_countryside_db import *;
@@ -361,7 +359,6 @@ def delete_temp_files():
     os.remove(STRIPPED_INET_FILE)
     # @TODO add files that aren't needed 
 
-
 def merge_files(output, files):
 
     try: 
@@ -374,109 +371,14 @@ def merge_files(output, files):
                 with open(del_file, "rb") as source:
 
                     shutil.copyfileobj(source, f)
-                    #f.write(os.linesep.encode())
     
     except IOError as e:
         
         print(e)
 
-
-def merge_successive():
-
-    with open(IP2COUNTRY_DB, "r", encoding='utf-8', errors='ignore') as input, open(os.path.join(DEL_FILES_DIR, "ip2country_temp.db"), "w", encoding='utf-8', errors='ignore') as output:
-
-        for group in get_successive_group(input):
-            
-            if len(group) > 1:
-
-                ip_from     = group[0][0]
-                ip_to       = group[-1][1]
-                cc          = group[0][2]
-                registry    = group[0][3]
-                date        = group[0][4]
-                type        = group[0][5]
-                status      = group[0][6]
-                descr       = ""
-
-                if type == "I":
-                    descr = group[0][7]
-
-                record = [ip_from, ip_to, cc, registry, date, type, status, descr]
-                
-            else:
-
-                record = group[0]
-
-            if record:
-                    
-                    line = "|".join(map(str, record))
-                    line = line + '\n'
-                    output.write(line)
-                    
-    os.remove(IP2COUNTRY_DB)
-    os.rename(os.path.join(DEL_FILES_DIR, "ip2country_temp.db"), IP2COUNTRY_DB)
-
-
-def get_successive_group(file):
-
-    data = []
-
-    for line in file:
-
-        record = read_db_record(line)
-
-         # if data array is empty then append current record
-        if len(data) == 0:
-
-            data.append(record)
-            continue
-
-        elif (record[0] == data[-1][1] or record[0]-1 == data[-1][1]) and record[2] == data[-1][2]:
-            
-            data.append(record)
-
-        else:
- 
-            temp = record
-
-            # retrun current duplicate sequence to be proccessed
-            yield data
-
-            # clean data to begin with next duplicates group
-            data = []
-
-            # write the record which ends a duplicates sequence
-            data.append(temp)
-
-    # if we finished the file we still may have record in data 
-    # return this one also 
-    if data:
-
-        yield data
-        data = []
-
-
 ## ==============================================================================
 ## Parser Entry Method
  
-def splitdb(records):
-
-    ipv4 = []
-    ipv6 = []
-
-
-    for entry in records:
-        if len(str(entry[0])) < 11:
-            ipv4.append(entry)
-        else:
-            ipv6.append(entry)
-
-    write_db(ipv4, IP2COUNTRY_DB_IPV4)
-    write_db(ipv6, IP2COUNTRY_DB_IPV6)
-    
-    return
-
-
 def run_parser(save_conflicts_param=False, multicore=True):
 
     start_time = time.time()
@@ -489,7 +391,7 @@ def run_parser(save_conflicts_param=False, multicore=True):
         os.path.join(DEL_FILES_DIR, APNIC['del_fname']), 
         os.path.join(DEL_FILES_DIR, RIPE['del_fname'])
     ]
-    merge_files(MERGED_DEL_FILE, del_files)          
+    #merge_files(MERGED_DEL_FILE, del_files)          
      
     
     inet_files = [
@@ -498,20 +400,18 @@ def run_parser(save_conflicts_param=False, multicore=True):
         os.path.join(DEL_FILES_DIR, APNIC['inet_fname_ipv6']),
         os.path.join(DEL_FILES_DIR, RIPE['inet_fname_ipv6'])
     ]
-    merge_files(MERGED_INET_FILE, inet_files)          
-
-
+    #merge_files(MERGED_INET_FILE, inet_files)          
 
     print("parsing del files ...")
-    parse_del_files()           
+    #parse_del_files()           
 
 
     print("parsing inetnum files ...")
-    if multicore:
-          parse_inet_files_multicore()
+    # if multicore:
+    #   parse_inet_files_multicore()
 
-    else:
-        parse_inet_files_single()
+    # else:
+    #     parse_inet_files_single()
 
     stripped_files = [
         os.path.join(STRIPPED_DEL_FILE), 
@@ -521,22 +421,24 @@ def run_parser(save_conflicts_param=False, multicore=True):
 
     shutil.copyfile(IP2COUNTRY_DB, TRACE_FILE)
 
+    
     print("splitting")
     split_records()
 
     print("sorting")
-    sort_db()
+    sort_db_2()
 
     if(save_conflicts_param):
         save_conflicts()
 
     print("removing duplicates")
     remove_duplicates()
-
+    
     merge_successive()
 
-    print(f"checking if there are stil any overlaps in final database ... -> {records_overlap(read_db())}")
+    correct_edges()
 
+    print(f"checking if there are stil any overlaps in final database ... -> {records_overlap(read_db())}")
 
     #delete_temp_files()
     print("finished\n")
@@ -560,33 +462,15 @@ def run_parser(save_conflicts_param=False, multicore=True):
 #            return place_entity.country_cities[c][0]  
 #    return "No City information"      
 # Needed if for multiprocessing not to crash
-# 
+
 if __name__ == "__main__":   
 
- 
     # @TODOs
     # 10. Abgleich mit anderen Branchen
     # 05. Code aufräumen und Methods documentieren
     # 06. Spliting Records to find overlaps Strategy dokumentieren
-    # 03. Grenzen richtig abschneiden (split_files())
     # 07. Update README.md
     # 08. Update run.ps1
     # 09. Optimize downloader script
 
-    t = [
-        
-        [1,50,'DE','RIPE', '20161012', 'I', 'ALLOCATED PA', 'TELEX SRL'],
-        [10,20,'ES','RIPE', '20161012', 'I', 'ASSIGNED', 'TELEX SRL'],
-        [50,60,'DE','RIPE', '20161012', 'I', 'ASSIGNED', 'TELEX SRL'],
-
-        # [20,55,'BE','RIPE', '20161012', 'I', 'TELEX SRL'],
-        # [40,60,'SY','RIPE', '20161012', 'I', 'TELEX SRL'],
-        # [45,55,'AT','RIPE', '20161012', 'I', 'TELEX SRL'],
-        # [60,100,'TE','RIPE', '20161012', 'I', 'TELEX SRL'],
-        # [70,100,'TE','RIPE', '20161012', 'I', 'TELEX SRL'],
-        # [40,100,'TE','RIPE', '20161012', 'I', 'TELEX SRL'],
-        # [ 17842175, 17986560, "KR", "APNIC", "20100512", "D", "ALLOCATED"]
-    ]
-
     run_parser(multicore=True)
-

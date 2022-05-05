@@ -4,7 +4,7 @@ import maxminddb
 import ipaddress
 from ipaddress import ip_address, IPv4Address, IPv6Address, ip_interface
 import json
-#import yaml
+import yaml
 import math
 import sqlite3
 import csv
@@ -85,7 +85,7 @@ def read_db_record(line):
         status          = line[6].rstrip("\n")
         descr           = ""
         
-        if record_type == "I":
+        if record_type == "I" and len(line) > 6:
             descr = line[7].rstrip("\n")
 
         return [ip_from, ip_to, country, registry, last_modified, record_type, status, descr]
@@ -96,13 +96,45 @@ def read_db_record(line):
 def sort_db(file=IP2COUNTRY_DB):
 
     with (open(file, "r", encoding='utf-8', errors='ignore')) as input, open(os.path.join(DEL_FILES_DIR, "ip2country_temp.db"), "w", encoding='utf-8', errors='ignore') as output:
-
-        large_sort(input, output, itemgetter(1,2), False)
+        
+        large_sort(input, output, itemgetter(0,1), False, limit_chars=2)
 
     os.remove(IP2COUNTRY_DB)
     os.rename(os.path.join(DEL_FILES_DIR, "ip2country_temp.db"), IP2COUNTRY_DB)
 
 
+def sort_db_2(file=IP2COUNTRY_DB):
+
+    records = []
+
+    # get records from final db
+    records = read_db(file)
+
+    # sort this list
+    records.sort()
+
+    # write sorted list back into final db
+    write_db(records, file)
+
+
+def splitdb(records):
+
+    ipv4 = []
+    ipv6 = []
+
+
+    for entry in records:
+        if len(str(entry[0])) < 11:
+            ipv4.append(entry)
+        else:
+            ipv6.append(entry)
+
+    write_db(ipv4, IP2COUNTRY_DB_IPV4)
+    write_db(ipv6, IP2COUNTRY_DB_IPV6)
+    
+    return
+
+    
 def extract_as_json(file=IP2COUNTRY_DB):
     
     data = { }
@@ -142,7 +174,7 @@ def extract_as_json(file=IP2COUNTRY_DB):
 
 def extract_as_yaml(file=IP2COUNTRY_DB):
     
-    data = { }
+    data = {}
     
     records = read_db(file)
     
@@ -175,8 +207,9 @@ def extract_as_yaml(file=IP2COUNTRY_DB):
     except IOError as e:
 
         print(e)
-       
+              
     return 0
+
 
 def extract_as_sqllite(file=IP2COUNTRY_DB):
     os.remove(IP2COUNTRY_DB_SQLLITE)
@@ -209,6 +242,7 @@ def extract_as_sqllite(file=IP2COUNTRY_DB):
 
     with open(IP2COUNTRY_DB, 'r',  encoding='utf-8', errors='ignore') as db: 
         
+
         database = []
         for row in db:
             row = row.split('|')
@@ -225,6 +259,7 @@ def extract_as_sqllite(file=IP2COUNTRY_DB):
         connection.close()
 
         # To query transform ip into integer and integer to a fixed 128 bit value 
+
 
 def extract_as_mmdb(file=IP2COUNTRY_DB):
     data = {}
@@ -271,6 +306,7 @@ def read_mmdb(ipaddress):
         m = maxminddb.open_database(IP2COUNTRY_DB_MMDB_V6)
     return m.get(ipaddress)
 
+
 def getNetwork(ip_from, ip_to):
     hosts = ip_to + 1 - ip_from
     res = math.log2(hosts)
@@ -283,6 +319,7 @@ def getNetwork(ip_from, ip_to):
         return str(ipaddress.ip_address(ip_from)) + "/" + str(subnetmask)
 
     return str(ipaddress.ip_address(ip_from)) + "/" + str(subnetmask)
+
 
 def getaddress(ip_from):
     return str(ipaddress.ip_address(ip_from))
