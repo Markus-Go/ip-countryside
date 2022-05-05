@@ -149,22 +149,26 @@ def sort_db_2(file=IP2COUNTRY_DB):
     write_db(records, file)
 
 
-def splitdb(records):
+def split_db(file=IP2COUNTRY_DB):
 
-    ipv4 = []
-    ipv6 = []
+    try:
 
+        # save all records into a list
+        with open(file, "r", encoding='utf-8', errors='ignore') as input, open(IP2COUNTRY_DB_IPV4, "w", encoding='utf-8', errors='ignore') as output4, open(IP2COUNTRY_DB_IPV6, "w", encoding='utf-8', errors='ignore') as output6:
 
-    for entry in records:
-        if len(str(entry[0])) < 11:
-            ipv4.append(entry)
-        else:
-            ipv6.append(entry)
+            for line in input:
+                
+                record = read_db_record(line)
 
-    write_db(ipv4, IP2COUNTRY_DB_IPV4)
-    write_db(ipv6, IP2COUNTRY_DB_IPV6)
-    
-    return
+                if len(str(record[0])) < 11:
+                    output4.write(line)
+
+                else:
+                    output6.write(line)
+
+    except IOError as e:
+        
+        print(e)
 
     
 def extract_as_json(file=IP2COUNTRY_DB):

@@ -144,3 +144,19 @@ def get_geolocation(address):
         hasLocation = False
 
     return [lat, lon, isValid, hasLocation]
+
+    
+#def get_city(string, countryCode):
+
+#    place_entity = locationtagger.find_locations(text = string)
+   
+#    # getting all country cities
+#    print("The countries cities in text : ")
+#    print(place_entity.country_cities)
+
+#    for c in place_entity.country_cities:
+#        if c.upper() == COUNTRY_DICTIONARY[countryCode]:
+#            #print(place_entity.country_cities[c], "is in",COUNTRY_DICTIONARY[countryCode])
+#            return place_entity.country_cities[c][0]  
+#    return "No City information"      
+# Needed if for multiprocessing not to crash
