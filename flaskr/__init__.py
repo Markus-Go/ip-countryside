@@ -110,11 +110,11 @@ def create_app(test_config=None):
                 record = get_record_by_ip(ip_address)
 
             if record:
-
+                
                 ip_from     = ipaddress.ip_address(record[0])
                 ip_to       = ipaddress.ip_address(record[1])
                 country     = COUNTRY_DICTIONARY[record[2]] 
-                status      = record[6]
+                status      = record[3]
                 isValid     = True
                 flag        = record[2]
                

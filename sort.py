@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from tempfile import TemporaryDirectory, mktemp
 from typing import IO, Callable, List
 
-import ip_countryside_db  
+#import ip_countryside_db  
 
 def large_sort(input_file: IO, output_file: IO, key: Callable=None, reverse: bool=False, limit_chars: int=1024*1024*64):
 
