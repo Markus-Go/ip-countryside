@@ -1,5 +1,5 @@
-#from netaddr import IPSet
-#from mmdb_writer import MMDBWriter
+from netaddr import IPSet, IPNetwork
+from mmdb_writer import MMDBWriter
 import maxminddb
 import ipaddress
 from ipaddress import ip_address, IPv4Address, IPv6Address, ip_interface
@@ -11,7 +11,7 @@ import csv
 import random
 from config import *;
 import time
-import pandas as pd
+#import pandas as pd
 
 from operator import itemgetter
 #from sort import large_sort
@@ -288,6 +288,56 @@ def extract_as_mmdb(file=IP2COUNTRY_DB):
                 #print(e)
                 return 0
 
+def extract_as_mmdb_fast(file=IP2COUNTRY_DB):
+
+    data = {}
+    filteredlist = []
+    countryips4 = []
+    countryips6 = []
+    records = read_db(file)
+
+    for record in records:
+        entry = '{0}'.format(record[2])
+        filteredlist.append(entry)
+
+    sortedlist = sorted(list(dict.fromkeys(filteredlist)))
+
+    writerv4 = MMDBWriter(ip_version=4)
+    writerv6 = MMDBWriter(ip_version=6)
+    i = 0
+    for row in sortedlist:
+        print(row + "")
+        for record in records:
+            if row == record[2]:
+
+                ip = getNetwork(record[0], record[1])
+                ipversion = ip_interface(ip).ip.version
+                if ipversion == 4:
+
+                    countryips4.append(IPNetwork(ip))
+                    writerv4.insert_network(IPSet([ip]),
+                                            {'CountryCode': '{0}'.format(row)})
+                    writerv4.to_db_file(IP2COUNTRY_DB_MMDB_V6)
+                else:
+                    countryips6.append(ip)
+                    #writerv6.insert_network(IPSet([ip, ]),
+                    #                        {'CountryCode': '{0}'.format(row)})
+                    #writerv6.to_db_file(IP2COUNTRY_DB_MMDB_V6)
+
+
+        writerv4.to_db_file(IP2COUNTRY_DB_MMDB_V4)
+        #writerv6.to_db_file(IP2COUNTRY_DB_MMDB_V6)
+
+        # print(row + "-IPV4 Adresses:\t"+ str(len((countryips4))))
+        # print(row + "-IPV6 Adresses:\t"+ str(len((countryips6))))
+
+        # ip6total = len(countryips6)
+        # ip4total = len(countryips4)
+        # iptotal = ip4total + ip6total
+
+    # print("Total Amount of IP Adresses: " + str(iptotal) + "there are "+str(ip4total)+"IPv4 Adresses and "+str(ip6total)+"IPv6 Adresses")
+
+
 def read_mmdb(ipaddress):
     if ip_interface(ipaddress).ip.version == 4:
         m = maxminddb.open_database(IP2COUNTRY_DB_MMDB_V4)
@@ -313,7 +363,7 @@ def getNetwork(ip_from, ip_to):
 def getaddress(ip_from):
     return str(ipaddress.ip_address(ip_from))
 
-#extract_as_mmdb()
+extract_as_mmdb_fast()
 #print(read_mmdb("131.255.44.4"))
 #print(read_mmdb("2c0f:eca0::0001"))
 
