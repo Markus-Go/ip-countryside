@@ -46,6 +46,7 @@ def read_db(file=IP2COUNTRY_DB):
 
     return records
 
+
 def write_db(records, file=IP2COUNTRY_DB):
     
     if not records:
@@ -225,16 +226,20 @@ def extract_as_sqllite(file=IP2COUNTRY_DB):
     cursor.execute(query)
     connection.commit()
     
-    
-
     #IP2COUNTRY_DB
     with open(IP2COUNTRY_DB, 'r',  encoding='utf-8', errors='ignore') as db: 
         
-
         database = []
         for row in db:
-            row = row.split('|')
-            entry =   (bin(int(row[0]))[2:].zfill(128), bin(int(row[1]))[2:].zfill(128), row[2], row[6])
+            
+            record = read_db_record(row)
+
+            ip_from_binary = bin(record[0])[2:].zfill(128)
+            ip_to_binary   = bin(record[1])[2:].zfill(128)
+            cc             = record[2]
+            status         = record[6]
+
+            entry =   (ip_from_binary, ip_to_binary, cc, status)
 
             database.append(entry)
            
@@ -248,7 +253,6 @@ def extract_as_sqllite(file=IP2COUNTRY_DB):
         connection.close()
 
         # To query transform ip into integer and integer to a fixed 128 bit value 
-
 
 def extract_as_mmdb(file=IP2COUNTRY_DB):
     data = {}
@@ -363,7 +367,7 @@ def getNetwork(ip_from, ip_to):
 def getaddress(ip_from):
     return str(ipaddress.ip_address(ip_from))
 
-extract_as_mmdb_fast()
+#extract_as_mmdb_fast()
 #print(read_mmdb("131.255.44.4"))
 #print(read_mmdb("2c0f:eca0::0001"))
 
@@ -532,7 +536,6 @@ def comparedbs(nr_samples):
     print("total time needed was:", f'{end_time - start_time:.3f}', "s\n") 
 
 
-
 def comparemaxmind(nr_samples):
 
     
@@ -620,3 +623,4 @@ def comparemaxmind(nr_samples):
 
 #print(t)
 #print(result)
+extract_as_sqllite()
