@@ -35,7 +35,7 @@ def get_record_by_ip(ip, getAll=False):
 
         return "No IP found"
 
-print(get_record_by_ip("94.134.100.43"))
+#print(get_record_by_ip("94.134.100.43"))
 
 
 def empty_entry_by_idx(records, indicies):

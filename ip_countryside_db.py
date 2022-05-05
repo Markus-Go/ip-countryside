@@ -363,7 +363,7 @@ def getNetwork(ip_from, ip_to):
 def getaddress(ip_from):
     return str(ipaddress.ip_address(ip_from))
 
-extract_as_mmdb_fast()
+#extract_as_mmdb_fast()
 #print(read_mmdb("131.255.44.4"))
 #print(read_mmdb("2c0f:eca0::0001"))
 
