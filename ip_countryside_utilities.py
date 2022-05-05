@@ -13,7 +13,6 @@ def get_record_by_ip(ip):
     
     ip = bin(int(ip))[2:].zfill(128)
 
-
     connection = sqlite3.connect(IP2COUNTRY_DB_SQLLITE)
     cursor = connection.cursor()
     query = "SELECT * FROM ip2country WHERE ip_from <= '%s' and ip_to >= '%s'" % (ip, ip)
