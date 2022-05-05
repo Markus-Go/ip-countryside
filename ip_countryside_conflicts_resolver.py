@@ -473,6 +473,123 @@ def  group_records_by_type(records):
     return data
 
 
+def merge_successive():
+
+    with open(IP2COUNTRY_DB, "r", encoding='utf-8', errors='ignore') as input, open(os.path.join(DEL_FILES_DIR, "ip2country_temp.db"), "w", encoding='utf-8', errors='ignore') as output:
+
+        for group in get_successive_group(input):
+            
+            if len(group) > 1:
+
+                ip_from     = group[0][0]
+                ip_to       = group[-1][1]
+                cc          = group[0][2]
+                registry    = group[0][3]
+                date        = group[0][4]
+                type        = group[0][5]
+                status      = group[0][6]
+                descr       = ""
+
+                if type == "I":
+                    descr = group[0][7]
+
+                record = [ip_from, ip_to, cc, registry, date, type, status, descr]
+                
+            else:
+
+                record = group[0]
+
+            if record:
+                    
+                line = "|".join(map(str, record))
+                line = line + '\n'
+                output.write(line)
+                    
+    os.remove(IP2COUNTRY_DB)
+    os.rename(os.path.join(DEL_FILES_DIR, "ip2country_temp.db"), IP2COUNTRY_DB)
+
+
+def get_successive_group(file):
+
+    data = []
+
+    for line in file:
+
+        record = read_db_record(line)
+
+         # if data array is empty then append current record
+        if len(data) == 0:
+
+            data.append(record)
+            continue
+
+        elif (record[0] == data[-1][1] or record[0]-1 == data[-1][1]) and record[2] == data[-1][2]:
+            
+            data.append(record)
+
+        else:
+ 
+            temp = record
+
+            # retrun current duplicate sequence to be proccessed
+            yield data
+
+            # clean data to begin with next duplicates group
+            data = []
+
+            # write the record which ends a duplicates sequence
+            data.append(temp)
+
+    # if we finished the file we still may have record in data 
+    # return this one also 
+    if data:
+
+        yield data
+        data = []
+
+
+def correct_edges():
+
+    with open(IP2COUNTRY_DB, "r", encoding='utf-8', errors='ignore') as input, open(os.path.join(DEL_FILES_DIR, "ip2country_temp.db"), "w", encoding='utf-8', errors='ignore') as output:
+
+        temp = []
+
+        for line in input:
+            
+            record = read_db_record(line)
+
+            if not temp: 
+                temp = record
+                continue
+
+            else:
+
+                if temp[1] == record[0] and temp[2] != record[2]:
+                    
+                    temp[1] = temp[1] - 1
+
+                    line = "|".join(map(str, temp))
+                    line = line + '\n'
+                    output.write(line)
+
+                    temp = record
+                
+                else:
+
+                    line = "|".join(map(str, temp))
+                    line = line + '\n'
+                    output.write(line)
+
+                    temp = record
+            
+        line = "|".join(map(str, temp))
+        line = line + '\n'
+        output.write(line)
+                    
+    os.remove(IP2COUNTRY_DB)
+    os.rename(os.path.join(DEL_FILES_DIR, "ip2country_temp.db"), IP2COUNTRY_DB)
+
+
 def records_overlap(records):
     """
     Checks if any two records overlaps in the given list of RIA records 
@@ -508,8 +625,10 @@ def records_overlap(records):
     P.sort()
 
     for i in range(len(P)-1):
-    
-        if P[i][1] == "L" and P[i+1][1] != "R":
-            return True
         
+        if P[i][1] == "L" and P[i+1][1] != "R":
+            print(records[P[i][2]])
+            print(records[P[i+1][2]])
+            return True
+            
     return False

@@ -1,0 +1,39 @@
+<div class="download_form col col-12 col-md-6 pb-3">
+	
+    <form class="d-flex flex-row" method="GET" action="/download">
+
+        <div class="input-group mb-3">
+        
+            <select name="fname" class="custom-select" id="inputGroupSelect01">
+
+                {%for db_file in db_files %}
+    
+                    <option value="{{db_file}}">
+                        {{ db_file.upper() }}
+                    </option>
+                
+                {%endfor%}
+
+            </select>
+            
+            <div class="input-group-append">
+
+                <button type="submit" name="download" class="btn btn-outline-success">
+
+                    <svg viewBox="0 0 24 24">
+
+                        <path fill="currentColor" d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z" />
+                    
+                    </svg>
+
+                </button>
+            
+            </div>
+
+        </div>
+      
+
+    </form>
+
+</div>
+
