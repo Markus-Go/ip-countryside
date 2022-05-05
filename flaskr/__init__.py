@@ -111,12 +111,12 @@ def create_app(test_config=None):
 
             if record:
                 
-                ip_from     = ipaddress.ip_address(record[0])
-                ip_to       = ipaddress.ip_address(record[1])
+                ip_from     = record[0]
+                ip_to       = record[1]
+                flag        = record[2]
                 country     = COUNTRY_DICTIONARY[record[2]] 
                 status      = record[3]
                 isValid     = True
-                flag        = record[2]
                
                 if record[2] == "ZZ":
                     

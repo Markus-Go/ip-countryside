@@ -1,18 +1,21 @@
 from config import *;
 from ip_countryside_parser import *
 #from ip_countryside_parser import get_city
-import ipaddress
+from ipaddress import *
 import sqlite3
 import math
 
 from config import *;
 
+def get_record_by_ip(ip):
+    
+    ip = ip_address(ip)
+    
+    ip = bin(int(ip))[2:].zfill(128)
 
-def get_record_by_ip(ip, getAll=False):
-    ip = bin(int(ipaddress.ip_address(ip)))[2:].zfill(128)
     connection = sqlite3.connect(IP2COUNTRY_DB_SQLLITE)
     cursor = connection.cursor()
-    query = "SELECT * FROM ip2country WHERE ip_from <= '%s' and ip_to >= '%s'" % (ip,ip)
+    query = "SELECT * FROM ip2country WHERE ip_from <= '%s' and ip_to >= '%s'" % (ip, ip)
     cursor.execute(query)
     result = cursor.fetchall()
     
@@ -33,9 +36,7 @@ def get_record_by_ip(ip, getAll=False):
 
     else:
 
-        return "No IP found"
-
-#print(get_record_by_ip("94.134.100.43"))
+        return []
 
 
 def empty_entry_by_idx(records, indicies):
@@ -77,11 +78,9 @@ def getNetwork(ip_from, ip_to):
         print("No valid subnetmask", ip_from, " ", ip_to, "with subnetmask: ", res)
         return
     
-    return str(ipaddress.ip_address(ip_from)) + "/" + str(subnetmask)
+    return str(ip_address(ip_from)) + "/" + str(subnetmask)
 
-
-
-                
+           
 def converttoNetwork(records):
                          
     with open(IP2COUNTRY_MM, 'w', encoding='utf-8', errors='ignore') as f:
@@ -91,10 +90,10 @@ def converttoNetwork(records):
             ip_from = int(record[0])
             ip_to = int(record[1])
 
-            ip_from = ipaddress.ip_address(ip_from)
-            ip_to = ipaddress.ip_address(ip_to)
+            ip_from = ip_address(ip_from)
+            ip_to = ip_address(ip_to)
 
-            ranges = [ipaddr for ipaddr in ipaddress.summarize_address_range(ip_from, ip_to)]
+            ranges = [ipaddr for ipaddr in summarize_address_range(ip_from, ip_to)]
             
             for range in ranges:
                 
@@ -102,15 +101,11 @@ def converttoNetwork(records):
                 line = line + '\n'
                 f.write(line)           
 
-                
-     
-
-
 
 def traceIP(ip_addr):
     # returns a list of all entries in unmodified databse that contain a certain ip
 
-    ip = int(ipaddress.ip_address(ip_addr))
+    ip = int(ip_address(ip_addr))
     return_list = []
 
     with open(TRACE_FILE, 'r', encoding='utf-8', errors='ignore') as f:
@@ -126,15 +121,9 @@ def traceIP(ip_addr):
 
             
     for r in return_list:
-        r[0] =  str(ipaddress.ip_address(int(r[0])))
-        r[1] = str(ipaddress.ip_address(int(r[1])))
+        r[0] =  str(ip_address(int(r[0])))
+        r[1] = str(ip_address(int(r[1])))
         r[-1] = r[-1].replace('\n', '')
 
 
     return return_list
-
-
-
-#print(traceIP("61.245.128.1"))
-
-

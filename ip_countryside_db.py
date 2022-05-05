@@ -46,6 +46,7 @@ def read_db(file=IP2COUNTRY_DB):
 
     return records
 
+
 def write_db(records, file=IP2COUNTRY_DB):
     
     if not records:
@@ -100,8 +101,9 @@ def sort_db(file=IP2COUNTRY_DB):
 
     with (open(file, "r", encoding='utf-8', errors='ignore')) as input, open(os.path.join(DEL_FILES_DIR, "ip2country_temp.db"), "w", encoding='utf-8', errors='ignore') as output:
         
-        large_sort(input, output, itemgetter(0,1), False, limit_chars=2)
-
+        #large_sort(input, output, itemgetter(0,1), False, limit_chars=2)
+        pass
+         
     os.remove(IP2COUNTRY_DB)
     os.rename(os.path.join(DEL_FILES_DIR, "ip2country_temp.db"), IP2COUNTRY_DB)
 
@@ -201,7 +203,8 @@ def extract_as_yaml(file=IP2COUNTRY_DB):
 
 def extract_as_sqllite(file=IP2COUNTRY_DB):
     
-    os.remove(IP2COUNTRY_DB_SQLLITE)
+    if os.path.exists(IP2COUNTRY_DB_SQLLITE):
+        os.remove(IP2COUNTRY_DB_SQLLITE)
 
     connection = sqlite3.connect(IP2COUNTRY_DB_SQLLITE)
     cursor = connection.cursor()
@@ -225,16 +228,20 @@ def extract_as_sqllite(file=IP2COUNTRY_DB):
     cursor.execute(query)
     connection.commit()
     
-    
-
     #IP2COUNTRY_DB
     with open(IP2COUNTRY_DB, 'r',  encoding='utf-8', errors='ignore') as db: 
         
-
         database = []
         for row in db:
-            row = row.split('|')
-            entry =   (bin(int(row[0]))[2:].zfill(128), bin(int(row[1]))[2:].zfill(128), row[2], row[6])
+            
+            record = read_db_record(row)
+
+            ip_from_binary = bin(record[0])[2:].zfill(128)
+            ip_to_binary   = bin(record[1])[2:].zfill(128)
+            cc             = record[2]
+            status         = record[6]
+
+            entry =   (ip_from_binary, ip_to_binary, cc, status)
 
             database.append(entry)
            
@@ -248,7 +255,6 @@ def extract_as_sqllite(file=IP2COUNTRY_DB):
         connection.close()
 
         # To query transform ip into integer and integer to a fixed 128 bit value 
-
 
 def extract_as_mmdb(file=IP2COUNTRY_DB):
     data = {}
@@ -530,7 +536,6 @@ def comparedbs(nr_samples):
 
     end_time = time.time()
     print("total time needed was:", f'{end_time - start_time:.3f}', "s\n") 
-
 
 
 def comparemaxmind(nr_samples):
