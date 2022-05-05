@@ -407,7 +407,7 @@ def run_parser(save_conflicts_param=False, multicore=True):
 
     print("parsing inetnum files ...")
     # if multicore:
-    #       parse_inet_files_multicore()
+    #   parse_inet_files_multicore()
 
     # else:
     #     parse_inet_files_single()
@@ -418,21 +418,21 @@ def run_parser(save_conflicts_param=False, multicore=True):
         os.path.join(STRIPPED_INET_FILE),
     ]
     merge_files(IP2COUNTRY_DB, stripped_files)
-
-
+    
     print("splitting")
     split_records()
 
     print("sorting")
-    sort_db()
+    sort_db_2()
 
     if(save_conflicts_param):
         save_conflicts()
 
     print("removing duplicates")
     remove_duplicates()
+    
+    merge_successive()
 
-    sort_db()
     correct_edges()
 
     print(f"checking if there are stil any overlaps in final database ... -> {records_overlap(read_db())}")
@@ -457,24 +457,4 @@ if __name__ == "__main__":
     # 08. Update run.ps1
     # 09. Optimize downloader script
 
-    t = [
-        
-        [17301504, 17367039, "CN", "APNIC", "20210616", "I", "ALLOCATED PORTABLE", "KNET Techonlogy (BeiJing) Co., Ltd. 4, South 4th treet,  Zhongguancun, Haidian District, Beijing"],
-        [17367040, 17401088, "MY", "APNIC", "20200729", "I", "ALLOCATED PORTABLE", "Tmnet,  Telekom Malaysia Bhd. Telekom Malaysia Berhad 44th Floor,  Global Data Marketing,  TM Global Jalan Pantai Baharu"],
-        [17401088, 17432575, "MY", "APNIC", "20210210", "I", "ASSIGNED NON-PORTABLE", "Jabatan Ketua Menteri"],
-        [17432576, 17435135, "CN", "APNIC", "20210615", "I", "ALLOCATED PORTABLE", "CHINANET Guangdong province network Data Communication Division China Telecom"],
-        
-    ]
-
-    #run_parser(multicore=True)
-
-    split_records(t)
-
-    # print("sorting")
-    # sort_db()
-
-    # print("removing duplicates")
-    # remove_duplicates()
-
-    # sort_db()
-    # correct_edges()
+    run_parser(multicore=True)

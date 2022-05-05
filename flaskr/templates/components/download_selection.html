@@ -4,44 +4,21 @@
 
         <div class="input-group mb-3">
         
-            <select class="custom-select" id="inputGroupSelect01" onchange="location = this.value != '0' ? this.value : '/';">
+            <select name="fname" class="custom-select" id="inputGroupSelect01">
 
-                <option selected value="0">Download database as...</option>
+                {%for db_file in db_files %}
+    
+                    <option value="{{db_file}}">
+                        {{ db_file.upper() }}
+                    </option>
+                
+                {%endfor%}
 
-                <option value="{{url_for('download_file', filename='ip2country_2.db')}}"> 
-                    CSV 
-                </option>
-                
-                <option value="{{ url_for('download_file', filename='db4.mmdb') }}">
-                    MMD IPv6
-                </option>
-                
-                <option value="{{ url_for('download_file', filename='db6.mmdb') }}">
-                    MMD IPv4
-                </option>
-                
-
-                <option value="{{ url_for('download_file', filename='db.json') }}">
-                    JSON
-                </option>
-                
-                <option value="{{ url_for('download_file', filename='db.yaml') }}">
-                    YAML
-                </option>
-                
-                <option value="{{ url_for('download_file', filename='db.sql') }}">
-                    SQL
-                </option>
-                
-                <option value="{{ url_for('download_file', filename='sql_lite.db') }}">
-                    SQLITE
-                </option> 
-            
             </select>
             
             <div class="input-group-append">
 
-                <button type="button" class="btn btn-outline-success">
+                <button type="submit" name="download" class="btn btn-outline-success">
 
                     <svg viewBox="0 0 24 24">
 

@@ -1,3 +1,4 @@
+from fileinput import filename
 from operator import ge, truediv
 import os
 from pickle import TRUE
@@ -13,7 +14,7 @@ from flask import render_template
 from flask_assets import Bundle, Environment
 
 from geopy.geocoders import Nominatim
-from config import COUNTRY_DICTIONARY, DEL_FILES_DIR, ROOT_DIR
+from config import *
 
 
 from ip_countryside_utilities import get_record_by_ip;
@@ -90,10 +91,11 @@ def create_app(test_config=None):
         isValid     = False
         hasLocation = False
 
+        # process ip search request
         if request.method == 'GET':
             
             ip_address = request.args.get('ip', None)
-
+           
             if ip_address is None or ip_address == "":
 
                 ip_address = os.popen('curl -s ifconfig.me').readline()
@@ -127,14 +129,19 @@ def create_app(test_config=None):
 
                 isValid = False
 
-
-        output = render_template('index.html', ip_from=ip_from, ip_to=ip_to, lat=lat, lon=lon, flag=flag, country=country, isValid=isValid, hasLocation=hasLocation, ip=ip_address, comment=comment) 
+        # get download files data for templates
+        db_files = get_db_files()
+        
+        output = render_template('index.html', ip_from=ip_from, ip_to=ip_to, lat=lat, lon=lon, flag=flag, country=country, isValid=isValid, hasLocation=hasLocation, ip=ip_address, comment=comment, db_files=db_files) 
         
         return output 
 
-    @app.route('/download/<filename>')
-    def download_file(filename):
-        return send_from_directory(DEL_FILES_DIR, filename, as_attachment=True)
+    @app.route('/download')
+    def download_db_file():
+         
+        fname = request.args.get('fname', None)
+
+        return send_from_directory(DEL_FILES_DIR, fname, as_attachment=True)
 
 
     return app
@@ -159,3 +166,28 @@ def get_geolocation(address):
         hasLocation = False
 
     return [lat, lon, isValid, hasLocation]
+
+
+def get_db_files():
+
+    db_files = [
+        IP2COUNTRY_DB          ,
+        IP2COUNTRY_DB_IPV4     ,
+        IP2COUNTRY_DB_IPV6     ,
+        IP2COUNTRY_DB_JSON     ,   
+        IP2COUNTRY_DB_YAML     ,  
+        IP2COUNTRY_DB_MYSQL    ,
+        IP2COUNTRY_DB_SQLLITE  ,
+        IP2COUNTRY_DB_MMDB_V4  ,  
+        IP2COUNTRY_DB_MMDB_V6  ,   
+    ]
+
+    data = []
+
+    for file in db_files:
+
+        if os.path.exists(file):
+            
+            data.append(os.path.basename(file))
+            
+    return data

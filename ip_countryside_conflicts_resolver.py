@@ -625,10 +625,10 @@ def records_overlap(records):
     P.sort()
 
     for i in range(len(P)-1):
-    
+        
         if P[i][1] == "L" and P[i+1][1] != "R":
             print(records[P[i][2]])
             print(records[P[i+1][2]])
             return True
-        
+            
     return False

@@ -87,11 +87,25 @@ def read_db_record(line):
 def sort_db(file=IP2COUNTRY_DB):
 
     with (open(file, "r", encoding='utf-8', errors='ignore')) as input, open(os.path.join(DEL_FILES_DIR, "ip2country_temp.db"), "w", encoding='utf-8', errors='ignore') as output:
-
-        large_sort(input, output, itemgetter(1,2), False)
+        
+        large_sort(input, output, itemgetter(0,1), False, limit_chars=2)
 
     os.remove(IP2COUNTRY_DB)
     os.rename(os.path.join(DEL_FILES_DIR, "ip2country_temp.db"), IP2COUNTRY_DB)
+
+
+def sort_db_2(file=IP2COUNTRY_DB):
+
+    records = []
+
+    # get records from final db
+    records = read_db(file)
+
+    # sort this list
+    records.sort()
+
+    # write sorted list back into final db
+    write_db(records, file)
 
 
 def splitdb(records):
