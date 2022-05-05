@@ -625,4 +625,4 @@ def comparemaxmind(nr_samples):
 #print(t)
 #print(result)
 
-extract_as_sqllite()
+#extract_as_sqllite()
