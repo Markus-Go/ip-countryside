@@ -1,6 +1,6 @@
 #from netaddr import IPSet
 #from mmdb_writer import MMDBWriter
-#import maxminddb
+import maxminddb
 import ipaddress
 from ipaddress import ip_address, IPv4Address, IPv6Address, ip_interface
 import json
@@ -483,7 +483,7 @@ def comparedbs(nr_samples):
 
 
 
-def comparemaxmind():
+def comparemaxmind(nr_samples):
 
     
     with open(IP2COUNTRY_DB, 'r',  encoding='utf-8', errors='ignore') as db: 
@@ -491,23 +491,23 @@ def comparemaxmind():
         database = []
         for row in db:
             row = row.split('|')
-            database.append(row)
+            if int(row[0]) < 4294967296 and row[2] != 'ZZ':
+                database.append(row)
 
     sample_values = []
     
     for i in range(1,nr_samples):
-        sample_values.append(random.randint(0, len(c_db))) 
+        sample_values.append(random.randint(0, len(database))) 
             
     query_values = []
     for index in sample_values:
-        entry = c_db[index]
+        entry = database[index]
         ip_from = int(entry[0])
         ip_to = int(entry[1])
         country = entry[2]
         query_values.append([ip_from, ip_to, country])
 
-    col_names = ["ip_from", "ip_to", "country", "registry", "last-modified", "record_type", "status",  "description"]
-    df = pd.read_csv(IP2COUNTRY_DB, delimiter="|", names=col_names, converters={'ip_from':int, 'ip_to':int })
+    
 
     start_time = time.time() 
 
@@ -515,33 +515,58 @@ def comparemaxmind():
     eu_count = 0
     no_match = 0
     for entry in query_values:
-        ip = int(entry[0]) +1
-        country = entry[2].strip('\n')
+        
+        ip = int(entry[0]) + 1
+        ip = str(ipaddress.ip_address(ip))
 
-        record = df.loc[ ( (df['ip_from'] <= ip) & (df['ip_to'] >= ip) ) ].values
-        result = record[0][2]
+        country = entry[2]
+
+
+
+        t = read_mmdb(ip)
+
+        try:
+            result = t['country']['iso_code']
+            if result != country:
+                no_match += 1
+                print("%s: Country from maxmind database %s with ip: %s, country from result %s" % (i,result, ip, country))
+                if country == 'EU':
+                    eu_count += 1
+
+            i += 1
+
+        except:
+            pass
+        
+
+
+        
         #print("%s: Country from C database %s, country from result %s" % (i,country, result))
-        if result != country:
-            no_match += 1
-            print("%s: Country from C database %s with ip: %s, country from result %s" % (i,country, str(ipaddress.ip_address(ip)), result))
-            if country == 'EU':
-                eu_count += 1
-
-        i += 1
+        
 
     print("\nTotal entries looked at: %s" % i)
     print("No match cases: %s" % no_match)
     matching = (1 - (no_match / i)) * 100
-    print("Old database matches new database to %s%%\n" % matching)
+    print("Maxmind matches new database to %s%%\n" % matching)
     print("EU cases: %s" % eu_count)
 
     end_time = time.time()
     print("total time needed was:", f'{end_time - start_time:.3f}', "s\n")
 
+  
+    print("Average time for one request: ", str((end_time - start_time) / nr_samples), "s")
 
 
 
+#comparemaxmind(10000)
 #comparedbs(1000)
 #extract_as_sqllite()
 #extract_as_mysql()
 #extract_as_sqllite()
+
+#t = read_mmdb("185.58.141.125")
+
+#result = t['country']['iso_code']
+
+#print(t)
+#print(result)
