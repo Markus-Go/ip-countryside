@@ -114,15 +114,15 @@ def download_del_files(force = False):
 
    # collect delegation files in one specific folder "del_files"
    # if the folder doesn't exist then try to create one first ... 
-   del_files_dir = DEL_FILES_DIR
+   DB_DIR = DB_DIR
 
    try:
     
-    if not os.path.exists(del_files_dir):
-        os.makedirs(del_files_dir)
+    if not os.path.exists(DB_DIR):
+        os.makedirs(DB_DIR)
 
     # change to del_files directory
-    os.chdir(del_files_dir)
+    os.chdir(DB_DIR)
    
    except OSError as e:
     
@@ -174,7 +174,7 @@ def download_del_files(force = False):
       download_del_file(RIPE["host"],    RIPE["inet_cwd"],   RIPE["inet_fname_ipv6_gz"], True)
    
    if os.path.exists('temp'):
-       os.remove(os.path.join(DEL_FILES_DIR, 'temp'))
+       os.remove(os.path.join(DB_DIR, 'temp'))
 
    # return to project's root directory 
    os.chdir(ROOT_DIR)
@@ -240,7 +240,7 @@ def download_del_file(host, cwd, delFileName, zipped=False):
                     shutil.copyfileobj(f_in, f_out)
 
             #delete zipFile
-            #os.remove(os.path.join(DEL_FILES_DIR, delFileName))
+            #os.remove(os.path.join(DB_DIR, delFileName))
 
     except IOError as e:
 

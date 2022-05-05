@@ -475,7 +475,7 @@ def  group_records_by_type(records):
 
 def merge_successive():
 
-    with open(IP2COUNTRY_DB, "r", encoding='utf-8', errors='ignore') as input, open(os.path.join(DEL_FILES_DIR, "ip2country_temp.db"), "w", encoding='utf-8', errors='ignore') as output:
+    with open(IP2COUNTRY_DB, "r", encoding='utf-8', errors='ignore') as input, open(os.path.join(DB_DIR, "ip2country_temp.db"), "w", encoding='utf-8', errors='ignore') as output:
 
         for group in get_successive_group(input):
             
@@ -506,7 +506,7 @@ def merge_successive():
                 output.write(line)
                     
     os.remove(IP2COUNTRY_DB)
-    os.rename(os.path.join(DEL_FILES_DIR, "ip2country_temp.db"), IP2COUNTRY_DB)
+    os.rename(os.path.join(DB_DIR, "ip2country_temp.db"), IP2COUNTRY_DB)
 
 
 def get_successive_group(file):
@@ -550,7 +550,7 @@ def get_successive_group(file):
 
 def correct_edges():
 
-    with open(IP2COUNTRY_DB, "r", encoding='utf-8', errors='ignore') as input, open(os.path.join(DEL_FILES_DIR, "ip2country_temp.db"), "w", encoding='utf-8', errors='ignore') as output:
+    with open(IP2COUNTRY_DB, "r", encoding='utf-8', errors='ignore') as input, open(os.path.join(DB_DIR, "ip2country_temp.db"), "w", encoding='utf-8', errors='ignore') as output:
 
         temp = []
 
@@ -587,7 +587,7 @@ def correct_edges():
         output.write(line)
                     
     os.remove(IP2COUNTRY_DB)
-    os.rename(os.path.join(DEL_FILES_DIR, "ip2country_temp.db"), IP2COUNTRY_DB)
+    os.rename(os.path.join(DB_DIR, "ip2country_temp.db"), IP2COUNTRY_DB)
 
 
 def records_overlap(records):

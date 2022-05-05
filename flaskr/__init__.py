@@ -14,12 +14,11 @@ from flask import render_template
 from flask import request, jsonify
 from flask_assets import Bundle, Environment
 
-from geopy.geocoders import Nominatim
 from config import *
 
 
-from ip_countryside_utilities import get_record_by_ip;
-from ip_countryside_db import read_mmdb, read_db_record
+from ip_countryside_utilities import get_record_by_ip, get_geolocation;
+from ip_countryside_db import read_mmdb, get_db_files, read_db_record
 import json
 
 
@@ -154,53 +153,7 @@ def create_app(test_config=None):
          
         fname = request.args.get('fname', None)
 
-        return send_from_directory(DEL_FILES_DIR, fname, as_attachment=True)
+        return send_from_directory(DB_DIR, fname, as_attachment=True)
 
 
     return app
-
-
-def get_geolocation(address):
-
-    try:
-
-        geolocator = Nominatim(user_agent="Your_Name")
-        location = geolocator.geocode(address)
-        lat = location.latitude
-        lon = location.longitude
-        isValid = True
-        hasLocation = True
-
-    except:
-        
-        lat = 0
-        lon = 0
-        isValid = False
-        hasLocation = False
-
-    return [lat, lon, isValid, hasLocation]
-
-
-def get_db_files():
-
-    db_files = [
-        IP2COUNTRY_DB          ,
-        IP2COUNTRY_DB_IPV4     ,
-        IP2COUNTRY_DB_IPV6     ,
-        IP2COUNTRY_DB_JSON     ,   
-        IP2COUNTRY_DB_YAML     ,  
-        IP2COUNTRY_DB_MYSQL    ,
-        IP2COUNTRY_DB_SQLLITE  ,
-        IP2COUNTRY_DB_MMDB_V4  ,  
-        IP2COUNTRY_DB_MMDB_V6  ,   
-    ]
-
-    data = []
-
-    for file in db_files:
-
-        if os.path.exists(file):
-            
-            data.append(os.path.basename(file))
-            
-    return data

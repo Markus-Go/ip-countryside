@@ -2,6 +2,7 @@ from config import *;
 from ip_countryside_parser import *
 #from ip_countryside_parser import get_city
 from ipaddress import *
+from geopy.geocoders import Nominatim
 import sqlite3
 import math
 
@@ -122,3 +123,24 @@ def traceIP(ip_addr):
 
 
     return return_list
+
+
+def get_geolocation(address):
+
+    try:
+
+        geolocator = Nominatim(user_agent="Your_Name")
+        location = geolocator.geocode(address)
+        lat = location.latitude
+        lon = location.longitude
+        isValid = True
+        hasLocation = True
+
+    except:
+        
+        lat = 0
+        lon = 0
+        isValid = False
+        hasLocation = False
+
+    return [lat, lon, isValid, hasLocation]

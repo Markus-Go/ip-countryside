@@ -385,20 +385,20 @@ def run_parser(save_conflicts_param=False, multicore=True):
     print("parsing started\n")
 
     del_files = [
-        os.path.join(DEL_FILES_DIR, AFRINIC['del_fname']), 
-        os.path.join(DEL_FILES_DIR, LACNIC['del_fname']),
-        os.path.join(DEL_FILES_DIR, ARIN['del_fname']),
-        os.path.join(DEL_FILES_DIR, APNIC['del_fname']), 
-        os.path.join(DEL_FILES_DIR, RIPE['del_fname'])
+        os.path.join(DB_DIR, AFRINIC['del_fname']), 
+        os.path.join(DB_DIR, LACNIC['del_fname']),
+        os.path.join(DB_DIR, ARIN['del_fname']),
+        os.path.join(DB_DIR, APNIC['del_fname']), 
+        os.path.join(DB_DIR, RIPE['del_fname'])
     ]
     merge_files(MERGED_DEL_FILE, del_files)          
      
     
     inet_files = [
-        os.path.join(DEL_FILES_DIR, APNIC['inet_fname']), 
-        os.path.join(DEL_FILES_DIR, RIPE['inet_fname']),
-        os.path.join(DEL_FILES_DIR, APNIC['inet_fname_ipv6']),
-        os.path.join(DEL_FILES_DIR, RIPE['inet_fname_ipv6'])
+        os.path.join(DB_DIR, APNIC['inet_fname']), 
+        os.path.join(DB_DIR, RIPE['inet_fname']),
+        os.path.join(DB_DIR, APNIC['inet_fname_ipv6']),
+        os.path.join(DB_DIR, RIPE['inet_fname_ipv6'])
     ]
     merge_files(MERGED_INET_FILE, inet_files)          
 
@@ -421,7 +421,6 @@ def run_parser(save_conflicts_param=False, multicore=True):
 
     shutil.copyfile(IP2COUNTRY_DB, TRACE_FILE)
 
-    
     print("splitting")
     split_records()
 
@@ -462,15 +461,3 @@ def run_parser(save_conflicts_param=False, multicore=True):
 #            return place_entity.country_cities[c][0]  
 #    return "No City information"      
 # Needed if for multiprocessing not to crash
-
-if __name__ == "__main__":   
-
-    # @TODOs
-    # 10. Abgleich mit anderen Branchen
-    # 05. Code aufräumen und Methods documentieren
-    # 06. Spliting Records to find overlaps Strategy dokumentieren
-    # 07. Update README.md
-    # 08. Update run.ps1
-    # 09. Optimize downloader script
-
-    run_parser(multicore=True)

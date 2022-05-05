@@ -19,6 +19,33 @@ from operator import itemgetter
 
 from config import *
 
+def get_db_files():
+    """"
+        return all databases which exists in DB_DIR
+    """
+    db_files = [
+        IP2COUNTRY_DB          ,
+        IP2COUNTRY_DB_IPV4     ,
+        IP2COUNTRY_DB_IPV6     ,
+        IP2COUNTRY_DB_JSON     ,   
+        IP2COUNTRY_DB_YAML     ,  
+        IP2COUNTRY_DB_MYSQL    ,
+        IP2COUNTRY_DB_SQLLITE  ,
+        IP2COUNTRY_MM          ,
+        IP2COUNTRY_DB_MMDB_V4  ,  
+        IP2COUNTRY_DB_MMDB_V6  ,   
+    ]
+
+    data = []
+
+    for file in db_files:
+
+        if os.path.exists(file):
+            
+            data.append(os.path.basename(file))
+            
+    return data
+
 # record index:    0       1   2    3           4            5          6       7
 # record format: ip_from|ip_to|cc|registry|last-modified|record_type|status|description
 
@@ -99,13 +126,13 @@ def read_db_record(line):
 
 def sort_db(file=IP2COUNTRY_DB):
 
-    with (open(file, "r", encoding='utf-8', errors='ignore')) as input, open(os.path.join(DEL_FILES_DIR, "ip2country_temp.db"), "w", encoding='utf-8', errors='ignore') as output:
+    with (open(file, "r", encoding='utf-8', errors='ignore')) as input, open(os.path.join(DB_DIR, "ip2country_temp.db"), "w", encoding='utf-8', errors='ignore') as output:
         
         #large_sort(input, output, itemgetter(0,1), False, limit_chars=2)
         pass
          
     os.remove(IP2COUNTRY_DB)
-    os.rename(os.path.join(DEL_FILES_DIR, "ip2country_temp.db"), IP2COUNTRY_DB)
+    os.rename(os.path.join(DB_DIR, "ip2country_temp.db"), IP2COUNTRY_DB)
 
 
 def sort_db_2(file=IP2COUNTRY_DB):
@@ -293,6 +320,7 @@ def extract_as_mmdb(file=IP2COUNTRY_DB):
             except IOError as e:
                 #print(e)
                 return 0
+
 
 def extract_as_mmdb_fast(file=IP2COUNTRY_DB):
 

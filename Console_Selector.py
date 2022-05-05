@@ -17,10 +17,13 @@ def CallUpdate(forced=False):
 def CallParse(ip):
 
     record = get_record_by_ip(ip)
+    output = ""
     
-    cc = record[2]
+    if record:
 
-    output = "\n" + record[0].__str__() + " - " + record[1].__str__() + "\n" + "Country: " + COUNTRY_DICTIONARY[cc]
+        cc = record[2]
+
+        output = "\n" + record[0].__str__() + " - " + record[1].__str__() + "\n" + "Country: " + COUNTRY_DICTIONARY[cc]
 
     return output
 
