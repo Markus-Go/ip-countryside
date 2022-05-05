@@ -20,17 +20,20 @@ def get_record_by_ip(ip):
     
         result = result[0]
 
-        ip_from = int(result[0]) 
-        ip_to = int(result[1])
+        ip_from =  str(ipaddress.ip_address(int(result[0], 2)))
+        ip_to = str(ipaddress.ip_address(int(result[1], 2)))
         cc = result[2]
-        status = result[6]
+        status = result[3]
 
         return [ip_from, ip_to, cc, status]
 
     else:
 
         return []
-   
+
+print(get_record_by_ip("2003:EF:DF13:DCE9:F897:5C93:DA97:4722"))
+
+
 def empty_entry_by_idx(records, indicies):
     """
     Set for each index in indicies the corresponding entry in 
@@ -70,49 +73,34 @@ def getNetwork(ip_from, ip_to):
         print("No valid subnetmask", ip_from, " ", ip_to, "with subnetmask: ", res)
         return
     
-        
     return str(ipaddress.ip_address(ip_from)) + "/" + str(subnetmask)
 
 
+
+                
 def converttoNetwork(records):
                          
     with open(IP2COUNTRY_MM, 'w', encoding='utf-8', errors='ignore') as f:
 
         for record in records: 
-            powers = []
+            
             ip_from = int(record[0])
             ip_to = int(record[1])
-            hosts = ip_to + 1 - ip_from 
-            res = math.log2(hosts)
- 
-        
-            if not res.is_integer() and not record[3] == 'ZZ':
-                powers = getPowers(int(hosts)) 
-         
-                start = ip_from
-                end = ip_to
-          
-                for i in range(len(powers)):
-                    end = start + powers[i] -1
-                    line = "|".join(map(str, [start, end, record[2], record[3], record[4], record[5]]))
-                    line = line + '\n'
-                    f.write(line)   
-                    start = end + 1
-            else:
-                    line = "|".join(map(str, record))
-                    line = line + '\n'
-                    f.write(line)
+
+            ip_from = ipaddress.ip_address(ip_from)
+            ip_to = ipaddress.ip_address(ip_to)
+
+            ranges = [ipaddr for ipaddr in ipaddress.summarize_address_range(ip_from, ip_to)]
+            
+            for range in ranges:
+                
+                line = "|".join(map(str, [range, record[2]]))
+                line = line + '\n'
+                f.write(line)           
+
+                
      
 
-def getPowers(x):
-
-    powers = []
-    i = 1
-    while i <= x:
-        if i & x:
-            powers.append(i)
-        i <<= 1
-    return powers
 
 
 def traceIP(ip_addr):
@@ -142,4 +130,7 @@ def traceIP(ip_addr):
     return return_list
 
 
-#print(get_record_by_ip("2003:EF:DF13:DCE9:F897:5C93:DA97:4722"))
+
+#print(traceIP("61.245.128.1"))
+
+

@@ -1,18 +1,21 @@
-from netaddr import IPSet
-from mmdb_writer import MMDBWriter
-import maxminddb
+#from netaddr import IPSet
+#from mmdb_writer import MMDBWriter
+#import maxminddb
 import ipaddress
 from ipaddress import ip_address, IPv4Address, IPv6Address, ip_interface
 import json
-import yaml
+#import yaml
 import math
 import sqlite3
 import csv
 import random
 from config import *;
+import time
+import pandas as pd
 
 from operator import itemgetter
-from sort import large_sort
+#from sort import large_sort
+
 
 from config import *
 
@@ -152,11 +155,6 @@ def extract_as_json(file=IP2COUNTRY_DB):
                     'ip_from':        record[0],
                     'ip_to':          record[1],
                     'cc':               record[2],
-                    'registry':         record[3],
-                    'last_modified':  record[4],
-                    'record_type':        record[5],
-                    'status':        record[6],
-                    'description':   record[7],
                 }
 
                 f.write(json.dumps(data, indent=4))
@@ -192,16 +190,6 @@ def extract_as_yaml(file=IP2COUNTRY_DB):
                 f.write(str(record[1]))
                 f.write("\n  cc: ")
                 f.write(record[2])
-                f.write("\n  registry: ")
-                f.write(record[3])
-                f.write("\n  last_modified: ")
-                f.write(record[4])
-                f.write("\n  record_type: ")
-                f.write(record[5])
-                f.write("\n  status: ")
-                f.write(record[6])
-                f.write("\n  description: ")
-                f.write(record[7])
                 f.write("\n")
 
     except IOError as e:
@@ -212,6 +200,7 @@ def extract_as_yaml(file=IP2COUNTRY_DB):
 
 
 def extract_as_sqllite(file=IP2COUNTRY_DB):
+    
     os.remove(IP2COUNTRY_DB_SQLLITE)
 
     connection = sqlite3.connect(IP2COUNTRY_DB_SQLLITE)
@@ -221,14 +210,10 @@ def extract_as_sqllite(file=IP2COUNTRY_DB):
     
     query = """
     CREATE TABLE ip2country (
-    ip_from VARCHAR(129),
-    ip_to VARCHAR(129),
-    cc varchar(3),
-    registry VARCHAR(15), 
-    last_modified VARCHAR(15), 
-    record_type VARCHAR(2),
-    status VARCHAR(30),
-    description VARCHAR(255),
+    ip_from BLOB,
+    ip_to BLOB,
+    cc CHAR,
+    status CHAR, 
     PRIMARY KEY (ip_from, ip_to)
     );    
     """
@@ -236,22 +221,26 @@ def extract_as_sqllite(file=IP2COUNTRY_DB):
     cursor.execute(query)
     connection.commit()
 
-    #query = "CREATE INDEX ip_range on ip2country (ip_from, ip_to);"
-    #cursor.execute(query)
-    #connection.commit()
+    query = "CREATE INDEX ip_range on ip2country (ip_from, ip_to);"
+    cursor.execute(query)
+    connection.commit()
+    
+    
 
+    #IP2COUNTRY_DB
     with open(IP2COUNTRY_DB, 'r',  encoding='utf-8', errors='ignore') as db: 
         
 
         database = []
         for row in db:
             row = row.split('|')
-            entry =   (bin(int(row[0]))[2:].zfill(128), bin(int(row[1]))[2:].zfill(128), row[2], row[3], row[4],row[5], row[6], row[7].strip('\n'))
+            entry =   (bin(int(row[0]))[2:].zfill(128), bin(int(row[1]))[2:].zfill(128), row[2], row[6])
+
             database.append(entry)
            
         query = """
                 INSERT INTO ip2country 
-                        VALUES (?,?,?,?,?,?,?,?)  
+                        VALUES (?,?,?,?)  
                 """    
        
         cursor.executemany(query, database)
@@ -332,9 +321,11 @@ def extract_as_mysql(file=IP2COUNTRY_DB):
 
     with open(IP2COUNTRY_DB_MYSQL, 'w',  encoding='utf-8', errors='ignore') as f, open(IP2COUNTRY_DB, 'r',  encoding='utf-8', errors='ignore') as db: 
        
-        f.write("CREATE TABLE ip2country\n(ip_from VARCHAR(50), ip_to VARCHAR(50),cc VARCHAR(3),registry VARCHAR(15), last_modified VARCHAR(15), record_type VARCHAR(2), status VARCHAR(30), description VARCHAR(255), PRIMARY KEY(ip_from, ip_to));\n")
-        f.write("INSERT INTO ip2country (ip_from, ip_to, country, registry, last_modified, record_type, status, description)\n")
+        f.write("CREATE TABLE ip2country (ip_from BINARY(16), ip_to BINARY(16),cc CHAR(2), PRIMARY KEY(ip_from, ip_to));\n")
+        f.write("CREATE INDEX ip_range on ip2country (ip_from, ip_to);\n")
+        f.write("INSERT INTO ip2country (ip_from, ip_to, cc)\n")
         f.write("VALUES\n")
+       
         
         database = []
         for row in db:
@@ -342,11 +333,18 @@ def extract_as_mysql(file=IP2COUNTRY_DB):
             database.append(row)
 
         for row in database[:-1]:
-            line = "('%s', '%s', '%s', '%s', '%s' , '%s', '%s', '%s'),\n" % (str(ipaddress.ip_address(int(row[0]))), str(ipaddress.ip_address(int(row[1]))), row[2], row[3], row[4],row[5], row[6], row[7].strip('\n'))
-            f.write(line)
+            if int(row[0]) > 4294967296:
+                line = "(INET6_ATON('%s'), INET6_ATON('%s'), '%s'),\n" % (str(ipaddress.ip_address(int(row[0]))), str(ipaddress.ip_address(int(row[1]))), row[2])
+                f.write(line)
+            else:
+                line = "(INET_ATON('%s'), INET_ATON('%s'), '%s'),\n" % (str(ipaddress.ip_address(int(row[0]))), str(ipaddress.ip_address(int(row[1]))), row[2])
+                f.write(line)
         else:
-            line = "('%s', '%s', '%s', '%s', '%s' , '%s', '%s', '%s');" % (str(ipaddress.ip_address(int(row[0]))), str(ipaddress.ip_address(int(row[1]))), row[2], row[3], row[4],row[5], row[6], row[7].strip('\n'))
-            f.write(line)
+            if int(row[0]) > 4294967296:
+                line = "(INET6_ATON('%s'), INET6_ATON('%s'), '%s');" % (str(ipaddress.ip_address(int(row[0]))), str(ipaddress.ip_address(int(row[1]))), row[2])
+                f.write(line)
+            else:
+                line = "(INET_ATON('%s'), INET_ATON('%s'), '%s');" % (str(ipaddress.ip_address(int(row[0]))), str(ipaddress.ip_address(int(row[1]))), row[2])
 
     # query with: Select country from ip2country where inet6_aton('41.31.255.254') >= inet6_aton(ip_to) and inet6_aton('41.31.255.254') <= inet6_aton(ip_to)
 
@@ -373,13 +371,17 @@ def testquery_sql_lite(nr_samples):
 
     #print(result)
     
+    
     start_time = time.time()  
     for value in query_values: 
         connection = sqlite3.connect(IP2COUNTRY_DB_SQLLITE)
         cursor = connection.cursor()
-        query = "SELECT country FROM ip2country WHERE ip_from <= '%s' and ip_to >= '%s'" % (value[0], value[0])
+        query = "SELECT * FROM ip2country WHERE ip_from <= '%s' and ip_to >= '%s'" % (value[0], value[0])
         cursor.execute(query)
         result = cursor.fetchall()
+        result = result[0]
+        ip = str(ipaddress.ip_address(int(result[0], 2)))
+        print(ip," ", result[2])
         
     end_time = time.time()
     print("total time needed was:", f'{end_time - start_time:.3f}', "s\n") 
@@ -479,3 +481,67 @@ def comparedbs(nr_samples):
     end_time = time.time()
     print("total time needed was:", f'{end_time - start_time:.3f}', "s\n") 
 
+
+
+def comparemaxmind():
+
+    
+    with open(IP2COUNTRY_DB, 'r',  encoding='utf-8', errors='ignore') as db: 
+       
+        database = []
+        for row in db:
+            row = row.split('|')
+            database.append(row)
+
+    sample_values = []
+    
+    for i in range(1,nr_samples):
+        sample_values.append(random.randint(0, len(c_db))) 
+            
+    query_values = []
+    for index in sample_values:
+        entry = c_db[index]
+        ip_from = int(entry[0])
+        ip_to = int(entry[1])
+        country = entry[2]
+        query_values.append([ip_from, ip_to, country])
+
+    col_names = ["ip_from", "ip_to", "country", "registry", "last-modified", "record_type", "status",  "description"]
+    df = pd.read_csv(IP2COUNTRY_DB, delimiter="|", names=col_names, converters={'ip_from':int, 'ip_to':int })
+
+    start_time = time.time() 
+
+    i = 1
+    eu_count = 0
+    no_match = 0
+    for entry in query_values:
+        ip = int(entry[0]) +1
+        country = entry[2].strip('\n')
+
+        record = df.loc[ ( (df['ip_from'] <= ip) & (df['ip_to'] >= ip) ) ].values
+        result = record[0][2]
+        #print("%s: Country from C database %s, country from result %s" % (i,country, result))
+        if result != country:
+            no_match += 1
+            print("%s: Country from C database %s with ip: %s, country from result %s" % (i,country, str(ipaddress.ip_address(ip)), result))
+            if country == 'EU':
+                eu_count += 1
+
+        i += 1
+
+    print("\nTotal entries looked at: %s" % i)
+    print("No match cases: %s" % no_match)
+    matching = (1 - (no_match / i)) * 100
+    print("Old database matches new database to %s%%\n" % matching)
+    print("EU cases: %s" % eu_count)
+
+    end_time = time.time()
+    print("total time needed was:", f'{end_time - start_time:.3f}', "s\n")
+
+
+
+
+#comparedbs(1000)
+#extract_as_sqllite()
+#extract_as_mysql()
+#extract_as_sqllite()
