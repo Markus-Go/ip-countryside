@@ -7,7 +7,7 @@ import math
 
 from config import *;
 
-def get_record_by_ip(ip):
+def get_record_by_ip(ip, getAll):
     
     ip = ip_address(ip)
     
@@ -33,10 +33,8 @@ def get_record_by_ip(ip):
             return ' '.join(map(str,[ip_from, ip_to, cc, COUNTRY_DICTIONARY[cc] ,status]))
         else:
             return ' '.join((cc, COUNTRY_DICTIONARY[cc]))
-
     else:
-
-        return []
+        return 'No IP found!'
 
 
 def empty_entry_by_idx(records, indicies):

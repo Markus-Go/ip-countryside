@@ -200,7 +200,6 @@ def extract_as_yaml(file=IP2COUNTRY_DB):
               
     return 0
 
-
 def extract_as_sqllite(file=IP2COUNTRY_DB):
     
     if os.path.exists(IP2COUNTRY_DB_SQLLITE):
@@ -625,3 +624,5 @@ def comparemaxmind(nr_samples):
 
 #print(t)
 #print(result)
+
+extract_as_sqllite()

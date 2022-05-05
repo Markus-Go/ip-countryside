@@ -21,17 +21,20 @@ def CallUpdate(force, multicore, output):
 
 def CallParse(ip, getAll):
     return get_record_by_ip(ip, getAll)
-
-    record = get_record_by_ip(ip)
-    
-    cc = record[2]
-
-    output = "\n" + record[0].__str__() + " - " + record[1].__str__() + "\n" + "Country: " + COUNTRY_DICTIONARY[cc]
-
-    return output
+    #record = get_record_by_ip(ip, getAll)
+    #cc = record[2]
+    #output = "\n" + record[0].__str__() + " - " + record[1].__str__() + "\n" + "Country: " + COUNTRY_DICTIONARY[cc]
+    #return output
 
 def CallTrace(ip):
     return traceIP(ip)
+    #records = traceIP(ip)
+    #output = ""
+    #for record in records:
+    #    record[0] = record[0].__str__() 
+    #    record[1] = record[1].__str__()
+    #    output = output + "\n" + str(record)
+    #return output
 
 def evaluateOutput(output):
     for entry in output:
@@ -54,17 +57,3 @@ def evaluateOutput(output):
         else: 
             click.echo('format not valid (' + entry + ')')
             continue
-#Call methods wich create databases
-
-    records = traceIP(ip)
-    
-    output = ""
-
-    for record in records:
-
-        record[0] = record[0].__str__() 
-        record[1] = record[1].__str__()
-
-        output = output + "\n" + str(record)
-
-    return output
