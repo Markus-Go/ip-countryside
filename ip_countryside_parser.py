@@ -391,7 +391,7 @@ def run_parser(save_conflicts_param=False, multicore=True):
         os.path.join(DEL_FILES_DIR, APNIC['del_fname']), 
         os.path.join(DEL_FILES_DIR, RIPE['del_fname'])
     ]
-    #merge_files(MERGED_DEL_FILE, del_files)          
+    merge_files(MERGED_DEL_FILE, del_files)          
      
     
     inet_files = [
@@ -400,18 +400,18 @@ def run_parser(save_conflicts_param=False, multicore=True):
         os.path.join(DEL_FILES_DIR, APNIC['inet_fname_ipv6']),
         os.path.join(DEL_FILES_DIR, RIPE['inet_fname_ipv6'])
     ]
-    #merge_files(MERGED_INET_FILE, inet_files)          
+    merge_files(MERGED_INET_FILE, inet_files)          
 
     print("parsing del files ...")
-    #parse_del_files()           
+    parse_del_files()           
 
 
     print("parsing inetnum files ...")
-    # if multicore:
-    #   parse_inet_files_multicore()
+    if multicore:
+      parse_inet_files_multicore()
 
-    # else:
-    #     parse_inet_files_single()
+    else:
+        parse_inet_files_single()
 
     stripped_files = [
         os.path.join(STRIPPED_DEL_FILE), 
@@ -440,7 +440,7 @@ def run_parser(save_conflicts_param=False, multicore=True):
 
     print(f"checking if there are stil any overlaps in final database ... -> {records_overlap(read_db())}")
 
-    #delete_temp_files()
+    delete_temp_files()
     print("finished\n")
 
     end_time = time.time()

@@ -101,8 +101,9 @@ def sort_db(file=IP2COUNTRY_DB):
 
     with (open(file, "r", encoding='utf-8', errors='ignore')) as input, open(os.path.join(DEL_FILES_DIR, "ip2country_temp.db"), "w", encoding='utf-8', errors='ignore') as output:
         
-        large_sort(input, output, itemgetter(0,1), False, limit_chars=2)
-
+        #large_sort(input, output, itemgetter(0,1), False, limit_chars=2)
+        pass
+         
     os.remove(IP2COUNTRY_DB)
     os.rename(os.path.join(DEL_FILES_DIR, "ip2country_temp.db"), IP2COUNTRY_DB)
 
@@ -202,7 +203,8 @@ def extract_as_yaml(file=IP2COUNTRY_DB):
 
 def extract_as_sqllite(file=IP2COUNTRY_DB):
     
-    os.remove(IP2COUNTRY_DB_SQLLITE)
+    if os.path.exists(IP2COUNTRY_DB_SQLLITE):
+        os.remove(IP2COUNTRY_DB_SQLLITE)
 
     connection = sqlite3.connect(IP2COUNTRY_DB_SQLLITE)
     cursor = connection.cursor()
@@ -623,4 +625,3 @@ def comparemaxmind(nr_samples):
 
 #print(t)
 #print(result)
-extract_as_sqllite()

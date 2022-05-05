@@ -1,32 +1,42 @@
 import os
 
-# PATHS
+# ip2country root path 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# ip2country root path of the data bases  
 DEL_FILES_DIR = os.path.join(ROOT_DIR, "del_files")
 
+# ip2country files generated during the execution (should be deleted after processing)
 MERGED_DEL_FILE        = os.path.join(DEL_FILES_DIR, "merged_del_file.csv")
 STRIPPED_DEL_FILE      = os.path.join(DEL_FILES_DIR, "stipped_del_file.csv")
 MERGED_INET_FILE       = os.path.join(DEL_FILES_DIR, "merged_inet_file.csv")
 STRIPPED_INET_FILE     = os.path.join(DEL_FILES_DIR, "stipped_inet_file.csv")
-IP2COUNTRY_DB          = os.path.join(DEL_FILES_DIR, "ip2country_2.db")
-IP2COUNTRY_DB_JSON     = os.path.join(DEL_FILES_DIR, "db.json")
-IP2COUNTRY_DB_YAML     = os.path.join(DEL_FILES_DIR, "db.yaml")
-IP2COUNTRY_DB_MYSQL    = os.path.join(DEL_FILES_DIR, "db.sql")
-IP2COUNTRY_DB_DF       = os.path.join(DEL_FILES_DIR, "ip2country_df.pkl")
-IP2COUNTRY_DB_SQLLITE  = os.path.join(DEL_FILES_DIR, "sql_lite.db")
+
+# ip2country files for debuging and tracing duplicates
+INET_CONFLICTS         = os.path.join(DEL_FILES_DIR, "ip2country_conflicts.csv")
 TRACE_FILE             = os.path.join(DEL_FILES_DIR, "trace_ip_file.csv")
-IP2COUNTRY_DB_IPV4     = os.path.join(DEL_FILES_DIR, "ipv4.db")
-IP2COUNTRY_DB_IPV6     = os.path.join(DEL_FILES_DIR, "ipv6.db")
+
+# ip2country data bases paths
+IP2COUNTRY_DB          = os.path.join(DEL_FILES_DIR, "ip2country.csv")
+IP2COUNTRY_DB_IPV4     = os.path.join(DEL_FILES_DIR, "ip2country_ipv4.csv")
+IP2COUNTRY_DB_IPV6     = os.path.join(DEL_FILES_DIR, "ip2country_ipv6.csv")
+
+IP2COUNTRY_DB_JSON     = os.path.join(DEL_FILES_DIR, "ip2country.json")
+IP2COUNTRY_DB_YAML     = os.path.join(DEL_FILES_DIR, "ip2country.yaml")
+IP2COUNTRY_DB_MYSQL    = os.path.join(DEL_FILES_DIR, "ip2country.sql")
+IP2COUNTRY_DB_SQLLITE  = os.path.join(DEL_FILES_DIR, "ip2country.sqlite")
+
 IP2COUNTRY_MM          = os.path.join(DEL_FILES_DIR, "ip2country_mm_extended.db")
+IP2COUNTRY_DB_MMDB_V4  = os.path.join(DEL_FILES_DIR, "db4.mmdb")
+IP2COUNTRY_DB_MMDB_V6  = os.path.join(DEL_FILES_DIR, "db6.mmdb")
 
-INET_CONFLICTS         = os.path.join(DEL_FILES_DIR, "ip2country_conflicts")
+IP2COUNTRY_DB_DF       = os.path.join(DEL_FILES_DIR, "ip2country_df.pkl")
 
+# ip2country paths used for city information
 APNIC_DB_IRT           = os.path.join(DEL_FILES_DIR, "apnic.db.irt")
 APNIC_IRT              = os.path.join(DEL_FILES_DIR, "apnic.irt")
 IRTTOADDRESS           = os.path.join(DEL_FILES_DIR, "irtToAddress.py")
 MNT_BYTOADDRESS        = os.path.join(DEL_FILES_DIR, "mnt_byToAddress.py")
-IP2COUNTRY_DB_MMDB_V4     = os.path.join(DEL_FILES_DIR, "db4.mmdb")
-IP2COUNTRY_DB_MMDB_V6     = os.path.join(DEL_FILES_DIR, "db6.mmdb")
 
 # Regex for matching ip versions
 IPV4_PATTERN = "[0-9]+(?:\.[0-9]+){3}"
