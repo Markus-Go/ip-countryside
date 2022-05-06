@@ -138,11 +138,11 @@ def create_app(test_config=None):
         
         return output
 
-    @app.route('/api/ip', methods=['GET'])
+    @app.route('/api', methods=['GET'])
     def api_id():
 
-        if 'id' in request.args:
-            id = request.args['id']
+        if 'ip' in request.args:
+            id = request.args['ip']
             return jsonify(read_mmdb(id))
 
         else:

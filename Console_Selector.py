@@ -48,7 +48,7 @@ def CallTrace(ip):
     return output
 
     
-def evaluateOutput(output):
+def evaluateOutput(output): 
     for entry in output:
         entry = str(entry).lower()
         if entry == 'mmdb':
@@ -68,4 +68,4 @@ def evaluateOutput(output):
             #extract_as_sqllite()
         else: 
             click.echo('format not valid (' + entry + ')')
-            continue 
+            continue

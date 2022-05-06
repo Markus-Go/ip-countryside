@@ -377,10 +377,11 @@ def extract_as_mmdb_fast(file=IP2COUNTRY_DB):
 
 
 def read_mmdb(ipaddress):
+    
     if ip_interface(ipaddress).ip.version == 4:
-        m = maxminddb.open_database(IP2COUNTRY_DB_MMDB_V4)
+       m = maxminddb.open_database(IP2COUNTRY_DB_MMDB_V4)
     else:
-        m = maxminddb.open_database(IP2COUNTRY_DB_MMDB_V6)
+       m = maxminddb.open_database(IP2COUNTRY_DB_MMDB_V6)
     return m.get(ipaddress)
 
 
