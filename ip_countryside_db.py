@@ -19,6 +19,10 @@ from operator import itemgetter
 
 from config import *
 
+
+# record index:    0       1   2    3           4            5          6       7
+# record format: ip_from|ip_to|cc|registry|last-modified|record_type|status|description
+
 def get_db_files():
     """"
         return all databases which exists in DB_DIR
@@ -46,8 +50,6 @@ def get_db_files():
             
     return data
 
-# record index:    0       1   2    3           4            5          6       7
-# record format: ip_from|ip_to|cc|registry|last-modified|record_type|status|description
 
 def read_db(file=IP2COUNTRY_DB):
 
@@ -187,7 +189,7 @@ def extract_as_json(file=IP2COUNTRY_DB):
                 data = {
                     'ip_from':        record[0],
                     'ip_to':          record[1],
-                    'cc':               record[2],
+                    'cc':             record[2],
                 }
 
                 f.write(json.dumps(data, indent=4))
@@ -230,6 +232,7 @@ def extract_as_yaml(file=IP2COUNTRY_DB):
         print(e)
               
     return 0
+
 
 def extract_as_sqllite(file=IP2COUNTRY_DB):
     
@@ -475,6 +478,7 @@ def testquery_sql_lite(nr_samples):
     print("total time needed was:", f'{end_time - start_time:.3f}', "s\n") 
     print("Average time for one request: ", str((end_time - start_time) / nr_samples), "s")
     connection.close()     
+
 
 def testquery_df(nr_samples):
     with open(IP2COUNTRY_DB, 'r',  encoding='utf-8', errors='ignore') as db: 

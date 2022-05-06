@@ -8,7 +8,7 @@ import math
 
 from config import *;
 
-def get_record_by_ip(ip, getAll):
+def get_record_by_ip_cli(ip, getAll=False):
     
     ip = ip_address(ip)
     
@@ -36,6 +36,33 @@ def get_record_by_ip(ip, getAll):
             return ' '.join((cc, COUNTRY_DICTIONARY[cc]))
     else:
         return 'No IP found!'
+
+
+def get_record_by_ip(ip):
+    
+    ip = ip_address(ip)
+    
+    ip = bin(int(ip))[2:].zfill(128)
+
+    connection = sqlite3.connect(IP2COUNTRY_DB_SQLLITE)
+    cursor = connection.cursor()
+    query = "SELECT * FROM ip2country WHERE ip_from <= '%s' and ip_to >= '%s'" % (ip, ip)
+    cursor.execute(query)
+    result = cursor.fetchall()
+    
+    if result:
+    
+        result  = result[0]
+        ip_from = ip_address(int(result[0], 2)) 
+        ip_to   = ip_address(int(result[1], 2))
+        cc      = result[2]
+        status  = result[3]
+
+        return [ip_from, ip_to, cc, status]
+
+    else:
+
+        return []
 
 
 def empty_entry_by_idx(records, indicies):
