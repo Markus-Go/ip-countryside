@@ -2,14 +2,29 @@
   "name": "ip-countryside",
   "version": "0.9.0",
   "description": "",
-  "main": "./src/main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "sirv public --no-clear"
   },
   "keywords": [],
   "author": "Mohammad Jarkas",
   "license": "MIT",
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^17.0.0",
+    "@rollup/plugin-node-resolve": "^11.0.0",
+    "rollup": "^2.3.4",
+    "rollup-plugin-css-only": "^3.1.0",
+    "rollup-plugin-livereload": "^2.0.0",
+    "rollup-plugin-svelte": "^7.0.0",
+    "rollup-plugin-terser": "^7.0.0",
+    "svelte": "^3.0.0"
+  },
   "dependencies": {
-    "bootstrap": "^4.6.1"
+    "bootstrap": "^4.6.1",
+    "rollup": "^2.72.0",
+    "rollup-plugin-svelte": "^7.1.0",
+    "svelte": "^3.48.0"
   }
 }
