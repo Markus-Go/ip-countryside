@@ -16,11 +16,9 @@ from flask_assets import Bundle, Environment
 
 from config import *
 
-
 from ip_countryside_utilities import get_record_by_ip, get_geolocation;
 from ip_countryside_db import read_mmdb, get_db_files, read_db_record
 import json
-
 
 def create_app(test_config=None):
 
@@ -59,13 +57,13 @@ def create_app(test_config=None):
         "node_modules/jquery/dist/jquery.min.js",
         "node_modules/popper.js/dist/popper.min.js",
         "node_modules/bootstrap/dist/js/bootstrap.min.js",
+        "dist/javascript/svelte_bundle.js",
         filters="jsmin",
         output="dist/javascript/generated.js"
     )
-  
-    # Bootstrap and SCSS files
+    
     scss = Bundle(
-        "src/scss/main.scss",  # 1. will read this scss file and generate a css file based on it
+        "scss/main.scss",  # 1. will read this scss file and generate a css file based on it
         filters="libsass",   # using this filter: https://webassets.readthedocs.io/en/latest/builtin_filters.html#libsass
         output="dist/css/scss-generated.css",  # 2. and output the generated .css file in the static/css folder
         extra={'rel': 'stylesheet/css'}
@@ -154,6 +152,5 @@ def create_app(test_config=None):
         fname = request.args.get('fname', None)
 
         return send_from_directory(DB_DIR, fname, as_attachment=True)
-
 
     return app
