@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "bootstrap": "^4.6.1",
+    "json-format-highlight": "^1.0.4",
     "rollup": "^2.72.0",
     "rollup-plugin-svelte": "^7.1.0",
     "svelte": "^3.48.0"

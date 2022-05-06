@@ -6,6 +6,9 @@ $primary: #ed7d31;;
 $background: #1a1e21;
 $boxshadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
 
+.text-primary {
+    color: $primary !important;
+}
 
 $font-family: "PT Sans", "Open Sans", "sans-serif";
 
