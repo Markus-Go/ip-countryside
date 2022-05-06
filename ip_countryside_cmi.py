@@ -15,14 +15,15 @@ def cli():
 @click.option('--force', '-f', is_flag=True, help="Forcing update.")
 @click.option('--multicore', '-m', is_flag=True, help='Enabeling multicore parsing')
 @click.option('--output', '-o', multiple=True, help="Format option for update.")
-@click.option('--split', '-s', is_flag=True, help="Seperating IPv4 and IPv6.")
-def update(force, multicore, output, split):
+#@click.option('--split', '-s', is_flag=True, help="Seperating IPv4 and IPv6.")
+def update(force, multicore, output):
+    click.echo('\n')
     click.echo('Is Force = ' + str(force))
     click.echo('\nIs multicore = ' + str(multicore))
-    click.echo('\nSplit IP = ' + str(split))
     click.echo('\nOutput options:')
     click.echo('\n'.join(output))
-    CallUpdate(force)
+    click.echo('\n----------------------------------------------------------\n')
+    CallUpdate(force, multicore, output)
 
 @cli.command(name='trace', help='tracing IP')
 @click.argument('IP')
@@ -30,16 +31,18 @@ def trace(ip):
     if(checkIp(ip)):
         click.echo('tracing ' + ip)
         result = CallTrace(ip)
-        click.echo(result)
+        for entry in result:
+            click.echo(entry)
     else:
         pass
 
 @cli.command(name='query', help='querying IP')
+@click.option('--all', '-a', is_flag=True, help="Get all Information")
 @click.argument('IP')
-def query(ip):
+def query(ip, all):
     if(checkIp(ip)):
         click.echo('querying ' + ip)
-        result = CallParse(ip)
+        result = CallParse(ip, all)
         click.echo(result)
     else:
         pass
@@ -55,6 +58,7 @@ def checkIp(ip):
     except:
         click.echo('Usage : %s  ip' % sys.argv[0])
         return False
+
 
 if __name__ == "__main__":
     cli()

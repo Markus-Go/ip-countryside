@@ -8,7 +8,7 @@ import math
 
 from config import *;
 
-def get_record_by_ip(ip):
+def get_record_by_ip(ip, getAll):
     
     ip = ip_address(ip)
     
@@ -23,16 +23,19 @@ def get_record_by_ip(ip):
     if result:
     
         result = result[0]
-        ip_from = ip_address(int(result[0], 2)) 
-        ip_to   = ip_address(int(result[1], 2))
-        cc      = result[2]
-        status  = result[3]
 
-        return [ip_from, ip_to, cc, status]
+        ip_from =  str(ipaddress.ip_address(int(result[0], 2)))
+        ip_to = str(ipaddress.ip_address(int(result[1], 2)))
+        cc = result[2]
+        status = result[3]
 
+
+        if getAll or cc == 'ZZ':
+            return ' '.join(map(str,[ip_from, ip_to, cc, COUNTRY_DICTIONARY[cc] ,status]))
+        else:
+            return ' '.join((cc, COUNTRY_DICTIONARY[cc]))
     else:
-
-        return []
+        return 'No IP found!'
 
 
 def empty_entry_by_idx(records, indicies):

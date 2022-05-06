@@ -6,6 +6,7 @@ from ip_countryside_utilities import *
 from ip_countryside_parser import *
 from ip_countryside_db import *
 
+
 def CallUpdate(force, multicore, output):
     if(force):
         click.echo("Forcing Update!")
@@ -18,37 +19,27 @@ def CallUpdate(force, multicore, output):
     click.echo('csv created')
     evaluateOutput(output)
 
-def CallParse(ip):
 
-    record = get_record_by_ip(ip)
-    output = ""
-    
-    if record:
-
-        cc = record[2]
-
-        output = "\n" + record[0].__str__() + " - " + record[1].__str__() + "\n" + "Country: " + COUNTRY_DICTIONARY[cc]
-
-    return output
+def CallParse(ip, getAll):
+    return get_record_by_ip(ip, getAll)
+    #record = get_record_by_ip(ip, getAll)
+    #cc = record[2]
+    #output = "\n" + record[0].__str__() + " - " + record[1].__str__() + "\n" + "Country: " + COUNTRY_DICTIONARY[cc]
+    #return output
 
 
 def CallTrace(ip):
+    return traceIP(ip)
+    #records = traceIP(ip)
+    #output = ""
+    #for record in records:
+    #    record[0] = record[0].__str__() 
+    #    record[1] = record[1].__str__()
+    #    output = output + "\n" + str(record)
+    #return output
 
-    records = traceIP(ip)
-    
-    output = ""
 
-    for record in records:
-
-        record[0] = record[0].__str__() 
-        record[1] = record[1].__str__()
-
-        output = output + "\n" + str(record)
-
-    return output
-
-    
-def evaluateOutput(output): 
+def evaluateOutput(output):
     for entry in output:
         entry = str(entry).lower()
         if entry == 'mmdb':
