@@ -10,12 +10,12 @@ from ip_countryside_db import *
 def CallUpdate(force, multicore, output):
     if(force):
         click.echo("Forcing Update!")
-        #download_del_files(True)
+        download_del_files(True)
     else:
         click.echo("Check if files are old enough for update.")
-        #download_del_files()
+        download_del_files()
     click.echo('parsing database')
-    #run_parser(multicore)
+    run_parser(multicore)
     click.echo('csv created')
     evaluateOutput(output)
 

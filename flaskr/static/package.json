@@ -3,10 +3,17 @@
   "version": "0.9.0",
   "description": "",
   "scripts": {
-    "build": "rollup -c",
-    "dev": "rollup -c -w",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "sirv public --no-clear"
+    
+    "build": "concurrently npm:build:*",
+    "build:svelte": "rollup -c",
+    "build:scss": "node-sass --include-path node_modules --output-style compressed --source-map true --source-map-contents true --precision 6 scss -o dist/css/",
+    
+    "dev": "concurrently npm:dev:*",
+    "dev:svelte": "rollup -c -w ",
+    "dev:scss": "nodemon -e html,scss -x \"node-sass --include-path node_modules --output-style compressed --source-map true --source-map-contents true --precision 6 scss -o dist/css/\"",
+    
+    "start": "sirv public --no-clear",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "Mohammad Jarkas",
@@ -14,6 +21,9 @@
   "devDependencies": {
     "@rollup/plugin-commonjs": "^17.0.0",
     "@rollup/plugin-node-resolve": "^11.0.0",
+    "concurrently": "^7.1.0",
+    "jquery": "^3.6.0",
+    "node-sass": "^7.0.1",
     "rollup": "^2.3.4",
     "rollup-plugin-css-only": "^3.1.0",
     "rollup-plugin-livereload": "^2.0.0",
@@ -23,7 +33,12 @@
   },
   "dependencies": {
     "bootstrap": "^4.6.1",
+    "jquery": "^3.6.0",
     "json-format-highlight": "^1.0.4",
+    "node-sass": "^7.0.1",
+    "nodemon": "^2.0.16",
+    "npm-run-all": "^4.1.5",
+    "poper": "^0.1.1",
     "rollup": "^2.72.0",
     "rollup-plugin-svelte": "^7.1.0",
     "svelte": "^3.48.0"

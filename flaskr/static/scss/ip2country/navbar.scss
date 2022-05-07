@@ -1,0 +1,15 @@
+.navbar-custom {
+
+    padding: 1em;
+    background-color: fade-out(#000, 0.3);
+
+    .navbar-brand {
+        font-size: 1rem;
+        font-weight: 700;
+    }
+
+    .collapse.navbar-collapse {
+        flex-direction: row-reverse;
+    }
+
+}

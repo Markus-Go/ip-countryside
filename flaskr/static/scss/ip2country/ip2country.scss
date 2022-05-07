@@ -1,0 +1,91 @@
+@import "navbar.scss";
+@import "banner.scss";
+@import "about.scss";
+@import "api_demo.scss";
+@import "footer.scss";
+
+
+$background: #1a1e21;
+$boxshadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+
+$font-family: "PT Sans", "Open Sans", "sans-serif";
+
+html {   
+    scroll-behavior: smooth;
+
+    body {
+
+    display:flex; 
+    flex-direction:column; 
+    min-height: 100vh;
+    font-family: $font-family;
+    
+    .wrapper {
+
+            position: relative;
+            flex: 1 0 auto;
+            overflow: hidden;
+
+            .container {
+                position: relative;
+                z-index: 1;
+            }
+            
+    }
+
+    .main {
+            
+            margin: 2em;
+
+        }
+
+    }
+
+}
+
+
+.col {
+    padding: 1em;
+}
+
+
+#map {
+    height: 100%;
+    width: 100%;
+    min-height: 281px;
+    box-shadow: $boxshadow; 
+} 
+
+// No Map Block
+.nomap {
+
+    &__svg {
+
+        max-height: 150px;
+
+    }
+}
+
+.ip_info {
+
+    overflow: auto;
+    overflow-y: hidden;
+
+    .table {
+        
+        th {
+            vertical-align: middle;
+        }
+    }
+
+}
+
+// Download Form 
+.download_form {
+
+    svg {
+        width: 20px;
+    }
+}
+
+

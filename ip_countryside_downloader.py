@@ -104,7 +104,6 @@ def download_del_files(force = False):
 
    """
 
-
    # if downloading is not necessary and force is not set
    # skip downloading ...
    # @TODO logic not correct
@@ -114,7 +113,6 @@ def download_del_files(force = False):
 
    # collect delegation files in one specific folder "del_files"
    # if the folder doesn't exist then try to create one first ... 
-   DB_DIR = DB_DIR
 
    try:
     

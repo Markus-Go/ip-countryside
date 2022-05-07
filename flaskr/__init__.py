@@ -62,21 +62,11 @@ def create_app(test_config=None):
         output="dist/javascript/generated.js"
     )
     
-    scss = Bundle(
-        "scss/main.scss",  # 1. will read this scss file and generate a css file based on it
-        filters="libsass",   # using this filter: https://webassets.readthedocs.io/en/latest/builtin_filters.html#libsass
-        output="dist/css/scss-generated.css",  # 2. and output the generated .css file in the static/css folder
-        extra={'rel': 'stylesheet/css'}
-    )
-    
     assets.register("js_all", js)
-    assets.register("scss_all", scss) 
-
+    
     # Remove when not developing !!!!!!!!!!
     js.build()
-    scss.build()
-   
-    
+  
     @app.route('/', methods=['GET'])
     def index():
 

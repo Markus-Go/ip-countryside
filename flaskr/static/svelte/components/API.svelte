@@ -11,19 +11,15 @@ async function handle_search_by_api() {
     .then(response => response.json())
     .then(data => {
 
-        var delayInMilliseconds = 1000; //1 second
-
-        setTimeout(function() {
-            response_json = syntaxHighlight(data)
-            console.log(response_json)
-        }, delayInMilliseconds);
+        response_json = syntaxHighlight(data)
+        console.debug(response_json)
         
     }).catch(error => {
-        console.log(error);
+        console.error(error);
         response_json = null
     })
     
-    ip = ""
+    ip = "" 
 }
 
 function syntaxHighlight(json) {
@@ -53,7 +49,7 @@ function syntaxHighlight(json) {
 
 <div class="col-12 col-md-8 m-auto">
     
-    <h2 class="api__block__title text-center m-auto py-5 text-dark">API Demo</h2>
+    <h2 class="api__block__title text-center m-auto py-5">API Demo</h2>
 
     <div class="api__block_content d-flex pb-3">
 
@@ -71,16 +67,16 @@ function syntaxHighlight(json) {
 
     </div>
 
+    
     {#if response_json}
     
-        <div class="p-3 text-dark" style="background-color: #f5f2f0;">
+        <div class="p-3" style="background-color: #f5f2f0;">
             
             {@html response_json}
                 
         </div>
     
     {/if}
-
         
 
 </div>

@@ -21,8 +21,10 @@
 
         <!-- Bootstrap CSS and JS and Custom SCSS -->
         {% assets "scss_all" %}
-            <link rel=stylesheet type=text/css href="{{ ASSET_URL }}">
+            <!-- <link rel=stylesheet type=text/css href="{{ ASSET_URL }}"> -->
         {% endassets %}
+
+        <link rel=stylesheet type=text/css href="{{ url_for('static', filename='dist/css/main.css') }}">
 
         {% assets "js_all" %}
             <script type="module" src="{{ ASSET_URL }}"></script>

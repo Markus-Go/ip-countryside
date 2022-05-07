@@ -1,0 +1,29 @@
+.banner {
+    position: relative;
+    min-height: 600px;
+    
+    &__image {
+        position:absolute;
+        height:100%;
+        width: 100%;
+        background-size: cover;
+        background-repeat: no-repeat; 
+        
+        &:before{
+            position: absolute;
+            content: '';
+            height: 100%;
+            width: 100%;
+            background-color: rgba(0,0,0,.4);
+            z-index: 2;
+        }
+
+    }
+
+    &__block {
+
+        z-index: 3;
+
+    }
+
+}
