@@ -7,6 +7,8 @@ from warnings import catch_warnings
 import ipaddress
 from datetime import datetime
 import math
+import json
+
 from click import command
 
 from flask import Flask, request, send_from_directory
@@ -14,11 +16,12 @@ from flask import render_template
 from flask import request, jsonify
 from flask_assets import Bundle, Environment
 
-from config import *
-
-from ip_countryside_utilities import get_record_by_ip, get_geolocation;
+from ip_countryside_utilities import get_record_by_ip
 from ip_countryside_db import read_mmdb, get_db_files, read_db_record
-import json
+from geopy.geocoders import Nominatim
+
+
+from config import *
 
 def create_app(test_config=None):
 
@@ -70,7 +73,7 @@ def create_app(test_config=None):
     @app.route('/', methods=['GET'])
     def index():
 
-        record = []
+        record      = []
         ip_from     = " "
         ip_to       = " "
         country     = "-" 
@@ -96,8 +99,9 @@ def create_app(test_config=None):
                 ip_address = ip_address.strip()
                 record = get_record_by_ip(ip_address)
 
+            
             if record:
-                
+
                 ip_from     = record[0]
                 ip_to       = record[1]
                 flag        = record[2]
@@ -144,3 +148,23 @@ def create_app(test_config=None):
         return send_from_directory(DB_DIR, fname, as_attachment=True)
 
     return app
+
+def get_geolocation(address):
+
+    try:
+
+        geolocator = Nominatim(user_agent="Your_Name")
+        location = geolocator.geocode(address)
+        lat = location.latitude
+        lon = location.longitude
+        isValid = True
+        hasLocation = True
+
+    except:
+        
+        lat = 0
+        lon = 0
+        isValid = False
+        hasLocation = False
+
+    return [lat, lon, isValid, hasLocation]
