@@ -91,6 +91,7 @@ def create_app(test_config=None):
            
             if ip_address is None or ip_address == "":
 
+                # @TODO
                 ip_address = os.popen('curl -s ifconfig.me').readline()
                 record = get_record_by_ip(ip_address)
 
