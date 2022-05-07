@@ -423,7 +423,7 @@ def run_parser(save_conflicts_param=False, multicore=True):
     split_records()
 
     print("sorting")
-    sort_db_2()
+    sort_db()
 
     if(save_conflicts_param):
         save_conflicts()

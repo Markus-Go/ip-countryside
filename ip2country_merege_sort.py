@@ -1,39 +1,21 @@
+from ast import keyword
 import heapq
 import os
 from contextlib import contextmanager
 from tempfile import TemporaryDirectory, mktemp
 from typing import IO, Callable, List
 
-#import ip_countryside_db  
 
 def large_sort(input_file: IO, output_file: IO, key: Callable=None, reverse: bool=False, limit_chars: int=1024*1024*64):
 
     with TemporaryDirectory() as tmp_dir:
 
         for lines in _read_parts(input_file, limit_chars):
-
-            records = [] 
-            for line in lines:
-
-                records.append(ip_countryside_db.read_db_record(line))
-
-            records = sorted(records, key=key, reverse=reverse)
-
-            lines = []
-
-            for record in records:
-                
-                if record:
-                    
-                    line = "|".join(map(str, record))
-                    line = line + '\n'
-
-                lines.append(line)
-
+            lines = sorted(lines, key=key, reverse=reverse)
             _write_part(lines, tmp_dir)
 
         with _open_tmp_files(tmp_dir) as tmp_files:
-            for row in heapq.merge(*tmp_files, key=key, reverse=reverse):
+            for row in heapq.merge(*tmp_files, key=key, reverse=False):
                 output_file.write(row)
 
 

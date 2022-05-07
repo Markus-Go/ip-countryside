@@ -13,7 +13,7 @@ import time
 #import pandas as pd
 
 from operator import itemgetter
-#from sort import large_sort
+from ip2country_merege_sort import large_sort
 
 
 from config import *
@@ -129,8 +129,7 @@ def sort_db(file=IP2COUNTRY_DB):
 
     with (open(file, "r", encoding='utf-8', errors='ignore')) as input, open(os.path.join(DB_DIR, "ip2country_temp.db"), "w", encoding='utf-8', errors='ignore') as output:
         
-        #large_sort(input, output, itemgetter(0,1), False, limit_chars=2)
-        pass
+        large_sort(input, output, lambda line: read_db_record(line)[0], False, limit_chars=1024*1024*64)
          
     os.remove(IP2COUNTRY_DB)
     os.rename(os.path.join(DB_DIR, "ip2country_temp.db"), IP2COUNTRY_DB)
@@ -421,13 +420,13 @@ def getNetwork(ip_from, ip_to):
     if not res.is_integer():
         round(subnetmask, 0)
         #print("No valid subnetmask", ip_from, " ", ip_to, "with subnetmask: ", res)
-        return str(ipaddress.ip_address(ip_from)) + "/" + str(subnetmask)
+        return str(ip_address(ip_from)) + "/" + str(subnetmask)
 
-    return str(ipaddress.ip_address(ip_from)) + "/" + str(subnetmask)
+    return str(ip_address(ip_from)) + "/" + str(subnetmask)
 
 
 def getaddress(ip_from):
-    return str(ipaddress.ip_address(ip_from))
+    return str(ip_address(ip_from))
 
 #extract_as_mmdb_fast()
 #print(read_mmdb("131.255.44.4"))
@@ -450,17 +449,17 @@ def extract_as_mysql(file=IP2COUNTRY_DB):
 
         for row in database[:-1]:
             if int(row[0]) > 4294967296:
-                line = "(INET6_ATON('%s'), INET6_ATON('%s'), '%s'),\n" % (str(ipaddress.ip_address(int(row[0]))), str(ipaddress.ip_address(int(row[1]))), row[2])
+                line = "(INET6_ATON('%s'), INET6_ATON('%s'), '%s'),\n" % (str(ip_address(int(row[0]))), str(ip_address(int(row[1]))), row[2])
                 f.write(line)
             else:
-                line = "(INET_ATON('%s'), INET_ATON('%s'), '%s'),\n" % (str(ipaddress.ip_address(int(row[0]))), str(ipaddress.ip_address(int(row[1]))), row[2])
+                line = "(INET_ATON('%s'), INET_ATON('%s'), '%s'),\n" % (str(ip_address(int(row[0]))), str(ip_address(int(row[1]))), row[2])
                 f.write(line)
         else:
             if int(row[0]) > 4294967296:
-                line = "(INET6_ATON('%s'), INET6_ATON('%s'), '%s');" % (str(ipaddress.ip_address(int(row[0]))), str(ipaddress.ip_address(int(row[1]))), row[2])
+                line = "(INET6_ATON('%s'), INET6_ATON('%s'), '%s');" % (str(ip_address(int(row[0]))), str(ip_address(int(row[1]))), row[2])
                 f.write(line)
             else:
-                line = "(INET_ATON('%s'), INET_ATON('%s'), '%s');" % (str(ipaddress.ip_address(int(row[0]))), str(ipaddress.ip_address(int(row[1]))), row[2])
+                line = "(INET_ATON('%s'), INET_ATON('%s'), '%s');" % (str(ip_address(int(row[0]))), str(ip_address(int(row[1]))), row[2])
 
     # query with: Select country from ip2country where inet6_aton('41.31.255.254') >= inet6_aton(ip_to) and inet6_aton('41.31.255.254') <= inet6_aton(ip_to)
 
@@ -496,7 +495,7 @@ def testquery_sql_lite(nr_samples):
         cursor.execute(query)
         result = cursor.fetchall()
         result = result[0]
-        ip = str(ipaddress.ip_address(int(result[0], 2)))
+        ip = str(ip_address(int(result[0], 2)))
         print(ip," ", result[2])
         
     end_time = time.time()
@@ -583,7 +582,7 @@ def comparedbs(nr_samples):
         #print("%s: Country from C database %s, country from result %s" % (i,country, result))
         if result != country:
             no_match += 1
-            print("%s: Country from C database %s with ip: %s, country from result %s" % (i,country, str(ipaddress.ip_address(ip)), result))
+            print("%s: Country from C database %s with ip: %s, country from result %s" % (i,country, str(ip_address(ip)), result))
             if country == 'EU':
                 eu_count += 1
 
@@ -633,7 +632,7 @@ def comparemaxmind(nr_samples):
     for entry in query_values:
         
         ip = int(entry[0]) + 1
-        ip = str(ipaddress.ip_address(ip))
+        ip = str(ip_address(ip))
 
         country = entry[2]
 
