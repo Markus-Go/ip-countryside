@@ -2,7 +2,6 @@ from config import *;
 from ip_countryside_parser import *
 #from ip_countryside_parser import get_city
 from ipaddress import *
-#from geopy.geocoders import Nominatim
 import sqlite3
 import math
 
@@ -23,7 +22,7 @@ def get_record_by_ip(ip):
     if result:
     
         result  = result[0]
-        ip_from = ip_address(int(result[0], 2)) 
+        ip_from = ip_address(int(result[0], 2))
         ip_to   = ip_address(int(result[1], 2))
         cc      = result[2]
         status  = result[3]
@@ -34,16 +33,13 @@ def get_record_by_ip(ip):
 
         return []
 
-def open_db():
-    if mmdb_exist:
-        return read_mmdb(ip)
-    elif sqllite_exist:
-        return read_sqllite(ip)
-    elif csv_exist:
-        return read_csv(ip)
-
-
-
+# def open_db():
+#     if mmdb_exist:
+#         return read_mmdb(ip)
+#     elif sqllite_exist:
+#         return read_sqllite(ip)
+#     elif csv_exist:
+#         return read_csv(ip)
 
 def empty_entry_by_idx(records, indicies):
     """
@@ -134,28 +130,7 @@ def traceIP(ip_addr):
 
     return return_list
 
-
-def get_geolocation(address):
-
-    try:
-
-        geolocator = Nominatim(user_agent="Your_Name")
-        location = geolocator.geocode(address)
-        lat = location.latitude
-        lon = location.longitude
-        isValid = True
-        hasLocation = True
-
-    except:
-        
-        lat = 0
-        lon = 0
-        isValid = False
-        hasLocation = False
-
-    return [lat, lon, isValid, hasLocation]
-
-    
+  
 #def get_city(string, countryCode):
 
 #    place_entity = locationtagger.find_locations(text = string)
