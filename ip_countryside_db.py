@@ -1,7 +1,6 @@
 from netaddr import IPSet, IPNetwork
 from mmdb_writer import MMDBWriter
 import maxminddb
-import ipaddress
 from ipaddress import ip_address, IPv4Address, IPv6Address, ip_interface
 import json
 #import yaml
@@ -305,7 +304,8 @@ def extract_as_mmdb(file=IP2COUNTRY_DB):
                                         {'CountryCode': '{0}'.format(record[2]),
                                          'Registry': '{0}'.format(record[3]),
                                          'LastModified': '{0}'.format(record[4]),
-                                         'Description': '{0}'.format(record[5])})
+                                         'Description': '{0}'.format(record[5]),
+                                         'Status': '{0}'.format(record[6])})
                 writerv4.to_db_file(IP2COUNTRY_DB_MMDB_V4)
                 print("entry added for: " + ipaddress)
 
@@ -319,7 +319,8 @@ def extract_as_mmdb(file=IP2COUNTRY_DB):
                                         {'CountryCode': '{0}'.format(record[2]),
                                          'Registry': '{0}'.format(record[3]),
                                          'LastModified': '{0}'.format(record[4]),
-                                         'Description': '{0}'.format(record[5])})
+                                         'Description': '{0}'.format(record[5]),
+                                         'Status': '{0}'.format(record[6])})
                 writerv6.to_db_file(IP2COUNTRY_DB_MMDB_V6)
                 print("entry added for: " + ipaddress)
 
@@ -386,6 +387,30 @@ def read_mmdb(ipaddress):
        m = maxminddb.open_database(IP2COUNTRY_DB_MMDB_V6)
     return m.get(ipaddress)
 
+def read_sqllite(ip):
+    ip = ip_address(ip)
+    
+    ip = bin(int(ip))[2:].zfill(128)
+
+    connection = sqlite3.connect(IP2COUNTRY_DB_SQLLITE)
+    cursor = connection.cursor()
+    query = "SELECT * FROM ip2country WHERE ip_from <= '%s' and ip_to >= '%s'" % (ip, ip)
+    cursor.execute(query)
+    result = cursor.fetchall()
+    
+    if result:
+    
+        result  = result[0]
+        ip_from = ip_address(int(result[0], 2)) 
+        ip_to   = ip_address(int(result[1], 2))
+        cc      = result[2]
+        status  = result[3]
+
+        return [ip_from, ip_to, cc, status]
+
+    else:
+
+        return []
 
 def getNetwork(ip_from, ip_to):
     hosts = ip_to + 1 - ip_from

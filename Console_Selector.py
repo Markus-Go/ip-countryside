@@ -6,7 +6,6 @@ from ip_countryside_utilities import *
 from ip_countryside_parser import *
 from ip_countryside_db import *
 
-
 def CallUpdate(force, multicore, output):
     if(force):
         click.echo("Forcing Update!")
@@ -19,12 +18,9 @@ def CallUpdate(force, multicore, output):
     click.echo('csv created')
     evaluateOutput(output)
 
-
 def CallParse(ip, getAll):
     result = get_record_by_ip(ip)
     return evaluateResult(result, getAll)
-
-
 
 def CallTrace(ip):
     return traceIP(ip)

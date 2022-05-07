@@ -1,5 +1,6 @@
 from config import *;
 from ip_countryside_parser import *
+from ip_countryside_db import *
 #from ip_countryside_parser import get_city
 from ipaddress import *
 #from geopy.geocoders import Nominatim
@@ -9,41 +10,18 @@ import math
 from config import *;
 
 def get_record_by_ip(ip):
-    
-    ip = ip_address(ip)
-    
-    ip = bin(int(ip))[2:].zfill(128)
+    return open_db(ip)
 
-    connection = sqlite3.connect(IP2COUNTRY_DB_SQLLITE)
-    cursor = connection.cursor()
-    query = "SELECT * FROM ip2country WHERE ip_from <= '%s' and ip_to >= '%s'" % (ip, ip)
-    cursor.execute(query)
-    result = cursor.fetchall()
-    
-    if result:
-    
-        result  = result[0]
-        ip_from = ip_address(int(result[0], 2)) 
-        ip_to   = ip_address(int(result[1], 2))
-        cc      = result[2]
-        status  = result[3]
-
-        return [ip_from, ip_to, cc, status]
-
-    else:
-
-        return []
-
-def open_db():
-    if mmdb_exist:
-        return read_mmdb(ip)
-    elif sqllite_exist:
-        return read_sqllite(ip)
-    elif csv_exist:
-        return read_csv(ip)
-
-
-
+def open_db(ip):
+    try:
+        #if os.path.exists(IP2COUNTRY_MM):
+        #    return []#read_mmdb(ip) #TODO
+        if os.path.exists(IP2COUNTRY_DB_SQLLITE):
+            return read_sqllite(ip)
+        elif os.path.exists(IP2COUNTRY_DB):
+            raise Exception()#read_csv(ip) #TODO
+    except: 
+        raise Exception("No Database existent. Please call the update function with the command line!")
 
 def empty_entry_by_idx(records, indicies):
     """
@@ -74,7 +52,6 @@ def empty_entry_by_idx(records, indicies):
 
     return records
 
-
 def getNetwork(ip_from, ip_to):
     hosts = ip_to + 1 - ip_from 
     res = math.log2(hosts)
@@ -85,8 +62,7 @@ def getNetwork(ip_from, ip_to):
         return
     
     return str(ip_address(ip_from)) + "/" + str(subnetmask)
-
-           
+    
 def converttoNetwork(records):
                          
     with open(IP2COUNTRY_MM, 'w', encoding='utf-8', errors='ignore') as f:
@@ -107,7 +83,6 @@ def converttoNetwork(records):
                 line = line + '\n'
                 f.write(line)           
 
-
 def traceIP(ip_addr):
     # returns a list of all entries in unmodified databse that contain a certain ip
 
@@ -124,28 +99,25 @@ def traceIP(ip_addr):
                 ip_to = int(entry[1])
                 if ip_from <= ip and ip_to >= ip:
                     return_list.append(entry)
-
-            
+      
     for r in return_list:
         r[0] =  str(ip_address(int(r[0])))
         r[1] = str(ip_address(int(r[1])))
         r[-1] = r[-1].replace('\n', '')
 
-
     return return_list
-
 
 def get_geolocation(address):
 
     try:
-
+        
         geolocator = Nominatim(user_agent="Your_Name")
         location = geolocator.geocode(address)
         lat = location.latitude
         lon = location.longitude
         isValid = True
         hasLocation = True
-
+        
     except:
         
         lat = 0
@@ -154,8 +126,7 @@ def get_geolocation(address):
         hasLocation = False
 
     return [lat, lon, isValid, hasLocation]
-
-    
+ 
 #def get_city(string, countryCode):
 
 #    place_entity = locationtagger.find_locations(text = string)
