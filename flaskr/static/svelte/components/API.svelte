@@ -1,9 +1,10 @@
 <script>
 
     let ip
-    $: api_url = location.href.split('#')[0] + "api?ip=" + ip  
-    let response_json
+    $: api_url = "/api?ip=" + ip  
 
+    let response_json
+    
 
 async function handle_search_by_api() {
 
@@ -12,7 +13,6 @@ async function handle_search_by_api() {
     .then(data => {
 
         response_json = syntaxHighlight(data)
-        console.debug(response_json)
         
     }).catch(error => {
         console.error(error);
@@ -20,6 +20,7 @@ async function handle_search_by_api() {
     })
     
     ip = "" 
+
 }
 
 
