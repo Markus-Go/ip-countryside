@@ -3,15 +3,12 @@
   "version": "0.9.0",
   "description": "",
   "scripts": {
-    
     "build": "concurrently npm:build:*",
     "build:svelte": "rollup -c",
     "build:scss": "node-sass --include-path node_modules --output-style compressed --source-map true --source-map-contents true --precision 6 scss -o dist/css/",
-    
     "dev": "concurrently npm:dev:*",
     "dev:svelte": "rollup -c -w ",
     "dev:scss": "nodemon -e html,scss -x \"node-sass --include-path node_modules --output-style compressed --source-map true --source-map-contents true --precision 6 scss -o dist/css/\"",
-    
     "start": "sirv public --no-clear",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -33,6 +30,7 @@
   },
   "dependencies": {
     "bootstrap": "^4.6.1",
+    "is-ip": "^4.0.0",
     "jquery": "^3.6.0",
     "json-format-highlight": "^1.0.4",
     "node-sass": "^7.0.1",

@@ -1,27 +1,42 @@
 <script>
-
-    let ip
+    import {isIP} from 'is-ip';
+    
+    export let ip
+    console.log(ip)
+    let  isValid
     $: api_url = "/api?ip=" + ip  
 
     let response_json
-    
 
 async function handle_search_by_api() {
 
-    await fetch(api_url)
-    .then(response => response.json())
-    .then(data => {
+    isValid = ValidateIPaddress(ip)
 
-        response_json = syntaxHighlight(data)
+    if(isValid)
+        await fetch(api_url)
+        .then(response => response.json())
+        .then(data => {
+
+            response_json = syntaxHighlight(data)
+            
+        }).catch(error => {
+            console.error(error);
+            response_json = null
+        })
+    else {
         
-    }).catch(error => {
-        console.error(error);
-        response_json = null
-    })
+        response_json = { "status": "fail", "message":"unvalid input", "input":ip }
+        response_json  = syntaxHighlight(response_json)
+        console.log(response_json)
+    }
     
     ip = "" 
-
+    
 }
+
+function ValidateIPaddress(ip) {  
+	return isIP(ip) 
+} 
 
 
 </script>
@@ -41,7 +56,7 @@ async function handle_search_by_api() {
 
         <div class="input-group-append ml-2">
 
-            <button on:click={handle_search_by_api} class="btn btn-primary" type="submit" value="Find">search</button>
+            <button on:click={handle_search_by_api} class="btn btn-primary" type="button" value="Find">search</button>
 
         </div>
 
