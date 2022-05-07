@@ -31,10 +31,10 @@ def CallTrace(ip):
 
 def evaluateResult(result, getAll):
 
-    if result: return 'No IP found'
+    if not result: return 'No IP found'
 
-    ip_from = ip_address(int(result[0], 2)) 
-    ip_to   = ip_address(int(result[1], 2))
+    ip_from = result[0] 
+    ip_to   = result[1]
     cc      = result[2]
     status  = result[3]
 
