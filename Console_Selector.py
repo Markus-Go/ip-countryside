@@ -21,14 +21,27 @@ def CallUpdate(force, multicore, output):
 
 
 def CallParse(ip, getAll):
-    return get_record_by_ip_cli(ip, getAll)
+    result = get_record_by_ip(ip)
+    return evaluateResult(result, getAll)
 
 
 
 def CallTrace(ip):
     return traceIP(ip)
 
+def evaluateResult(result, getAll):
 
+    if result: return 'No IP found'
+
+    ip_from = ip_address(int(result[0], 2)) 
+    ip_to   = ip_address(int(result[1], 2))
+    cc      = result[2]
+    status  = result[3]
+
+    if getAll or cc == 'ZZ':
+        return ' '.join(map(str,[ip_from, ip_to, cc, COUNTRY_DICTIONARY[cc] ,status]))
+    else:
+        return ' '.join((cc, COUNTRY_DICTIONARY[cc]))
 
 def evaluateOutput(output):
     for entry in output:

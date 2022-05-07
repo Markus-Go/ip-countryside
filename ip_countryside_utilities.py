@@ -2,41 +2,11 @@ from config import *;
 from ip_countryside_parser import *
 #from ip_countryside_parser import get_city
 from ipaddress import *
-from geopy.geocoders import Nominatim
+#from geopy.geocoders import Nominatim
 import sqlite3
 import math
 
 from config import *;
-
-def get_record_by_ip_cli(ip, getAll=False):
-    
-    ip = ip_address(ip)
-    
-    ip = bin(int(ip))[2:].zfill(128)
-
-    connection = sqlite3.connect(IP2COUNTRY_DB_SQLLITE)
-    cursor = connection.cursor()
-    query = "SELECT * FROM ip2country WHERE ip_from <= '%s' and ip_to >= '%s'" % (ip, ip)
-    cursor.execute(query)
-    result = cursor.fetchall()
-    
-    if result:
-    
-        result = result[0]
-
-        ip_from =  str(ipaddress.ip_address(int(result[0], 2)))
-        ip_to = str(ipaddress.ip_address(int(result[1], 2)))
-        cc = result[2]
-        status = result[3]
-
-
-        if getAll or cc == 'ZZ':
-            return ' '.join(map(str,[ip_from, ip_to, cc, COUNTRY_DICTIONARY[cc] ,status]))
-        else:
-            return ' '.join((cc, COUNTRY_DICTIONARY[cc]))
-    else:
-        return 'No IP found!'
-
 
 def get_record_by_ip(ip):
     
@@ -63,6 +33,16 @@ def get_record_by_ip(ip):
     else:
 
         return []
+
+def open_db():
+    if mmdb_exist:
+        return read_mmdb(ip)
+    elif sqllite_exist:
+        return read_sqllite(ip)
+    elif csv_exist:
+        return read_csv(ip)
+
+
 
 
 def empty_entry_by_idx(records, indicies):
