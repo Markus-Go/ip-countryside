@@ -18,9 +18,53 @@ def open_db(ip):
         if os.path.exists(IP2COUNTRY_DB_SQLLITE):
             return read_sqllite(ip)
         elif os.path.exists(IP2COUNTRY_DB):
-            raise Exception()#read_csv(ip) #TODO
+            read_csv(ip) #TODO
     except: 
         raise Exception("No Database existent. Please call the update function with the command line!")
+
+def read_sqllite(ip):
+    ip = ip_address(ip)
+    ip = bin(int(ip))[2:].zfill(128)
+    connection = sqlite3.connect(IP2COUNTRY_DB_SQLLITE)
+    cursor = connection.cursor()
+    query = "SELECT * FROM ip2country WHERE ip_from <= '%s' and ip_to >= '%s'" % (ip, ip)
+    cursor.execute(query)
+    result = cursor.fetchall()
+    if result:
+        result  = result[0]
+        ip_from = ip_address(int(result[0], 2)) 
+        ip_to   = ip_address(int(result[1], 2))
+        cc      = result[2]
+        status  = result[3]
+        return [ip_from, ip_to, cc, status]
+    else:
+        return []
+
+def read_csv(ip):
+    
+    with open(IP2COUNTRY_DB, encoding='utf-8', errors='ignore') as file:
+
+        for line in file:
+            
+            item = line.split("|")
+
+            range_start = int(item[0])
+            range_end   = int(item[1])
+            country     = item[2].rstrip('\n')
+
+            if ip_in_range(ip, range_start, range_end):
+
+                return COUNTRY_DICTIONARY[country], country
+            
+
+    return []
+
+def ip_in_range(ip, start, end):
+    
+    ip = ipaddress.ip_address(ip)
+    ip_int = int(ip)
+
+    return start <= ip_int <= end 
 
 def empty_entry_by_idx(records, indicies):
     """
@@ -120,4 +164,6 @@ def traceIP(ip_addr):
 #            #print(place_entity.country_cities[c], "is in",COUNTRY_DICTIONARY[countryCode])
 #            return place_entity.country_cities[c][0]  
 #    return "No City information"      
-# Needed if for multiprocessing not to crash
+
+
+print(get_record_by_ip("1.2.3.4"))

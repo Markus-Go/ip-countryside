@@ -1,16 +1,18 @@
 from netaddr import IPSet, IPNetwork
 from mmdb_writer import MMDBWriter
 import maxminddb
-from ipaddress import ip_address, IPv4Address, IPv6Address, ip_interface
+import ipaddress
+from ipaddress import *
 import json
-#import yaml
+import yaml
 import math
 import sqlite3
 import csv
 import random
 from config import *;
 import time
-#import pandas as pd
+
+
 
 from operator import itemgetter
 from ip2country_merege_sort import large_sort
@@ -287,45 +289,7 @@ def extract_as_sqllite(file=IP2COUNTRY_DB):
 
         # To query transform ip into integer and integer to a fixed 128 bit value 
 
-def extract_as_mmdb(file=IP2COUNTRY_DB):
-    data = {}
 
-    records = read_db(file)
-
-    writerv4 = MMDBWriter(ip_version=4)
-    writerv6 = MMDBWriter(ip_version=6)
-    for record in records:
-        ipaddress = getNetwork(record[0], record[1])
-        ipversion = ip_interface(ipaddress).ip.version
-        if ipversion == 4:
-            try:
-                writerv4.insert_network(IPSet(['{0}'.format(ipaddress)]),
-                                        {'CountryCode': '{0}'.format(record[2]),
-                                         'Registry': '{0}'.format(record[3]),
-                                         'LastModified': '{0}'.format(record[4]),
-                                         'Description': '{0}'.format(record[5]),
-                                         'Status': '{0}'.format(record[6])})
-                writerv4.to_db_file(IP2COUNTRY_DB_MMDB_V4)
-                print("entry added for: " + ipaddress)
-
-            except IOError as e:
-                #print(e)
-                return 0
-
-        if ipversion == 6:
-            try:
-                writerv6.insert_network(IPSet(['{0}'.format(ipaddress)]),
-                                        {'CountryCode': '{0}'.format(record[2]),
-                                         'Registry': '{0}'.format(record[3]),
-                                         'LastModified': '{0}'.format(record[4]),
-                                         'Description': '{0}'.format(record[5]),
-                                         'Status': '{0}'.format(record[6])})
-                writerv6.to_db_file(IP2COUNTRY_DB_MMDB_V6)
-                print("entry added for: " + ipaddress)
-
-            except IOError as e:
-                #print(e)
-                return 0
 
 
 def extract_as_mmdb_fast(file=IP2COUNTRY_DB):
@@ -334,49 +298,103 @@ def extract_as_mmdb_fast(file=IP2COUNTRY_DB):
     filteredlist = []
     countryips4 = []
     countryips6 = []
-    records = read_db(file)
+    
+    with open(file, 'r', encoding='utf-8', errors='ignore') as database:
+    
+        for record in database:
+            record = record.split('|')
+            entry = record[2].strip('\n')
+            filteredlist.append(entry)
 
-    for record in records:
-        entry = '{0}'.format(record[2])
-        filteredlist.append(entry)
+        sortedlist = sorted(list(dict.fromkeys(filteredlist)))
+        
+        writerv4 = MMDBWriter(ip_version=4)
+        writerv6 = MMDBWriter(ip_version=6)
+        i = 0
+        j = 0
+        database.close()
 
-    sortedlist = sorted(list(dict.fromkeys(filteredlist)))
+        print(sortedlist)
+        for row in sortedlist:
+            
 
-    writerv4 = MMDBWriter(ip_version=4)
-    writerv6 = MMDBWriter(ip_version=6)
-    i = 0
-    for row in sortedlist:
-        print(row + "")
-        for record in records:
-            if row == record[2]:
+            with open(file, 'r', encoding='utf-8', errors='ignore') as database:
+                print(row + "")
+        
+                for record in database:
 
-                ip = getNetwork(record[0], record[1])
-                ipversion = ip_interface(ip).ip.version
-                if ipversion == 4:
+                    record = record.split('|')
 
-                    countryips4.append(IPNetwork(ip))
-                    writerv4.insert_network(IPSet([ip]),
-                                            {'CountryCode': '{0}'.format(row)})
-                    writerv4.to_db_file(IP2COUNTRY_DB_MMDB_V6)
-                else:
-                    countryips6.append(ip)
-                    #writerv6.insert_network(IPSet([ip, ]),
-                    #                        {'CountryCode': '{0}'.format(row)})
-                    #writerv6.to_db_file(IP2COUNTRY_DB_MMDB_V6)
+                    if row == record[2]:
 
+                        split_ips = converttoNetwork(record)
+
+                        for network in split_ips:
+                            i += 1
+                            ipversion = ip_interface(network).ip.version
+                            if ipversion == 4:
+                                
+                                #countryips4.append(IPNetwork(network))
+                                writerv4.insert_network(IPSet([network]),
+                                                        {'CountryCode': '{0}'.format(row)})
+                                #writerv4.to_db_file(IP2COUNTRY_DB_MMDB_V4)
+                            else:
+                                #countryips6.append(network)
+                                writerv6.insert_network(IPSet([network]),
+                                                        {'CountryCode': '{0}'.format(row)})
+                                #writerv6.to_db_file(IP2COUNTRY_DB_MMDB_V6)
+
+                            j += 1
+                            if j > 1000000:
+                                writerv4.to_db_file(IP2COUNTRY_DB_MMDB_V4)
+                                writerv6.to_db_file(IP2COUNTRY_DB_MMDB_V6)
+                                print("Wrote 1.000.000 IP ranges, for a total of %s written entries, estimated progress is %s%%" % (i,((i / 27000000) * 100)))
+                                j = 0
+            #countryips4.sort()
+            #countryips6.sort()
+           
+            #blockPrint()
+            #for ip4 in countryips4:
+              
+            #    writerv4.insert_network(IPSet([ip4]), {'CountryCode': '{0}'.format(row)})
+            #    #writerv4.to_db_file(IP2COUNTRY_DB_MMDB_V4)
+
+
+            #for ip6 in countryips6:
+            #    writerv6.insert_network(IPSet([ip6]),{'CountryCode': '{0}'.format(row)})
+            #    #writerv6.to_db_file(IP2COUNTRY_DB_MMDB_V6)
+                
+                
+                
+
+
+            
+            print("\nNr. of ips written %s, progress is %s%%" % (i, (i / 27000000) * 100))
 
         writerv4.to_db_file(IP2COUNTRY_DB_MMDB_V4)
-        #writerv6.to_db_file(IP2COUNTRY_DB_MMDB_V6)
+        writerv6.to_db_file(IP2COUNTRY_DB_MMDB_V6)
 
-        # print(row + "-IPV4 Adresses:\t"+ str(len((countryips4))))
-        # print(row + "-IPV6 Adresses:\t"+ str(len((countryips6))))
 
-        # ip6total = len(countryips6)
-        # ip4total = len(countryips4)
-        # iptotal = ip4total + ip6total
+def converttoNetwork(record):
+                         
+    ip_from = int(record[0])
+    ip_to = int(record[1])
 
-    # print("Total Amount of IP Adresses: " + str(iptotal) + "there are "+str(ip4total)+"IPv4 Adresses and "+str(ip6total)+"IPv6 Adresses")
+    ip_from = ip_address(ip_from)
+    ip_to = ip_address(ip_to)
 
+    ranges = [ipaddr for ipaddr in summarize_address_range(ip_from, ip_to)]
+            
+    return_list = []
+    for range in ranges:
+                
+        line = "|".join(map(str, [range]))
+        return_list.append(line)
+
+    return return_list
+              
+            
+             
 
 def read_mmdb(ipaddress):
     
@@ -386,53 +404,11 @@ def read_mmdb(ipaddress):
        m = maxminddb.open_database(IP2COUNTRY_DB_MMDB_V6)
     return m.get(ipaddress)
 
-def read_sqllite(ip):
-    ip = ip_address(ip)
-    
-    ip = bin(int(ip))[2:].zfill(128)
 
-    connection = sqlite3.connect(IP2COUNTRY_DB_SQLLITE)
-    cursor = connection.cursor()
-    query = "SELECT * FROM ip2country WHERE ip_from <= '%s' and ip_to >= '%s'" % (ip, ip)
-    cursor.execute(query)
-    result = cursor.fetchall()
-    
-    if result:
-    
-        result  = result[0]
-        ip_from = ip_address(int(result[0], 2)) 
-        ip_to   = ip_address(int(result[1], 2))
-        cc      = result[2]
-        status  = result[3]
-
-        return [ip_from, ip_to, cc, status]
-
-    else:
-
-        return []
-
-def getNetwork(ip_from, ip_to):
-    hosts = ip_to + 1 - ip_from
-    res = math.log2(hosts)
-    subnetmask = 32 - int(res)
-    if subnetmask < 0:
-        subnetmask = subnetmask * -1
-    if not res.is_integer():
-        round(subnetmask, 0)
-        #print("No valid subnetmask", ip_from, " ", ip_to, "with subnetmask: ", res)
-        return str(ip_address(ip_from)) + "/" + str(subnetmask)
-
-    return str(ip_address(ip_from)) + "/" + str(subnetmask)
-
-
-def getaddress(ip_from):
-    return str(ip_address(ip_from))
-
-#extract_as_mmdb_fast()
-#print(read_mmdb("131.255.44.4"))
-#print(read_mmdb("2c0f:eca0::0001"))
 
 def extract_as_mysql(file=IP2COUNTRY_DB):
+
+    # query with: Select country from ip2country where inet6_aton('41.31.255.254') >= inet6_aton(ip_to) and inet6_aton('41.31.255.254') <= inet6_aton(ip_to)
 
     with open(IP2COUNTRY_DB_MYSQL, 'w',  encoding='utf-8', errors='ignore') as f, open(IP2COUNTRY_DB, 'r',  encoding='utf-8', errors='ignore') as db: 
        
@@ -461,229 +437,13 @@ def extract_as_mysql(file=IP2COUNTRY_DB):
             else:
                 line = "(INET_ATON('%s'), INET_ATON('%s'), '%s');" % (str(ip_address(int(row[0]))), str(ip_address(int(row[1]))), row[2])
 
-    # query with: Select country from ip2country where inet6_aton('41.31.255.254') >= inet6_aton(ip_to) and inet6_aton('41.31.255.254') <= inet6_aton(ip_to)
-
-def testquery_sql_lite(nr_samples):
-    with open(IP2COUNTRY_DB, 'r',  encoding='utf-8', errors='ignore') as db: 
-       
-        database = []
-        for row in db:
-            row = row.split('|')
-            database.append(row)
-
-    sample_values = []
-    
-    for i in range(1,nr_samples):
-        sample_values.append(random.randint(0, len(database))) 
-
-            
-    query_values = []
-    for index in sample_values:
-        entry = database[index]
-        ip_from = int(entry[0])
-        ip_to = int(entry[1])
-        query_values.append([bin(ip_from)[2:].zfill(128), bin(ip_to)[2:].zfill(128)])
-
-    #print(result)
-    
-    
-    start_time = time.time()  
-    for value in query_values: 
-        connection = sqlite3.connect(IP2COUNTRY_DB_SQLLITE)
-        cursor = connection.cursor()
-        query = "SELECT * FROM ip2country WHERE ip_from <= '%s' and ip_to >= '%s'" % (value[0], value[0])
-        cursor.execute(query)
-        result = cursor.fetchall()
-        result = result[0]
-        ip = str(ip_address(int(result[0], 2)))
-        print(ip," ", result[2])
-        
-    end_time = time.time()
-    print("total time needed was:", f'{end_time - start_time:.3f}', "s\n") 
-    print("Average time for one request: ", str((end_time - start_time) / nr_samples), "s")
-    connection.close()     
-
-
-def testquery_df(nr_samples):
-    with open(IP2COUNTRY_DB, 'r',  encoding='utf-8', errors='ignore') as db: 
-       
-        database = []
-        for row in db:
-            row = row.split('|')
-            database.append(row)
-
-    sample_values = []
-    
-    for i in range(1,nr_samples):
-        sample_values.append(random.randint(0, len(database))) 
-            
-    query_values = []
-    for index in sample_values:
-        entry = database[index]
-        ip_from = int(entry[0])
-        ip_to = int(entry[1])
-        query_values.append([ip_from, ip_to])
-
-    start_time = time.time() 
-    
-    for value in query_values: 
-        df = pd.read_pickle(IP2COUNTRY_DB_DF)
-        record = df.loc[ ( (df['ip_from'] <= ip) & (df['ip_to'] >= ip) ) ].values 
-   
-    end_time = time.time()
-    print("total time needed was:", f'{end_time - start_time:.3f}', "s\n") 
-    print("Average time for one request: ", str((end_time - start_time) / nr_samples), "s")
-    
-#extract_as_sqllite()
-#testquery_sql_lite(100)
-
-def comparedbs(nr_samples):
-
-    with open("ipc.db", 'r') as cdb:
-
-        c_db = []
-        for entry in cdb:
-            c_db.append(entry.split(" "))
-
-    with open(IP2COUNTRY_DB, 'r',  encoding='utf-8', errors='ignore') as db: 
-       
-        database = []
-        for row in db:
-            row = row.split('|')
-            database.append(row)
-
-    sample_values = []
-    
-    for i in range(1,nr_samples):
-        sample_values.append(random.randint(0, len(c_db))) 
-            
-    query_values = []
-    for index in sample_values:
-        entry = c_db[index]
-        ip_from = int(entry[0])
-        ip_to = int(entry[1])
-        country = entry[2]
-        query_values.append([ip_from, ip_to, country])
-
-    col_names = ["ip_from", "ip_to", "country", "registry", "last-modified", "record_type", "status",  "description"]
-    df = pd.read_csv(IP2COUNTRY_DB, delimiter="|", names=col_names, converters={'ip_from':int, 'ip_to':int })
-
-    start_time = time.time() 
-
-    i = 1
-    eu_count = 0
-    no_match = 0
-    for entry in query_values:
-        ip = int(entry[0]) +1
-        country = entry[2].strip('\n')
-
-        record = df.loc[ ( (df['ip_from'] <= ip) & (df['ip_to'] >= ip) ) ].values
-        result = record[0][2]
-        #print("%s: Country from C database %s, country from result %s" % (i,country, result))
-        if result != country:
-            no_match += 1
-            print("%s: Country from C database %s with ip: %s, country from result %s" % (i,country, str(ip_address(ip)), result))
-            if country == 'EU':
-                eu_count += 1
-
-        i += 1
-
-    print("\nTotal entries looked at: %s" % i)
-    print("No match cases: %s" % no_match)
-    matching = (1 - (no_match / i)) * 100
-    print("Old database matches new database to %s%%\n" % matching)
-    print("EU cases: %s" % eu_count)
-
-    end_time = time.time()
-    print("total time needed was:", f'{end_time - start_time:.3f}', "s\n") 
-
-
-def comparemaxmind(nr_samples):
-
-    
-    with open(IP2COUNTRY_DB, 'r',  encoding='utf-8', errors='ignore') as db: 
-       
-        database = []
-        for row in db:
-            row = row.split('|')
-            if int(row[0]) < 4294967296 and row[2] != 'ZZ':
-                database.append(row)
-
-    sample_values = []
-    
-    for i in range(0,nr_samples):
-        sample_values.append(random.randint(0, len(database))) 
-            
-    query_values = []
-    for index in sample_values:
-        entry = database[index]
-        ip_from = int(entry[0])
-        ip_to = int(entry[1])
-        country = entry[2]
-        query_values.append([ip_from, ip_to, country])
-
     
 
-    start_time = time.time() 
-
-    i = 1
-    eu_count = 0
-    no_match = 0
-    for entry in query_values:
-        
-        ip = int(entry[0]) + 1
-        ip = str(ip_address(ip))
-
-        country = entry[2]
 
 
 
-        t = read_mmdb(ip)
-
-        try:
-            result = t['country']['iso_code']
-            if result != country:
-                no_match += 1
-                print("%s: Country from maxmind database %s with ip: %s, country from result %s" % (i,result, ip, country))
-                if country == 'EU':
-                    eu_count += 1
-
-            i += 1
-
-        except:
-            pass
-        
-
-
-        
-        #print("%s: Country from C database %s, country from result %s" % (i,country, result))
-        
-
-    print("\nTotal entries looked at: %s" % i)
-    print("No match cases: %s" % no_match)
-    matching = (1 - (no_match / i)) * 100
-    print("Maxmind matches new database to %s%%\n" % matching)
-    print("EU cases: %s" % eu_count)
-
-    end_time = time.time()
-    print("total time needed was:", f'{end_time - start_time:.3f}', "s\n")
-
-  
-    print("Average time for one request: ", str((end_time - start_time) / nr_samples), "s")
 
 
 
-#comparemaxmind(10000)
-#comparedbs(1000)
-#extract_as_sqllite()
-#extract_as_mysql()
-#extract_as_sqllite()
 
-#t = read_mmdb("185.58.141.125")
 
-#result = t['country']['iso_code']
-
-#print(t)
-#print(result)
-
-#extract_as_sqllite()
