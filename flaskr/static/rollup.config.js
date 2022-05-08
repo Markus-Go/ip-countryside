@@ -34,7 +34,8 @@ export default {
 		sourcemap: true,
 		format: 'iife',
 		name: 'app',
-		file: 'dist/javascript/svelte_bundle.js'
+		file: 'dist/javascript/svelte_bundle.js',
+		inlineDynamicImports: true, //Add this
 	},
 	plugins: [
 		svelte({
@@ -64,11 +65,14 @@ export default {
 
 		// Watch the `public` directory and refresh the
 		// browser on changes when not in production
-		!production && livereload('public'),
+		// !production && livereload('public'),
 
 		// If we're building for production (npm run build
 		// instead of npm run dev), minify
 		production && terser()
 	],
+	watch: {
+		clearScreen: false
+	}
 
 };

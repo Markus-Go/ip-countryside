@@ -18,6 +18,7 @@
   "devDependencies": {
     "@rollup/plugin-commonjs": "^17.0.0",
     "@rollup/plugin-node-resolve": "^11.0.0",
+    "@zerodevx/svelte-json-view": "^0.2.1",
     "concurrently": "^7.1.0",
     "jquery": "^3.6.0",
     "node-sass": "^7.0.1",
@@ -39,6 +40,8 @@
     "poper": "^0.1.1",
     "rollup": "^2.72.0",
     "rollup-plugin-svelte": "^7.1.0",
-    "svelte": "^3.48.0"
+    "svelte": "^3.48.0",
+    "svelte-json-tree": "^1.0.0",
+    "svelte-typewriter": "^3.0.0-alpha.11"
   }
 }

@@ -611,7 +611,7 @@ def comparemaxmind(nr_samples):
 
     sample_values = []
     
-    for i in range(1,nr_samples):
+    for i in range(0,nr_samples):
         sample_values.append(random.randint(0, len(database))) 
             
     query_values = []

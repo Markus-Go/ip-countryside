@@ -1,5 +1,6 @@
 // global variable
 let MAP;
+let ip;
 
 function init_map(map, lat, lon, ip) {
     

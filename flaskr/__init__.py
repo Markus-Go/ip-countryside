@@ -91,15 +91,13 @@ def create_app(test_config=None):
            
             if ip_address is None or ip_address == "":
 
-                # @TODO
-                ip_address = os.popen('curl -s ifconfig.me').readline()
+                ip_address = request.remote_addr
                 record = get_record_by_ip(ip_address)
 
             else:
                 
                 ip_address = ip_address.strip()
                 record = get_record_by_ip(ip_address)
-
             
             if record:
 
@@ -128,7 +126,7 @@ def create_app(test_config=None):
         db_files = get_db_files()
         
         output = render_template('index.html', ip_from=ip_from, ip_to=ip_to, lat=lat, lon=lon, flag=flag, country=country, isValid=isValid, hasLocation=hasLocation, ip=ip_address, comment=comment, db_files=db_files) 
-        
+
         return output
 
     @app.route('/api', methods=['GET'])

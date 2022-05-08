@@ -2,7 +2,7 @@
     import {isIP} from 'is-ip';
     
     export let ip
-    console.log(ip)
+
     let  isValid
     $: api_url = "/api?ip=" + ip  
 
