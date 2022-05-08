@@ -83,6 +83,7 @@ def create_app(test_config=None):
         comment     = "-"
         isValid     = False
         hasLocation = False
+        last_update = datetime.fromtimestamp(os.path.getmtime(IP2COUNTRY_DB_SQLLITE)).strftime('%Y-%m-%d %H:%M:%S')
 
         # process ip search request
         if request.method == 'GET':
@@ -125,7 +126,7 @@ def create_app(test_config=None):
         # get download files data for templates
         db_files = get_db_files()
         
-        output = render_template('index.html', ip_from=ip_from, ip_to=ip_to, lat=lat, lon=lon, flag=flag, country=country, isValid=isValid, hasLocation=hasLocation, ip=ip_address, comment=comment, db_files=db_files) 
+        output = render_template('index.html', ip_from=ip_from, ip_to=ip_to, lat=lat, lon=lon, flag=flag, country=country, isValid=isValid, hasLocation=hasLocation, ip=ip_address, comment=comment, db_files=db_files, last_update=last_update) 
 
         return output
 
