@@ -4,14 +4,14 @@ import maxminddb
 import ipaddress
 from ipaddress import *
 import json
-#import yaml
+import yaml
 import math
 import sqlite3
 import csv
 import random
 from config import *;
 import time
-import pandas as pd
+
 
 
 from operator import itemgetter
@@ -348,7 +348,7 @@ def extract_as_mmdb_fast(file=IP2COUNTRY_DB):
                             if j > 1000000:
                                 writerv4.to_db_file(IP2COUNTRY_DB_MMDB_V4)
                                 writerv6.to_db_file(IP2COUNTRY_DB_MMDB_V6)
-                                print("Wrote 1.000.000 IP ranges, for a total of %s written entries, estimated progress is %s" % (i,((i / 27000000) * 100)))
+                                print("Wrote 1.000.000 IP ranges, for a total of %s written entries, estimated progress is %s%%" % (i,((i / 27000000) * 100)))
                                 j = 0
             #countryips4.sort()
             #countryips6.sort()
