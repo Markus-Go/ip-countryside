@@ -8,7 +8,7 @@ import random
 from config import *
 import time
 from operator import itemgetter
-from ip2country_merge_sort import large_sort
+from ip_countryside_merge_sort import large_sort
 
 try:
     from netaddr import IPSet, IPNetwork
