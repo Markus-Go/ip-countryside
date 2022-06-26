@@ -25,7 +25,7 @@ IP2COUNTRY_DB_IPV6     = os.path.join(OUT_DIR, "ip2country_ipv6.csv")
 IP2COUNTRY_DB_JSON     = os.path.join(OUT_DIR, "ip2country.json")
 IP2COUNTRY_DB_YAML     = os.path.join(OUT_DIR, "ip2country.yaml")
 IP2COUNTRY_DB_MYSQL    = os.path.join(OUT_DIR, "ip2country.sql")
-IP2COUNTRY_DB_SQLITE  = os.path.join(OUT_DIR, "ip2country.sqlite")
+IP2COUNTRY_DB_SQLITE   = os.path.join(OUT_DIR, "ip2country.sqlite")
 
 IP2COUNTRY_MM          = os.path.join(OUT_DIR, "ip2country_mm_extended.db")
 IP2COUNTRY_DB_MMDB_V4  = os.path.join(OUT_DIR, "db4.mmdb")
