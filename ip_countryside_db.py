@@ -240,10 +240,9 @@ def extract_as_mmdb_fast(file=IP2COUNTRY_DB):
         j = 0
         database.close()
 
-        print(sortedlist)
         for row in sortedlist:
             with open(file, 'r', encoding='utf-8', errors='ignore') as database:
-                print(row + "")
+                #print(row + "")
                 for record in database:
                     record = record.split('|')
                     if row == record[2]:
@@ -283,7 +282,7 @@ def extract_as_mmdb_fast(file=IP2COUNTRY_DB):
             #    writerv6.insert_network(IPSet([ip6]),{'CountryCode': '{0}'.format(row)})
             #    #writerv6.to_db_file(IP2COUNTRY_DB_MMDB_V6)
 
-            print("\nNr. of ips written %s, progress is %s%%" % (i, (i / 27000000) * 100))
+            #print("Nr. of IPs written %s, progress is %s%%" % (i, (i / 27000000) * 100))
 
         writerv4.to_db_file(IP2COUNTRY_DB_MMDB_V4)
         writerv6.to_db_file(IP2COUNTRY_DB_MMDB_V6)

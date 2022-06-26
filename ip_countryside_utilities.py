@@ -17,7 +17,7 @@ def open_db(ip):
         elif os.path.exists(IP2COUNTRY_DB):
             read_csv(ip) #TODO
     except: 
-        raise Exception("No Database existent. Please call the update function with the command line!")
+        raise Exception("No Database exists. Please call the update function with the command line!")
 
 def read_sqlite(ip):
     ip = ip_address(ip)
