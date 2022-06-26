@@ -4,7 +4,8 @@ import os
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # ip2country root path of the data bases  
-DB_DIR = os.path.join(ROOT_DIR, "del_files")
+DB_DIR = os.path.join(ROOT_DIR, "tmp_files")
+OUT_DIR = os.path.join(ROOT_DIR, "output")
 
 # ip2country files generated during the execution (should be deleted after processing)
 MERGED_DEL_FILE        = os.path.join(DB_DIR, "merged_del_file.csv")
@@ -17,18 +18,18 @@ INET_CONFLICTS         = os.path.join(DB_DIR, "ip2country_conflicts.csv")
 TRACE_FILE             = os.path.join(DB_DIR, "trace_ip_file.csv")
 
 # ip2country data bases paths
-IP2COUNTRY_DB          = os.path.join(DB_DIR, "ip2country.csv")
-IP2COUNTRY_DB_IPV4     = os.path.join(DB_DIR, "ip2country_ipv4.csv")
-IP2COUNTRY_DB_IPV6     = os.path.join(DB_DIR, "ip2country_ipv6.csv")
+IP2COUNTRY_DB          = os.path.join(OUT_DIR, "ip2country.csv")
+IP2COUNTRY_DB_IPV4     = os.path.join(OUT_DIR, "ip2country_ipv4.csv")
+IP2COUNTRY_DB_IPV6     = os.path.join(OUT_DIR, "ip2country_ipv6.csv")
 
-IP2COUNTRY_DB_JSON     = os.path.join(DB_DIR, "ip2country.json")
-IP2COUNTRY_DB_YAML     = os.path.join(DB_DIR, "ip2country.yaml")
-IP2COUNTRY_DB_MYSQL    = os.path.join(DB_DIR, "ip2country.sql")
-IP2COUNTRY_DB_SQLLITE  = os.path.join(DB_DIR, "ip2country.sqlite")
+IP2COUNTRY_DB_JSON     = os.path.join(OUT_DIR, "ip2country.json")
+IP2COUNTRY_DB_YAML     = os.path.join(OUT_DIR, "ip2country.yaml")
+IP2COUNTRY_DB_MYSQL    = os.path.join(OUT_DIR, "ip2country.sql")
+IP2COUNTRY_DB_SQLITE  = os.path.join(OUT_DIR, "ip2country.sqlite")
 
-IP2COUNTRY_MM          = os.path.join(DB_DIR, "ip2country_mm_extended.db")
-IP2COUNTRY_DB_MMDB_V4  = os.path.join(DB_DIR, "db4.mmdb")
-IP2COUNTRY_DB_MMDB_V6  = os.path.join(DB_DIR, "db6.mmdb")
+IP2COUNTRY_MM          = os.path.join(OUT_DIR, "ip2country_mm_extended.db")
+IP2COUNTRY_DB_MMDB_V4  = os.path.join(OUT_DIR, "db4.mmdb")
+IP2COUNTRY_DB_MMDB_V6  = os.path.join(OUT_DIR, "db6.mmdb")
 
 # ip2country paths used for city information
 APNIC_DB_IRT           = os.path.join(DB_DIR, "apnic.db.irt")
@@ -40,8 +41,10 @@ MNT_BYTOADDRESS        = os.path.join(DB_DIR, "mnt_byToAddress.py")
 IPV4_PATTERN = "[0-9]+(?:\.[0-9]+){3}"
 IPV6_PATTERN = "(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))"
 
-# RIAS information
+# Available formats
+FORMATS = ('csv', 'mmdb', 'json', 'yaml', 'mysql', 'sqlite')
 
+# RIR information
 RECORD = ["inetnum", "netname", "descr", "country", "status", "created", "last-modified", "source"]
 
 AFRINIC = {
@@ -101,7 +104,6 @@ RIPE = {
     'irt_fname_gz':         "ripe.db.irt.gz",
     'irt_timestamp':        "ripe.db.irt.timestamp"
 }
-
 
 COUNTRY_DICTIONARY = {
     'AF':"AFGHANISTAN",
@@ -353,7 +355,6 @@ COUNTRY_DICTIONARY = {
     'VG':"VIRGIN ISLANDS, BRITISH",
     'VI':"VIRGIN ISLANDS, U.S.",
     'WF':"WALLIS AND FUTUNA",
-    'EH':"WESTERN SAHARA",
     'EH':"WESTERN SAHARA",
     'YE':"YEMEN",
     'YU':"YUGOSLAVIA",

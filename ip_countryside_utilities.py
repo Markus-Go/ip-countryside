@@ -1,12 +1,9 @@
-from config import *;
+from config import *
 from ip_countryside_parser import *
 from ip_countryside_db import *
-#from ip_countryside_parser import get_city
 from ipaddress import *
 import sqlite3
 import math
-
-from config import *;
 
 def get_record_by_ip(ip):
     return open_db(ip)
@@ -15,17 +12,17 @@ def open_db(ip):
     try:
         #if os.path.exists(IP2COUNTRY_MM):
         #    return []#read_mmdb(ip) #TODO
-        if os.path.exists(IP2COUNTRY_DB_SQLLITE):
-            return read_sqllite(ip)
+        if os.path.exists(IP2COUNTRY_DB_SQLITE):
+            return read_sqlite(ip)
         elif os.path.exists(IP2COUNTRY_DB):
             read_csv(ip) #TODO
     except: 
         raise Exception("No Database existent. Please call the update function with the command line!")
 
-def read_sqllite(ip):
+def read_sqlite(ip):
     ip = ip_address(ip)
     ip = bin(int(ip))[2:].zfill(128)
-    connection = sqlite3.connect(IP2COUNTRY_DB_SQLLITE)
+    connection = sqlite3.connect(IP2COUNTRY_DB_SQLITE)
     cursor = connection.cursor()
     query = "SELECT * FROM ip2country WHERE ip_from <= '%s' and ip_to >= '%s'" % (ip, ip)
     cursor.execute(query)
@@ -55,8 +52,6 @@ def read_csv(ip):
             if ip_in_range(ip, range_start, range_end):
 
                 return COUNTRY_DICTIONARY[country], country
-            
-
     return []
 
 def ip_in_range(ip, start, end):
@@ -149,21 +144,3 @@ def traceIP(ip_addr):
         r[-1] = r[-1].replace('\n', '')
 
     return return_list
-
-  
-#def get_city(string, countryCode):
-
-#    place_entity = locationtagger.find_locations(text = string)
-   
-#    # getting all country cities
-#    print("The countries cities in text : ")
-#    print(place_entity.country_cities)
-
-#    for c in place_entity.country_cities:
-#        if c.upper() == COUNTRY_DICTIONARY[countryCode]:
-#            #print(place_entity.country_cities[c], "is in",COUNTRY_DICTIONARY[countryCode])
-#            return place_entity.country_cities[c][0]  
-#    return "No City information"      
-
-
-print(get_record_by_ip("1.2.3.4"))

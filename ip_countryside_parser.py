@@ -440,7 +440,7 @@ def run_parser(save_conflicts_param=False, multicore=True):
     delete_temp_files()
     print("finished\n")
 
-    extract_as_sqllite()
+    extract_as_sqlite()
 
     end_time = time.time()
     print("total time needed was:", f'{end_time - start_time:.3f}', "s\n") 
