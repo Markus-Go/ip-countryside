@@ -7,13 +7,10 @@ from typing import IO, Callable, List
 
 
 def large_sort(input_file: IO, output_file: IO, key: Callable=None, reverse: bool=False, limit_chars: int=1024*1024*64):
-
     with TemporaryDirectory() as tmp_dir:
-
         for lines in _read_parts(input_file, limit_chars):
             lines = sorted(lines, key=key, reverse=reverse)
             _write_part(lines, tmp_dir)
-
         with _open_tmp_files(tmp_dir) as tmp_files:
             for row in heapq.merge(*tmp_files, key=key, reverse=False):
                 output_file.write(row)
