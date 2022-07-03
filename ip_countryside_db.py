@@ -8,6 +8,7 @@ import random
 from config import *
 import time
 from operator import itemgetter
+import zipfile
 from ip_countryside_merge_sort import large_sort
 
 try:
@@ -126,7 +127,6 @@ def sort_db_2(file=IP2COUNTRY_DB):
 
 def split_db(file=IP2COUNTRY_DB):
     try:
-
         # save all records into a list
         with open(file, "r", encoding='utf-8', errors='ignore') as input, open(IP2COUNTRY_DB_IPV4, "w",
                                                                                encoding='utf-8',
@@ -220,6 +220,10 @@ def extract_as_sqlite(file=IP2COUNTRY_DB):
 
         connection.close()
         # To query transform ip into integer and integer to a fixed 128 bit value
+
+        zipper = zipfile.ZipFile(IP2COUNTRY_DB_SQLITE + ".zip", 'w')
+        zipper.write(IP2COUNTRY_DB_SQLITE, os.path.basename(IP2COUNTRY_DB_SQLITE), zipfile.ZIP_DEFLATED)
+        zipper.close()
 
 
 def extract_as_mmdb_fast(file=IP2COUNTRY_DB):
@@ -323,6 +327,7 @@ def extract_as_mysql(file=IP2COUNTRY_DB):
         f.write("VALUES\n")
 
         database = []
+        i=0
         for row in db:
             row = row.split('|')
             database.append(row)
@@ -344,3 +349,6 @@ def extract_as_mysql(file=IP2COUNTRY_DB):
             else:
                 line = "(INET_ATON('%s'), INET_ATON('%s'), '%s');" % (
                 str(ip_address(int(row[0]))), str(ip_address(int(row[1]))), row[2])
+    zipper = zipfile.ZipFile(IP2COUNTRY_DB_MYSQL + ".zip", 'w')
+    zipper.write(IP2COUNTRY_DB_MYSQL, os.path.basename(IP2COUNTRY_DB_MYSQL), zipfile.ZIP_DEFLATED)
+    zipper.close()
