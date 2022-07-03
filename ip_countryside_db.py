@@ -8,7 +8,8 @@ import random
 from config import *
 import time
 from operator import itemgetter
-from ip2country_merge_sort import large_sort
+import zipfile
+from ip_countryside_merge_sort import large_sort
 
 try:
     from netaddr import IPSet, IPNetwork
@@ -126,7 +127,6 @@ def sort_db_2(file=IP2COUNTRY_DB):
 
 def split_db(file=IP2COUNTRY_DB):
     try:
-
         # save all records into a list
         with open(file, "r", encoding='utf-8', errors='ignore') as input, open(IP2COUNTRY_DB_IPV4, "w",
                                                                                encoding='utf-8',
@@ -221,6 +221,10 @@ def extract_as_sqlite(file=IP2COUNTRY_DB):
         connection.close()
         # To query transform ip into integer and integer to a fixed 128 bit value
 
+        zipper = zipfile.ZipFile(IP2COUNTRY_DB_SQLITE + ".zip", 'w')
+        zipper.write(IP2COUNTRY_DB_SQLITE, os.path.basename(IP2COUNTRY_DB_SQLITE), zipfile.ZIP_DEFLATED)
+        zipper.close()
+
 
 def extract_as_mmdb_fast(file=IP2COUNTRY_DB):
     data = {}
@@ -240,10 +244,9 @@ def extract_as_mmdb_fast(file=IP2COUNTRY_DB):
         j = 0
         database.close()
 
-        print(sortedlist)
         for row in sortedlist:
             with open(file, 'r', encoding='utf-8', errors='ignore') as database:
-                print(row + "")
+                #print(row + "")
                 for record in database:
                     record = record.split('|')
                     if row == record[2]:
@@ -283,7 +286,7 @@ def extract_as_mmdb_fast(file=IP2COUNTRY_DB):
             #    writerv6.insert_network(IPSet([ip6]),{'CountryCode': '{0}'.format(row)})
             #    #writerv6.to_db_file(IP2COUNTRY_DB_MMDB_V6)
 
-            print("\nNr. of ips written %s, progress is %s%%" % (i, (i / 27000000) * 100))
+            #print("Nr. of IPs written %s, progress is %s%%" % (i, (i / 27000000) * 100))
 
         writerv4.to_db_file(IP2COUNTRY_DB_MMDB_V4)
         writerv6.to_db_file(IP2COUNTRY_DB_MMDB_V6)
@@ -324,6 +327,7 @@ def extract_as_mysql(file=IP2COUNTRY_DB):
         f.write("VALUES\n")
 
         database = []
+        i=0
         for row in db:
             row = row.split('|')
             database.append(row)
@@ -345,3 +349,6 @@ def extract_as_mysql(file=IP2COUNTRY_DB):
             else:
                 line = "(INET_ATON('%s'), INET_ATON('%s'), '%s');" % (
                 str(ip_address(int(row[0]))), str(ip_address(int(row[1]))), row[2])
+    zipper = zipfile.ZipFile(IP2COUNTRY_DB_MYSQL + ".zip", 'w')
+    zipper.write(IP2COUNTRY_DB_MYSQL, os.path.basename(IP2COUNTRY_DB_MYSQL), zipfile.ZIP_DEFLATED)
+    zipper.close()

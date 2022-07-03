@@ -17,7 +17,7 @@ def open_db(ip):
         elif os.path.exists(IP2COUNTRY_DB):
             read_csv(ip) #TODO
     except: 
-        raise Exception("No Database existent. Please call the update function with the command line!")
+        raise Exception("No Database exists. Please call the update function with the command line!")
 
 def read_sqlite(ip):
     ip = ip_address(ip)
@@ -38,28 +38,20 @@ def read_sqlite(ip):
         return []
 
 def read_csv(ip):
-    
     with open(IP2COUNTRY_DB, encoding='utf-8', errors='ignore') as file:
-
         for line in file:
-            
             item = line.split("|")
-
             range_start = int(item[0])
             range_end   = int(item[1])
             country     = item[2].rstrip('\n')
-
             if ip_in_range(ip, range_start, range_end):
-
                 return COUNTRY_DICTIONARY[country], country
     return []
 
 def ip_in_range(ip, start, end):
-    
     ip = ipaddress.ip_address(ip)
     ip_int = int(ip)
-
-    return start <= ip_int <= end 
+    return start <= ip_int <= end
 
 def empty_entry_by_idx(records, indicies):
     """
@@ -76,18 +68,13 @@ def empty_entry_by_idx(records, indicies):
 
     Returns
     ----------
-    void
+    records
 
     """
-
     for idx in indicies:
-
         if idx < len(records):
-
             records[idx] = []
-
     records = [x for x in records if x != []]
-
     return records
 
 def getNetwork(ip_from, ip_to):
@@ -102,21 +89,15 @@ def getNetwork(ip_from, ip_to):
     return str(ip_address(ip_from)) + "/" + str(subnetmask)
     
 def converttoNetwork(records):
-                         
     with open(IP2COUNTRY_MM, 'w', encoding='utf-8', errors='ignore') as f:
-
-        for record in records: 
-            
+        for record in records:
             ip_from = int(record[0])
             ip_to = int(record[1])
-
             ip_from = ip_address(ip_from)
             ip_to = ip_address(ip_to)
 
             ranges = [ipaddr for ipaddr in summarize_address_range(ip_from, ip_to)]
-            
             for range in ranges:
-                
                 line = "|".join(map(str, [range, record[2]]))
                 line = line + '\n'
                 f.write(line)           

@@ -20,8 +20,10 @@ from ip_countryside_utilities import get_record_by_ip
 from ip_countryside_db import read_mmdb, get_db_files, read_db_record
 from geopy.geocoders import Nominatim
 
-
 from config import *
+
+# cache Nominatim
+adrCache= {}
 
 def create_app(test_config=None):
 
@@ -83,7 +85,7 @@ def create_app(test_config=None):
         comment     = "-"
         isValid     = False
         hasLocation = False
-        last_update = datetime.fromtimestamp(os.path.getmtime(IP2COUNTRY_DB_SQLLITE)).strftime('%Y-%m-%d %H:%M:%S')
+        last_update = datetime.fromtimestamp(os.path.getmtime(IP2COUNTRY_DB)).strftime('%Y-%m-%d %H:%M:%S')
 
         # process ip search request
         if request.method == 'GET':
@@ -104,7 +106,7 @@ def create_app(test_config=None):
 
                 ip_from     = record[0]
                 ip_to       = record[1]
-                flag        = record[2]
+                flag        = record[2].lower()
                 country     = COUNTRY_DICTIONARY[record[2]] 
                 status      = record[3]
                 isValid     = True
@@ -132,39 +134,51 @@ def create_app(test_config=None):
 
     @app.route('/api', methods=['GET'])
     def api_id():
-
         if 'ip' in request.args:
-            id = request.args['ip']
-            return jsonify(read_mmdb(id))
+            ip = request.args['ip']
+            if checkIp(ip):
+                return jsonify(read_mmdb(ip))
+            else:
+                return jsonify({"status": "fail", "message":"invalid input", "input": ip})
 
         else:
-            return "No id field provided. Please specify an id."
+            return jsonify({"status": "fail", "message": "no ip parameter", "input": None})
 
     @app.route('/download')
     def download_db_file():
-         
+        db_files = get_db_files()
         fname = request.args.get('fname', None)
-
-        return send_from_directory(DB_DIR, fname, as_attachment=True)
+        if fname in db_files: # security check
+            return send_from_directory(OUT_DIR, fname, as_attachment=True)
+        else:
+            pass
 
     return app
 
-def get_geolocation(address):
-
+def checkIp(ip):
     try:
+        ip = ipaddress.ip_address(ip)
+        return True
+    except ValueError:
+        return False
+    except:
+        return False
 
-        geolocator = Nominatim(user_agent="Your_Name")
+def get_geolocation(address):
+    if address in adrCache:
+        return adrCache[address]
+    try:
+        geolocator = Nominatim(user_agent="ipcountryside")
         location = geolocator.geocode(address)
         lat = location.latitude
         lon = location.longitude
         isValid = True
         hasLocation = True
-
+        adrCache[address] = [lat, lon, isValid, hasLocation];
+        print(adrCache[address])
     except:
-        
         lat = 0
         lon = 0
         isValid = False
         hasLocation = False
-
     return [lat, lon, isValid, hasLocation]
