@@ -134,23 +134,24 @@ def create_app(test_config=None):
 
     @app.route('/api', methods=['GET'])
     def api_id():
-
         if 'ip' in request.args:
             ip = request.args['ip']
             if checkIp(ip):
                 return jsonify(read_mmdb(ip))
             else:
-                return jsonify({"error":"No valid IPv4/v6 address."})
+                return jsonify({"status": "fail", "message":"invalid input", "input": ip})
 
         else:
-            return jsonify({"error":"No IP provided. Please specify an ip with ?ip=..."})
+            return jsonify({"status": "fail", "message": "no ip parameter", "input": None})
 
     @app.route('/download')
     def download_db_file():
-         
+        db_files = get_db_files()
         fname = request.args.get('fname', None)
-
-        return send_from_directory(DB_DIR, fname, as_attachment=True)
+        if fname in db_files: # security check
+            return send_from_directory(OUT_DIR, fname, as_attachment=True)
+        else:
+            pass
 
     return app
 
