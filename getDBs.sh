@@ -19,11 +19,11 @@ if ! $MD5SUM --check delegated-lacnic-latest.md5 > /dev/null 2>&1; then
 fi
 
 $RM -f delegated-arin-extended-latest.md5
-$WGET ftp://ftp.arin.net/pub/stats/arin/delegated-arin-extended-latest.md5
+$WGET http://ftp.arin.net/pub/stats/arin/delegated-arin-extended-latest.md5
 sed -i 's/[0-9]*$/latest/g' delegated-arin-extended-latest.md5
 if ! $MD5SUM --check delegated-arin-extended-latest.md5 > /dev/null 2>&1; then
   $RM -f delegated-arin-extended-latest
-  $WGET ftp://ftp.arin.net/pub/stats/arin/delegated-arin-extended-latest
+  $WGET http://ftp.arin.net/pub/stats/arin/delegated-arin-extended-latest
 fi
 
 $RM -f delegated-apnic-latest.md5
