@@ -278,7 +278,7 @@ int main() {
     
     // time_t current = time(0);
     
-    cout << "Program Terminated!"<<endl;
+    cout << "Program finished successfully."<<endl;
     return 0;
 }
 
@@ -329,7 +329,7 @@ void dbParser( string dbIn , string delName, string dbOut ) {
     while ( !(inDB.getline(cBuf,LINE_LENGTH).eof())  ) {
 		if ( inDB.fail() )
 		{
-			cout << "Error reading " << dbIn << " file" << std::endl;
+			cout << "Error reading " << dbIn << " file. Check buffer size." << std::endl;
 			exit(1);
 		}
         sStr = cBuf;
@@ -394,7 +394,7 @@ void dbParser( string dbIn , string delName, string dbOut ) {
     while ( !(in.getline(cBuf,LINE_LENGTH).eof())  ) {
 		if ( in.fail() )
 		{
-			cout << "Error reading " << s.c_str() << " file" << std::endl;
+			cout << "Error reading " << s.c_str() << " file. Check buffer size." << std::endl;
 			exit(1);
 		}
         sEntry.clear();
