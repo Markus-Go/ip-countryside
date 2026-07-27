@@ -7,7 +7,7 @@ applications for geolocating internet users based on  their IP address.
 <b>If you only need the ip2country database itself (not the program creating 
 it),  
 you can <a 
-href='https://github.com/Markus-Go/ip-countryside/blob/downloads/ip2country.zip?raw=true'>download 
+href='https://github.com/Markus-Go/ip-countryside/raw/refs/heads/downloads/ip2country.zip'>download 
 it here</a> (updated weekly).</b>
 
 A demo can be found <a href='https://www.goldiges.de/ip-countryside/' target='_BLANK'>here</a>. 
@@ -99,6 +99,6 @@ This is free software. Licensed under the [Apache License, Version 2.0](LICENSE.
 There is NO WARRANTY, to the extent permitted by law.
 
 <a href="http://www.dfki.de/" target="_blank"><img src="https://upload.wikimedia.org/wikipedia/de/8/88/Deutsches_Forschungszentrum_f%C3%BCr_K%C3%BCnstliche_Intelligenz_logo.svg" height="80"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<a href="http://www.thu.de" target="_blank"><img src="https://studium.hs-ulm.de/_catalogs/masterpage/HSUlm/images/logo.svg" height="80"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a href="http://www.thu.de" target="_blank"><img src="https://www.thu.de/_assets/1b3912148daf116798541c5520df0353/frontend/assets/images/logo.svg" height="80"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 [![https://www.goldiges.de/assets/images/logo-full.png](https://www.goldiges.de/assets/images/logo-full.png)](https://www.goldiges.de/)
 
